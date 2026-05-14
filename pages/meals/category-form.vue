@@ -1,0 +1,210 @@
+<template>
+  <view class="bl-page cat-form-page">
+    <BlHeader title="编辑类别" back>
+      <template #right>
+        <view class="top-save" @click="save">
+          <text class="top-save-text">保存</text>
+        </view>
+      </template>
+    </BlHeader>
+
+    <view class="bl-card">
+      <view class="row-title">
+        <view class="tag" />
+        <text class="row-title-text">名称</text>
+      </view>
+      <view class="input-wrap">
+        <input v-model="name" class="input" placeholder="请输入" placeholder-class="ph" />
+      </view>
+    </view>
+
+    <view class="bl-card colors-card">
+      <view class="row-title">
+        <view class="palette" />
+        <text class="row-title-text">选择颜色</text>
+      </view>
+      <view class="colors">
+        <view v-for="c in colors" :key="c" class="dot" :style="{ background: c }" @click="color = c">
+          <view v-if="color === c" class="dot-check"><text class="dot-check-text">✓</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-save" @click="save">
+      <text class="bottom-save-text">保存</text>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import BlHeader from '../../components/BlHeader.vue'
+import { ensureMealState, findCategory, updateCategory } from '../../utils/mealStore'
+
+const mealState = ref(ensureMealState())
+const catId = ref('')
+
+const name = ref('')
+const color = ref('#f0ad4e')
+
+const colors = [
+  '#f7c84f',
+  '#f0ad4e',
+  '#ff7a7f',
+  '#ff4b3f',
+  '#8ae36b',
+  '#4cc38a',
+  '#0ebf5c',
+  '#25c6da',
+  '#7cc7ff',
+  '#4c8dff',
+  '#b08cff',
+  '#9b59ff',
+  '#ff76e8',
+  '#c218d4',
+]
+
+function refresh() {
+  mealState.value = ensureMealState()
+}
+
+onLoad((options) => {
+  refresh()
+  catId.value = options && options.id ? String(options.id) : ''
+  if (!catId.value) {
+    uni.navigateBack()
+    return
+  }
+  const c = findCategory(mealState.value, catId.value)
+  if (!c) {
+    uni.navigateBack()
+    return
+  }
+  name.value = c.name || ''
+  color.value = c.color || color.value
+})
+
+function save() {
+  if (!String(name.value || '').trim()) {
+    uni.showToast({ title: '请输入名称', icon: 'none' })
+    return
+  }
+  updateCategory(mealState.value, catId.value, { name: name.value, color: color.value })
+  uni.navigateBack()
+}
+</script>
+
+<style scoped lang="scss">
+.cat-form-page {
+  padding-bottom: 240rpx;
+}
+
+.top-save {
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12rpx;
+}
+
+.top-save-text {
+  color: #3d6afb;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.row-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.tag,
+.palette {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  background: rgba(17, 17, 17, 0.12);
+}
+
+.row-title-text {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.input-wrap {
+  margin-top: 14rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: rgba(17, 17, 17, 0.04);
+  padding: 0 18rpx;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #111111;
+}
+
+.ph {
+  color: rgba(17, 17, 17, 0.35);
+}
+
+.colors-card {
+  margin-top: 18rpx;
+}
+
+.colors {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rpx;
+}
+
+.dot {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 999rpx;
+  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.12);
+  position: relative;
+}
+
+.dot-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dot-check-text {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.bottom-save {
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: 34rpx;
+  height: 104rpx;
+  background: #3d6afb;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-save-text {
+  color: #ffffff;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+</style>
+
