@@ -123,7 +123,7 @@
               <view class="task-left">
                 <text class="task-title">钢琴课</text>
                 <view class="task-time">
-                  <view class="clock" />
+                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
                   <text class="time-text">17:25–18:24</text>
                 </view>
               </view>
@@ -136,7 +136,7 @@
               <view class="task-left">
                 <text class="task-title">家庭聚会</text>
                 <view class="task-time">
-                  <view class="clock" />
+                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
                   <text class="time-text">17:25–18:24</text>
                 </view>
               </view>
@@ -180,7 +180,7 @@
               <view class="task-left">
                 <text class="task-title">修剪植物</text>
                 <view class="task-time">
-                  <view class="clock" />
+                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
                   <text class="time-text">17:25–18:24</text>
                 </view>
               </view>
@@ -303,6 +303,16 @@ function goYyoInactive() {
 </script>
 
 <style scoped lang="scss">
+.bl-header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: #eaf2ff;
+  margin: -28rpx -28rpx 0;
+  padding-left: 28rpx;
+  padding-right: 28rpx;
+}
+
 .plus {
   font-size: 50rpx;
   font-weight: 700;
@@ -565,20 +575,7 @@ function goYyoInactive() {
 .clock {
   width: 26rpx;
   height: 26rpx;
-  border-radius: 9999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.25);
-  position: relative;
-}
-
-.clock::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 8rpx;
-  height: 2rpx;
-  background: rgba(17, 17, 17, 0.35);
-  transform: translate(-10%, -50%);
+  display: block;
 }
 
 .avatars {

@@ -54,9 +54,9 @@
     </view>
 
     <view v-else class="top-card">
-      <view class="activate-wrap">
+      <view class="bl-card activate-card">
         <view class="hero">
-          <image class="device-img" src="/static/device/device_hero.png" mode="aspectFit" />
+          <image class="device-img" src="/static/device/device_hero_plain.png" mode="aspectFit" />
         </view>
         <text class="activate-title">准备激活设备？</text>
         <text class="activate-desc bl-muted">激活设备后，下拉可刷新应用</text>
@@ -138,6 +138,10 @@ function open(title) {
     uni.navigateTo({ url: '/pages/calendar/sync' })
     return
   }
+  if (title === '成员管理') {
+    uni.navigateTo({ url: '/pages/calendar/members' })
+    return
+  }
   if (title === '设备管理') {
     uni.navigateTo({ url: '/pages/device/index' })
     return
@@ -154,6 +158,10 @@ function open(title) {
     uni.navigateTo({ url: '/pages/activity/index?tab=notice' })
     return
   }
+  if (title === '贺卡') {
+    uni.navigateTo({ url: '/pages/cards/index' })
+    return
+  }
   uni.showToast({ title, icon: 'none' })
 }
 
@@ -163,6 +171,10 @@ function goActivate() {
 </script>
 
 <style scoped lang="scss">
+.bl-page {
+  background: #ffffff;
+}
+
 .center {
   display: flex;
   align-items: center;
@@ -182,7 +194,7 @@ function goActivate() {
 }
 
 .top-card {
-  margin-top: 10rpx;
+  margin-top: 0;
 }
 
 .device-card {
@@ -312,21 +324,22 @@ function goActivate() {
   background: #4cc38a;
 }
 
-.activate-wrap {
-  padding: 10rpx 0 12rpx;
+.activate-card {
+  background: rgba(17, 17, 17, 0.04);
+  padding-bottom: 18rpx;
 }
 
 .hero {
-  height: 270rpx;
+  height: 320rpx;
   position: relative;
 }
 
 .device-img {
   position: absolute;
   left: 50%;
-  top: 0;
-  width: 640rpx;
-  height: 270rpx;
+  top: 10rpx;
+  width: 600rpx;
+  height: 300rpx;
   transform: translateX(-50%);
 }
 
@@ -370,7 +383,7 @@ function goActivate() {
   font-size: 30rpx;
   font-weight: 900;
   color: #3d6afb;
-  margin-top: 6rpx;
+  margin-top: 2rpx;
 }
 
 .activate-desc {
@@ -382,7 +395,7 @@ function goActivate() {
 }
 
 .bl-btn-primary {
-  margin-top: 18rpx;
+  margin-top: 20rpx;
 }
 
 .arrow {
@@ -390,30 +403,32 @@ function goActivate() {
   font-weight: 900;
 }
 
-.day-empty {
+.bl-card-soft.day-empty {
   margin-top: 18rpx;
+  background: url('/static/home/bg_none_activity.png') no-repeat;
+  background-size: 100% 100%;
 }
 
 .empty-activity {
-  height: 220rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.55);
+  height: 240rpx;
+  margin-top: 22rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 
 .empty-icon {
-  width: 140rpx;
-  height: 140rpx;
+  width: 120rpx;
+  height: 120rpx;
   display: block;
 }
 
 .empty-text {
-  font-size: 26rpx;
-  font-weight: 700;
+  padding-top: 12rpx;
+  font-size: 20rpx;
+  font-weight: 400;
 }
 
 .grid {
@@ -505,5 +520,11 @@ function goActivate() {
 
 .tile.is-orange2 {
   background: #fff2e6;
+}
+</style>
+
+<style lang="scss">
+page {
+  background: #ffffff !important;
 }
 </style>

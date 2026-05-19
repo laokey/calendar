@@ -4,6 +4,19 @@ function uid(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`
 }
 
+function memberGlyphFromName(name) {
+  const n = String(name || '').trim()
+  if (!n) return ''
+  return n.length >= 2 ? n.slice(-2, -1) : n.slice(0, 1)
+}
+
+function guessMemberGroup(m) {
+  const id = m && m.id ? String(m.id) : ''
+  const name = m && m.name ? String(m.name) : ''
+  if (id === 'neighbor' || id === 'sis2' || name.includes('邻')) return 'calendarColor'
+  return 'member'
+}
+
 function pad(n) {
   return String(n).padStart(2, '0')
 }
@@ -66,14 +79,14 @@ function toCnDate(d) {
 
 function seedState() {
   const members = [
-    { id: 'dad', name: '爸爸', glyph: '爸', color: '#4cc38a', enabled: true },
-    { id: 'mom', name: '妈妈', glyph: '妈', color: '#9b59ff', enabled: true },
-    { id: 'sis', name: '姐姐', glyph: '姐', color: '#ff5a5f', enabled: true },
-    { id: 'bro', name: '弟弟', glyph: '弟', color: '#4c8dff', enabled: true },
-    { id: 'uncle', name: '外公', glyph: '外', color: '#7cc7ff', enabled: true },
-    { id: 'bigSis', name: '大姐', glyph: '大', color: '#ffb020', enabled: false },
-    { id: 'neighbor', name: '邻居', glyph: '邻', color: '#ff4bd8', enabled: true },
-    { id: 'sis2', name: '二姐', glyph: '二', color: '#ff4b3f', enabled: true },
+    { id: 'dad', name: '爸爸', glyph: '爸', color: '#4cc38a', enabled: true, group: 'member', avatarUrl: '' },
+    { id: 'mom', name: '妈妈', glyph: '妈', color: '#9b59ff', enabled: true, group: 'member', avatarUrl: '' },
+    { id: 'sis', name: '姐姐', glyph: '姐', color: '#ff5a5f', enabled: true, group: 'member', avatarUrl: '' },
+    { id: 'bro', name: '弟弟', glyph: '弟', color: '#4c8dff', enabled: true, group: 'member', avatarUrl: '' },
+    { id: 'uncle', name: '外公', glyph: '外', color: '#7cc7ff', enabled: true, group: 'member', avatarUrl: '' },
+    { id: 'bigSis', name: '大姐', glyph: '大', color: '#ffb020', enabled: false, group: 'member', avatarUrl: '' },
+    { id: 'neighbor', name: '邻居', glyph: '邻', color: '#ff4bd8', enabled: true, group: 'calendarColor', avatarUrl: '' },
+    { id: 'sis2', name: '二姐', glyph: '二', color: '#ff4b3f', enabled: true, group: 'calendarColor', avatarUrl: '' },
   ]
 
   const base = new Date(2026, 0, 1)
@@ -177,6 +190,8 @@ export function loadCalendarState() {
     state.members = state.members.map((m) => ({
       ...m,
       enabled: typeof m.enabled === 'boolean' ? m.enabled : true,
+      group: m && (m.group === 'calendarColor' || m.group === 'member') ? m.group : guessMemberGroup(m),
+      avatarUrl: typeof m?.avatarUrl === 'string' ? m.avatarUrl : '',
     }))
     if (!state.cursorDate) state.cursorDate = seedState().cursorDate
     if (!state.viewMode) state.viewMode = 'month'
@@ -212,11 +227,19 @@ export function listMembers(state) {
   return (state.members || []).slice()
 }
 
-export function addMember(state, { name, color }) {
+export function addMember(state, { name, color, avatarUrl }) {
   const n = String(name || '').trim()
   if (!n) return null
-  const glyph = n.length >= 2 ? n.slice(-2, -1) : n.slice(0, 1)
-  const member = { id: uid('mem'), name: n, glyph, color: color || '#3d6afb', enabled: true }
+  const glyph = memberGlyphFromName(n)
+  const member = {
+    id: uid('mem'),
+    name: n,
+    glyph,
+    color: color || '#3d6afb',
+    enabled: true,
+    group: 'member',
+    avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : '',
+  }
   state.members = [...(state.members || []), member]
   saveCalendarState(state)
   return member
@@ -224,6 +247,37 @@ export function addMember(state, { name, color }) {
 
 export function findMember(state, id) {
   return (state.members || []).find((m) => m.id === id) || null
+}
+
+export function updateMember(state, id, patch) {
+  const list = state.members || []
+  const idx = list.findIndex((m) => m.id === id)
+  if (idx < 0) return false
+  const prev = list[idx]
+  const next = { ...prev, ...(patch || {}) }
+  if (typeof next.name === 'string') {
+    const n = String(next.name || '').trim()
+    next.name = n
+    next.glyph = memberGlyphFromName(n)
+  }
+  if (typeof next.avatarUrl !== 'string') next.avatarUrl = ''
+  next.enabled = typeof next.enabled === 'boolean' ? next.enabled : true
+  next.group = next.group === 'calendarColor' ? 'calendarColor' : 'member'
+  list[idx] = next
+  saveCalendarState(state)
+  return true
+}
+
+export function setMembers(state, members) {
+  state.members = Array.isArray(members) ? members.slice() : []
+  saveCalendarState(state)
+  return state
+}
+
+export function deleteMember(state, id) {
+  state.members = (state.members || []).filter((m) => m.id !== id)
+  saveCalendarState(state)
+  return state
 }
 
 export function setMemberEnabled(state, id, enabled) {
@@ -237,6 +291,39 @@ export function setMemberEnabled(state, id, enabled) {
 
 export function listEvents(state) {
   return (state.events || []).slice().sort((a, b) => (b.createdAtTs || 0) - (a.createdAtTs || 0))
+}
+
+export function reassignEventsByMember(state, fromMemberId, toMemberId) {
+  const fromId = String(fromMemberId || '')
+  const toId = String(toMemberId || '')
+  if (!fromId || !toId || fromId === toId) return state
+  state.events = (state.events || []).map((e) => {
+    const ids = Array.isArray(e.memberIds) ? e.memberIds.slice() : []
+    if (!ids.includes(fromId)) return e
+    const out = ids.filter((x) => x !== fromId)
+    if (!out.includes(toId)) out.push(toId)
+    return { ...e, memberIds: out }
+  })
+  saveCalendarState(state)
+  return state
+}
+
+export function deleteEventsByMember(state, memberId) {
+  const mid = String(memberId || '')
+  if (!mid) return state
+  state.events = (state.events || [])
+    .map((e) => {
+      const ids = Array.isArray(e.memberIds) ? e.memberIds.slice() : []
+      if (!ids.includes(mid)) return e
+      const out = ids.filter((x) => x !== mid)
+      return { ...e, memberIds: out }
+    })
+    .filter((e) => {
+      const ids = Array.isArray(e.memberIds) ? e.memberIds : []
+      return ids.length > 0
+    })
+  saveCalendarState(state)
+  return state
 }
 
 export function findEvent(state, id) {

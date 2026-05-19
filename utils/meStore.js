@@ -18,6 +18,10 @@ function formatDateTime(ts) {
   return `${formatDate(ts)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
+function nowText() {
+  return formatDateTime(Date.now())
+}
+
 function seedState() {
   const email = uni.getStorageSync('auth_email') || '63422213@qq.com'
   const name = uni.getStorageSync('auth_name') || '海逸可'
@@ -137,9 +141,23 @@ export function deleteCardRecord(state, id) {
   return state
 }
 
+export function addCardRecord(state, payload) {
+  const item = {
+    id: uid('card'),
+    title: String(payload && payload.title ? payload.title : '贺卡'),
+    device: String(payload && payload.device ? payload.device : ''),
+    timeText: String(payload && payload.timeText ? payload.timeText : nowText()),
+    status: 'unread',
+    message: String(payload && payload.message ? payload.message : ''),
+    mode: payload && payload.mode === 'manual' ? 'manual' : 'auto',
+  }
+  state.cardRecords = [item, ...(state.cardRecords || [])]
+  saveMeState(state)
+  return item
+}
+
 export function clearCardRecords(state) {
   state.cardRecords = []
   saveMeState(state)
   return state
 }
-

@@ -1,11 +1,11 @@
 <template>
   <view class="bl-page settings-page">
-    <BlHeader title="显示设置" back />
+    <BlHeader title="显示设置" back back-icon-src="/static/reward/icon_nav_back_small.png" />
 
     <view class="card">
       <view class="row" @click="sortOpen = true">
         <view class="left">
-          <view class="sort-icon" />
+          <image class="row-icon" src="/static/reward/icon_list_bullets.png" mode="aspectFit" />
           <text class="label">列表排序</text>
         </view>
         <view class="right">
@@ -18,7 +18,7 @@
 
       <view class="row">
         <view class="left">
-          <view class="clock-icon" />
+          <image class="row-icon" src="/static/reward/icon_clock.png" mode="aspectFit" />
           <text class="label">显示已完成</text>
         </view>
         <switch :checked="showDone" color="#3d6afb" @change="toggleShowDone" />
@@ -31,15 +31,21 @@
         <view class="sort-item" :class="{ on: sort === 'asc' }" @click="setSort('asc')">
           <text class="sort-text">心心从小到大排列</text>
           <view class="mark">
-            <view v-if="sort === 'asc'" class="check"><text class="check-text">✓</text></view>
-            <view v-else class="dot" />
+            <image
+              class="mark-img"
+              :src="sort === 'asc' ? '/static/reward/icon_check_circle_green.png' : '/static/reward/icon_radio_off.png'"
+              mode="aspectFit"
+            />
           </view>
         </view>
         <view class="sort-item" :class="{ on: sort === 'desc' }" @click="setSort('desc')">
           <text class="sort-text">心心从大到小排序</text>
           <view class="mark">
-            <view v-if="sort === 'desc'" class="check"><text class="check-text">✓</text></view>
-            <view v-else class="dot" />
+            <image
+              class="mark-img"
+              :src="sort === 'desc' ? '/static/reward/icon_check_circle_green.png' : '/static/reward/icon_radio_off.png'"
+              mode="aspectFit"
+            />
           </view>
         </view>
       </view>
@@ -109,16 +115,11 @@ function toggleShowDone(e) {
   gap: 12rpx;
 }
 
-.sort-icon,
-.clock-icon {
+.row-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.clock-icon {
-  border-radius: 999rpx;
+  flex-shrink: 0;
+  display: block;
 }
 
 .label {
@@ -193,26 +194,9 @@ function toggleShowDone(e) {
   justify-content: flex-end;
 }
 
-.check {
-  width: 38rpx;
-  height: 38rpx;
-  border-radius: 999rpx;
-  background: #3d6afb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.check-text {
-  font-size: 22rpx;
-  font-weight: 900;
-  color: #ffffff;
-}
-
-.dot {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.18);
+.mark-img {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 </style>

@@ -6,10 +6,12 @@
 
     <view class="bl-input">
       <input v-model="localPart" class="bl-input-field" placeholder="23456788897" placeholder-class="ph" />
-      <view class="clear" v-if="localPart" @click="localPart = ''"><text class="x">×</text></view>
+      <view class="clear" v-if="localPart" @click="localPart = ''">
+        <image class="clear-img" src="/static/calendar/icon_close.png" mode="aspectFit" />
+      </view>
       <view class="bl-input-suffix">
         <text>@qq.com</text>
-        <text class="down">▾</text>
+        <image class="down-img" src="/static/calendar/icon_chevron_down.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -69,10 +71,10 @@ function search() {
   font-weight: 700;
 }
 
-.down {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.65);
+.down-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
 }
 
 .clear {
@@ -85,14 +87,13 @@ function search() {
   color: rgba(17, 17, 17, 0.55);
 }
 
-.x {
-  font-size: 34rpx;
-  font-weight: 900;
-  line-height: 1;
+.clear-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
 }
 
 .search-wrap {
   margin-top: 26rpx;
 }
 </style>
-

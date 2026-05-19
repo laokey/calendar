@@ -1,6 +1,6 @@
 <template>
   <view class="task-page">
-    <BlHeader back>
+    <BlHeader back back-icon-src="/static/task/icon_nav_back_small.png">
       <template #center>
         <view class="center">
           <text class="center-date">{{ mdText }}</text>
@@ -10,10 +10,10 @@
       <template #right>
         <view class="right-actions">
           <view class="icon-btn" @click="openMembers">
-            <text class="icon-text">成员</text>
+            <image class="top-icon" src="/static/task/icon_task_members.png" mode="aspectFit" />
           </view>
           <view class="icon-btn" @click="openSettings">
-            <text class="icon-text">设置</text>
+            <image class="top-icon" src="/static/task/icon_task_list.png" mode="aspectFit" />
           </view>
         </view>
       </template>
@@ -53,6 +53,11 @@
       </view>
 
       <view class="toggle" @click="toggleCalendar">
+        <image
+          class="toggle-img"
+          :src="calendarOpen ? '/static/task/icon_task_calendar_collapse.png' : '/static/task/icon_task_calendar_expand.png'"
+          mode="aspectFit"
+        />
         <text class="toggle-text">{{ calendarOpen ? '收起' : '展开' }}</text>
       </view>
     </view>
@@ -77,7 +82,7 @@
               <text class="stats-text">{{ statsFor(f.id).done }}/{{ statsFor(f.id).total }}</text>
             </view>
             <view v-if="f.id !== 'all'" class="hearts">
-              <view class="heart" />
+              <image class="heart-img" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
               <text class="hearts-text">{{ statsFor(f.id).hearts }}</text>
             </view>
           </view>
@@ -103,13 +108,13 @@
           </view>
           <view class="right">
             <view v-if="t.hearts" class="heart-pill">
-              <view class="heart is-pill" />
+              <image class="heart-img is-pill" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
               <text class="pill-text">{{ t.hearts }}</text>
             </view>
             <view class="assign">
-              <BlAvatar :glyph="memberGlyph(t.memberId)" :color="memberColor(t.memberId)" :size="58" />
+              <BlAvatar :glyph="memberGlyph(t.memberId)" :src="memberAvatar(t.memberId)" :color="memberColor(t.memberId)" :size="58" />
               <view class="check" @click.stop="toggleDone(t)">
-                <view class="check-circle" />
+                <image class="check-img" src="/static/task/icon_radio_off.png" mode="aspectFit" />
               </view>
             </view>
           </view>
@@ -117,7 +122,10 @@
       </view>
 
       <view v-else class="empty">
-        <view class="empty-illus" />
+        <view class="empty-illus">
+          <image class="empty-bg" src="/static/task/bg_task_gradient_card.png" mode="aspectFit" />
+          <image class="empty-icon" src="/static/task/icon_task_list.png" mode="aspectFit" />
+        </view>
         <text class="empty-text bl-muted">今天没有待完成的任务</text>
       </view>
 
@@ -145,9 +153,7 @@
                   <text class="mini-tag-text">{{ memberGlyph(t.memberId) }}</text>
                 </view>
                 <view class="check" @click.stop="toggleDone(t)">
-                  <view class="check-circle checked">
-                    <text class="checked-text">✓</text>
-                  </view>
+                <image class="check-img checked" src="/static/task/icon_check_circle_blue.png" mode="aspectFit" />
                 </view>
               </view>
             </view>
@@ -157,7 +163,7 @@
     </view>
 
     <view class="fab" @click="addTask">
-      <text class="fab-plus">+</text>
+      <image class="fab-img" src="/static/task/icon_plus_circle.png" mode="aspectFit" />
     </view>
 
     <BlSheet v-model="actionSheetOpen" title="" :confirm-text="''">
@@ -179,7 +185,10 @@
 
     <BlSheet v-model="donePopupOpen" title="" :confirm-text="''">
       <view class="done-pop">
-        <view class="pop-icon" />
+        <view class="pop-illus">
+          <image class="pop-burst" src="/static/task/illus_task_done_burst.png" mode="aspectFit" />
+          <image class="pop-confetti" src="/static/task/illus_task_done_confetti.png" mode="aspectFit" />
+        </view>
         <text class="pop-title">太棒了！</text>
         <text class="pop-sub">你今天完成了所有任务。明天继续。</text>
         <view class="pop-btn" @click="donePopupOpen = false"><text class="pop-btn-text">确认</text></view>
@@ -260,6 +269,11 @@ function memberGlyph(id) {
 function memberColor(id) {
   const m = memberList().find((x) => x.id === id)
   return m ? m.color : '#3d6afb'
+}
+
+function memberAvatar(id) {
+  const m = memberList().find((x) => x.id === id)
+  return m && m.avatarUrl ? m.avatarUrl : ''
 }
 
 function refresh() {
@@ -445,10 +459,10 @@ function doDelete(scope) {
   justify-content: center;
 }
 
-.icon-text {
-  font-size: 24rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.85);
+.top-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .top-calendar {
@@ -512,6 +526,13 @@ function doDelete(scope) {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10rpx;
+}
+
+.toggle-img {
+  width: 26rpx;
+  height: 26rpx;
+  display: block;
 }
 
 .toggle-text {
@@ -650,17 +671,15 @@ function doDelete(scope) {
   color: rgba(17, 17, 17, 0.75);
 }
 
-.heart {
+.heart-img {
   width: 18rpx;
   height: 18rpx;
-  border-radius: 6rpx;
-  background: #ffb020;
+  display: block;
 }
 
-.heart.is-pill {
+.heart-img.is-pill {
   width: 16rpx;
   height: 16rpx;
-  background: #ffb020;
 }
 
 .list-wrap {
@@ -785,26 +804,10 @@ function doDelete(scope) {
   justify-content: center;
 }
 
-.check-circle {
-  width: 34rpx;
-  height: 34rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.check-circle.checked {
+.check-img {
   width: 36rpx;
   height: 36rpx;
-  background: #3d6afb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.checked-text {
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 900;
+  display: block;
 }
 
 .mini-tag {
@@ -834,7 +837,25 @@ function doDelete(scope) {
   width: 160rpx;
   height: 160rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.empty-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54rpx;
+  height: 54rpx;
+  transform: translate(-50%, -50%);
+  opacity: 0.75;
 }
 
 .empty-text {
@@ -866,11 +887,10 @@ function doDelete(scope) {
   justify-content: center;
 }
 
-.fab-plus {
-  color: #ffffff;
-  font-size: 64rpx;
-  font-weight: 700;
-  line-height: 1;
+.fab-img {
+  width: 62rpx;
+  height: 62rpx;
+  display: block;
 }
 
 .action-list {
@@ -917,12 +937,29 @@ function doDelete(scope) {
   align-items: center;
 }
 
-.pop-icon {
-  width: 160rpx;
-  height: 120rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(135deg, #ffd24d 0%, #3d6afb 100%);
+.pop-illus {
+  width: 180rpx;
+  height: 140rpx;
+  position: relative;
   margin-bottom: 12rpx;
+}
+
+.pop-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200rpx;
+  height: 200rpx;
+  transform: translate(-50%, -50%);
+}
+
+.pop-confetti {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180rpx;
+  height: 180rpx;
+  transform: translate(-50%, -50%);
 }
 
 .pop-title {

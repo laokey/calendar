@@ -10,6 +10,8 @@
 
     <view class="block">
       <view class="field-title">
+                <image class="field-icon" src="/static/calendar/icon_form_title_edit.png" mode="aspectFit" />
+
         <text class="req">*</text>
         <text>标题</text>
       </view>
@@ -19,21 +21,23 @@
     </view>
 
     <view class="block row-between">
-      <text class="label">全天</text>
+      <view class="row-left">
+        <text class="label">全天</text>
+      </view>
       <switch :checked="allDay" color="#3d6afb" @change="allDay = !!$event.detail.value" />
     </view>
 
     <view v-if="!allDay" class="time-grid">
       <view class="time-card" @click="openDate('start')">
         <view class="time-head">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="time-label">开始时间</text>
         </view>
         <text class="time-val">{{ startDateText }}</text>
       </view>
       <view class="time-card" @click="openTime('start')">
         <view class="time-head">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="time-label">&nbsp;</text>
         </view>
         <text class="time-val">{{ startTime }}</text>
@@ -41,14 +45,14 @@
 
       <view class="time-card" @click="openDate('end')">
         <view class="time-head">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="time-label">结束时间</text>
         </view>
         <text class="time-val">{{ endDateText }}</text>
       </view>
       <view class="time-card" @click="openTime('end')">
         <view class="time-head">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="time-label">&nbsp;</text>
         </view>
         <text class="time-val">{{ endTime }}</text>
@@ -58,7 +62,7 @@
     <view v-else class="block">
       <view class="row-between" @click="openDate('start')">
         <view class="row-left">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="label">开始时间</text>
         </view>
         <text class="val">{{ startDateText }}</text>
@@ -66,7 +70,7 @@
       <view class="divider" />
       <view class="row-between" @click="openDate('end')">
         <view class="row-left">
-          <view class="clock" />
+          <image class="field-icon is-clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
           <text class="label">结束时间</text>
         </view>
         <text class="val">{{ endDateText }}</text>
@@ -75,7 +79,7 @@
 
     <view class="block row-between">
       <view class="row-left">
-        <view class="repeat" />
+        <image class="field-icon is-target" src="/static/calendar/icon_refresh.png" mode="aspectFit" />
         <text class="label">重复</text>
       </view>
       <switch :checked="repeatOn" color="#3d6afb" @change="onRepeatToggle" />
@@ -93,7 +97,7 @@
       </view>
       <view v-if="repeatUnit === 'month'" class="repeat-row" @click="openRepeatMonthRule">
         <view class="row-left">
-          <view class="cal" />
+          <image class="field-icon is-edit" src="/static/calendar/icon_form_title_edit.png" mode="aspectFit" />
           <text class="label">在什么时候</text>
         </view>
         <view class="repeat-month">
@@ -103,7 +107,7 @@
       </view>
       <view class="repeat-row row-between">
         <view class="row-left">
-          <view class="repeat" />
+          <image class="field-icon is-target" src="/static/calendar/icon_form_target.png" mode="aspectFit" />
           <text class="label">重复直到</text>
         </view>
         <switch :checked="repeatUntilOn" color="#3d6afb" @change="repeatUntilOn = !!$event.detail.value" />
@@ -116,17 +120,20 @@
 
     <view class="block">
       <view class="field-title">
-        <text class="req">*</text>
+        <image class="field-icon" src="/static/calendar/icon_form_members.png" mode="aspectFit" />
+                <text class="req">*</text>
         <text>选择成员</text>
       </view>
       <view class="members">
         <view v-for="m in selectedMembers" :key="m.id" class="mem" @click="openMemberSelect">
-          <BlAvatar :glyph="m.glyph" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
           <view class="mem-check"><text class="check">✓</text></view>
           <text class="mem-name">{{ m.name }}</text>
         </view>
         <view class="mem add" @click="openMemberSelect">
-          <view class="add-circle"><text class="add-plus">+</text></view>
+          <view class="add-circle">
+            <image class="add-plus-img" src="/static/calendar/icon_plus.png" mode="aspectFit" />
+          </view>
           <text class="mem-name">添加</text>
         </view>
       </view>
@@ -134,13 +141,16 @@
 
     <view class="block">
       <view class="row-between" @click="toggleSync">
-        <text class="label">同步日历</text>
-        <text class="arrow">{{ syncOpen ? '˄' : '˅' }}</text>
+        <view class="row-left">
+          <image class="field-icon" src="/static/calendar/icon_form_location_alt.png" mode="aspectFit" />
+          <text class="label">同步日历</text>
+        </view>
+        <image class="chev-img" :class="{ 'is-open': syncOpen }" src="/static/calendar/icon_chevron_down.png" mode="aspectFit" />
       </view>
       <view v-if="syncOpen" class="sync-body">
         <view class="row-between sync-row">
           <text class="val">无</text>
-          <view class="radio" />
+          <image class="radio-img" src="/static/calendar/icon_check_on.png" mode="aspectFit" />
         </view>
         <view class="sync-add">
           <text class="sync-add-text">+ 添加</text>
@@ -149,47 +159,33 @@
     </view>
 
     <view class="block">
-      <text class="label">描述</text>
+      <view class="row-left">
+        <image class="field-icon" src="/static/calendar/icon_form_edit.png" mode="aspectFit" />
+        <text class="label">描述</text>
+      </view>
       <view class="input-wrap is-textarea">
         <textarea v-model="desc" class="textarea" :placeholder="isEdit ? '' : '请输入描述'" placeholder-class="ph" />
       </view>
     </view>
 
     <view class="block">
-      <text class="label">定位&天气</text>
+      <view class="row-left">
+        <image class="field-icon" src="/static/calendar/icon_form_location.png" mode="aspectFit" />
+        <text class="label">定位&天气</text>
+      </view>
       <view class="input-wrap">
         <input v-model="location" class="input" :placeholder="isEdit ? '' : '请输入描述'" placeholder-class="ph" />
       </view>
     </view>
 
     <view class="bottom-save" @click="save">
+      <image class="bottom-save-bg" src="/static/calendar/btn_primary_gradient.png" mode="scaleToFill" />
       <text class="bottom-save-text">保存</text>
     </view>
 
-    <BlSheet v-model="dateSheetOpen" :title="dateSheetTitle" confirm-text="确定" @confirm="confirmDate">
-      <picker-view class="pv" :value="dateIndices" @change="onDateChange">
-        <picker-view-column class="col">
-          <view v-for="y in years" :key="y" class="pv-item"><text class="pv-text">{{ y }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="m in months" :key="m" class="pv-item"><text class="pv-text">{{ m }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="d in days" :key="d" class="pv-item"><text class="pv-text">{{ d }}</text></view>
-        </picker-view-column>
-      </picker-view>
-    </BlSheet>
+    <BlDatePickerSheet v-model="dateSheetOpen" :title="dateSheetTitle" :value="activeDateValue" @confirm="onDatePicked" />
 
-    <BlSheet v-model="timeSheetOpen" title="时间" confirm-text="确定" @confirm="confirmTime">
-      <picker-view class="pv" :value="timeIndices" @change="onTimeChange">
-        <picker-view-column class="col">
-          <view v-for="h in hours" :key="h" class="pv-item"><text class="pv-text">{{ h }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="m in minutes" :key="m" class="pv-item"><text class="pv-text">{{ m }}</text></view>
-        </picker-view-column>
-      </picker-view>
-    </BlSheet>
+    <BlTimePickerSheet v-model="timeSheetOpen" title="时间" :value="activeTimeValue" @confirm="onTimePicked" />
 
     <BlSheet v-model="repeatSheetOpen" title="" :confirm-text="''">
       <view class="repeat-actions">
@@ -209,6 +205,8 @@ import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSegmented from '../../components/BlSegmented.vue'
 import BlSheet from '../../components/BlSheet.vue'
+import BlDatePickerSheet from '../../components/BlDatePickerSheet.vue'
+import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
 import {
   addEvent,
   ensureCalendarState,
@@ -255,52 +253,17 @@ const repeatUnits = [
 const repeatSheetOpen = ref(false)
 const pendingSave = ref(null)
 
-const years = Array.from({ length: 21 }, (_, i) => 2020 + i)
-const months = Array.from({ length: 12 }, (_, i) => i + 1)
-const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
-
 const dateSheetOpen = ref(false)
 const dateKind = ref('start')
-const dateIndices = ref([0, 0, 0])
 
 const timeSheetOpen = ref(false)
 const timeKind = ref('start')
-const timeIndices = ref([0, 0])
 
 const dateSheetTitle = computed(() => {
   if (dateKind.value === 'start') return '开始时间'
   if (dateKind.value === 'end') return '结束时间'
   return '结束时间'
 })
-
-const days = computed(() => {
-  const y = years[dateIndices.value[0]] || 2026
-  const m = months[dateIndices.value[1]] || 1
-  const last = new Date(y, m, 0).getDate()
-  return Array.from({ length: last }, (_, i) => i + 1)
-})
-
-function syncDateIndicesByKey(key) {
-  const parts = String(key || '').split('-')
-  const y = parts.length === 3 ? Number(parts[0]) : 2026
-  const m = parts.length === 3 ? Number(parts[1]) : 1
-  const d = parts.length === 3 ? Number(parts[2]) : 1
-  const yIdx = Math.max(0, years.indexOf(y))
-  const mIdx = Math.max(0, months.indexOf(m))
-  const last = new Date(y, m, 0).getDate()
-  const day = Math.min(Math.max(1, d), last)
-  dateIndices.value = [yIdx, mIdx, day - 1]
-}
-
-function syncTimeIndicesByValue(t) {
-  const parts = String(t || '').split(':')
-  const h = parts.length === 2 ? parts[0] : '00'
-  const mm = parts.length === 2 ? parts[1] : '00'
-  const hIdx = Math.max(0, hours.indexOf(h))
-  const mIdx = Math.max(0, minutes.indexOf(mm))
-  timeIndices.value = [hIdx, mIdx]
-}
 
 function toCnDateText(key) {
   const parts = String(key || '').split('-')
@@ -320,6 +283,14 @@ const selectedMembers = computed(() =>
     .map((id) => members.value.find((m) => m.id === id))
     .filter((x) => !!x),
 )
+
+const activeDateValue = computed(() => {
+  if (dateKind.value === 'end') return endDate.value
+  if (dateKind.value === 'until') return repeatUntil.value || endDate.value
+  return startDate.value
+})
+
+const activeTimeValue = computed(() => (timeKind.value === 'end' ? endTime.value : startTime.value))
 
 onLoad((options) => {
   state.value = ensureCalendarState()
@@ -379,37 +350,15 @@ onShow(() => {
 
 function openDate(kind) {
   dateKind.value = kind
-  const base = kind === 'end' ? endDate.value : kind === 'until' ? repeatUntil.value || endDate.value : startDate.value
-  syncDateIndicesByKey(base)
   dateSheetOpen.value = true
 }
 
 function openTime(kind) {
   timeKind.value = kind
-  syncTimeIndicesByValue(kind === 'end' ? endTime.value : startTime.value)
   timeSheetOpen.value = true
 }
 
-function onDateChange(e) {
-  const v = e && e.detail ? e.detail.value : []
-  if (!Array.isArray(v) || v.length < 3) return
-  const yIdx = v[0]
-  const mIdx = v[1]
-  const dIdx = v[2]
-  dateIndices.value = [yIdx, mIdx, dIdx]
-
-  const y = years[yIdx] || 2026
-  const m = months[mIdx] || 1
-  const last = new Date(y, m, 0).getDate()
-  if (dIdx > last - 1) dateIndices.value = [yIdx, mIdx, last - 1]
-}
-
-function confirmDate() {
-  const y = years[dateIndices.value[0]] || 2026
-  const m = months[dateIndices.value[1]] || 1
-  const d = (days.value[dateIndices.value[2]] || 1)
-  const key = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-  dateSheetOpen.value = false
+function onDatePicked(key) {
   if (dateKind.value === 'start') {
     startDate.value = key
     if (endDate.value < key) endDate.value = key
@@ -421,17 +370,7 @@ function confirmDate() {
   }
 }
 
-function onTimeChange(e) {
-  const v = e && e.detail ? e.detail.value : []
-  if (!Array.isArray(v) || v.length < 2) return
-  timeIndices.value = [v[0], v[1]]
-}
-
-function confirmTime() {
-  const h = hours[timeIndices.value[0]] || '00'
-  const m = minutes[timeIndices.value[1]] || '00'
-  const t = `${h}:${m}`
-  timeSheetOpen.value = false
+function onTimePicked(t) {
   if (timeKind.value === 'start') startTime.value = t
   if (timeKind.value === 'end') endTime.value = t
 }
@@ -550,6 +489,8 @@ function applyRepeatEdit(scope) {
 <style scoped lang="scss">
 .form-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
+  min-height: 100vh;
 }
 
 .top-save {
@@ -604,7 +545,7 @@ function applyRepeatEdit(scope) {
 }
 
 .input {
-  width: 100%;
+  flex: 1;
   font-size: 34rpx;
   font-weight: 900;
   color: #111111;
@@ -685,25 +626,11 @@ function applyRepeatEdit(scope) {
   color: rgba(17, 17, 17, 0.65);
 }
 
-.clock {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.55);
-}
-
-.repeat {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.55);
-}
-
-.cal {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 8rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.55);
+.field-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex-shrink: 0;
+  display: block;
 }
 
 .repeat-block {
@@ -825,16 +752,22 @@ function applyRepeatEdit(scope) {
   justify-content: center;
 }
 
-.add-plus {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.6);
+.add-plus-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
-.arrow {
-  color: rgba(17, 17, 17, 0.5);
-  font-size: 30rpx;
-  font-weight: 900;
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
+  transform: rotate(0deg);
+  transition: transform 160ms ease;
+}
+
+.chev-img.is-open {
+  transform: rotate(180deg);
 }
 
 .sync-body {
@@ -846,11 +779,10 @@ function applyRepeatEdit(scope) {
   padding: 12rpx 0;
 }
 
-.radio {
-  width: 30rpx;
-  height: 30rpx;
-  border-radius: 999rpx;
-  border: 6rpx solid #3d6afb;
+.radio-img {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .sync-add {
@@ -875,14 +807,23 @@ function applyRepeatEdit(scope) {
   right: 28rpx;
   bottom: 34rpx;
   height: 104rpx;
-  background: #3d6afb;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  position: fixed;
+}
+
+.bottom-save-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .bottom-save-text {
+  position: relative;
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
@@ -921,21 +862,10 @@ function applyRepeatEdit(scope) {
   color: rgba(17, 17, 17, 0.8);
 }
 
-.pv {
-  height: 420rpx;
-  margin-top: 6rpx;
-}
+</style>
 
-.pv-item {
-  height: 84rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pv-text {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.88);
+<style lang="scss">
+page {
+  background: #ffffff !important;
 }
 </style>

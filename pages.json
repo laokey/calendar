@@ -67,6 +67,30 @@
       }
     },
     {
+      "path": "pages/cards/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/cards/doodle",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/cards/preview",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/cards/share",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/gallery/choose-album",
       "style": {
         "navigationStyle": "custom"

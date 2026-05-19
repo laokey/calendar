@@ -1,18 +1,18 @@
 <template>
   <view class="bl-page give-page">
-    <BlHeader title="给予心心" back />
+    <BlHeader title="给予心心" back back-icon-src="/static/reward/icon_nav_back_small.png" />
 
     <view class="card">
       <view class="card-head">
         <view class="head-left">
-          <view class="mini-icon" />
+          <image class="head-icon" src="/static/reward/icon_members_small.png" mode="aspectFit" />
           <text class="head-title"><text class="req">*</text>选择成员</text>
         </view>
       </view>
 
       <view class="members">
         <view v-for="m in memberItems" :key="m.id" class="mem" @click="memberId = m.id">
-          <BlAvatar :glyph="m.glyph" :color="m.color" :size="84" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="84" />
           <view v-if="memberId === m.id" class="mem-check"><text class="check">✓</text></view>
           <text class="mem-name">{{ m.name }}</text>
         </view>
@@ -26,13 +26,15 @@
     <view class="card">
       <view class="card-head">
         <view class="head-left">
-          <view class="heart-icon" />
+          <image class="head-icon is-heart" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
           <text class="head-title"><text class="req">*</text>心心</text>
         </view>
       </view>
       <view class="heart-input">
         <input v-model="hearts" class="input" type="number" placeholder="请输入心心数量" placeholder-class="ph" />
-        <view v-if="hearts" class="clear" @click="hearts = ''"><text class="clear-text">×</text></view>
+        <view v-if="hearts" class="clear" @click="hearts = ''">
+          <image class="clear-img" src="/static/reward/icon_close_x.png" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -51,6 +53,7 @@
 
     <view class="bottom" @click="confirm">
       <text class="bottom-text">确认</text>
+      <image class="bottom-icon" src="/static/reward/icon_check_circle_blue.png" mode="aspectFit" />
     </view>
   </view>
 </template>
@@ -149,18 +152,10 @@ function confirm() {
   gap: 12rpx;
 }
 
-.mini-icon {
+.head-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.heart-icon {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 176, 32, 0.3);
+  display: block;
 }
 
 .head-title {
@@ -265,10 +260,10 @@ function confirm() {
   justify-content: flex-end;
 }
 
-.clear-text {
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.45);
+.clear-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .table-card {
@@ -317,5 +312,13 @@ function confirm() {
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
+}
+
+.bottom-icon {
+  position: absolute;
+  right: 18rpx;
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
 }
 </style>

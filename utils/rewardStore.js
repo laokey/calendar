@@ -223,3 +223,24 @@ export function computeHeartBalance(state, memberId) {
   const transfers = (state.transfers || []).filter((t) => t.memberId === memberId).reduce((sum, t) => sum + (Number(t.delta || 0) || 0), 0)
   return earned + transfers
 }
+
+export function reassignRewardsByMember(state, fromMemberId, toMemberId) {
+  const fromId = String(fromMemberId || '')
+  const toId = String(toMemberId || '')
+  if (!fromId || !toId || fromId === toId) return state
+  state.items = (state.items || []).map((x) => (x && x.memberId === fromId ? { ...x, memberId: toId } : x))
+  state.transfers = (state.transfers || []).map((t) => (t && t.memberId === fromId ? { ...t, memberId: toId } : t))
+  if (state.activeMemberId === fromId) state.activeMemberId = toId
+  saveRewardState(state)
+  return state
+}
+
+export function deleteRewardsByMember(state, memberId) {
+  const mid = String(memberId || '')
+  if (!mid) return state
+  state.items = (state.items || []).filter((x) => !(x && x.memberId === mid))
+  state.transfers = (state.transfers || []).filter((t) => !(t && t.memberId === mid))
+  if (state.activeMemberId === mid) state.activeMemberId = 'me'
+  saveRewardState(state)
+  return state
+}

@@ -1,12 +1,12 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="显示设置" back />
+    <BlHeader title="显示设置" back back-icon-src="/static/task/icon_nav_back_small.png" />
 
     <view class="card" @click="openSort">
       <text class="card-title">排序列表</text>
       <view class="card-right">
         <view class="pill"><text class="pill-text">{{ sortText }}</text></view>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -30,8 +30,11 @@
       <view class="sort-sheet">
         <view v-for="opt in sortOptions" :key="opt.value" class="sort-item" @click="sortDraft = opt.value">
           <text class="sort-text">{{ opt.label }}</text>
-          <view v-if="sortDraft === opt.value" class="sort-check"><text class="sort-check-text">✓</text></view>
-          <view v-else class="sort-empty" />
+          <image
+            class="sort-sel-img"
+            :src="sortDraft === opt.value ? '/static/task/icon_radio_on.png' : '/static/task/icon_radio_off.png'"
+            mode="aspectFit"
+          />
         </view>
         <view class="sort-actions">
           <view class="btn cancel" @click="sortSheetOpen = false"><text class="btn-text">取消</text></view>
@@ -151,10 +154,10 @@ function setShowOverdue(v) {
   font-weight: 900;
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.4);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
 }
 
 .sort-sheet {
@@ -175,27 +178,10 @@ function setShowOverdue(v) {
   color: rgba(17, 17, 17, 0.88);
 }
 
-.sort-empty {
+.sort-sel-img {
   width: 34rpx;
   height: 34rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.sort-check {
-  width: 34rpx;
-  height: 34rpx;
-  border-radius: 999rpx;
-  background: #3d6afb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sort-check-text {
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 900;
+  display: block;
 }
 
 .sort-actions {
@@ -232,4 +218,3 @@ function setShowOverdue(v) {
   color: #ffffff;
 }
 </style>
-

@@ -2,7 +2,8 @@
   <view class="bl-header" :style="{ paddingTop: safeTop + 'px' }">
     <view class="left">
       <view v-if="showBack" class="bl-header-back" @click="onBack">
-        <text class="icon">‹</text>
+        <image v-if="backIconSrc" class="back-img" :src="backIconSrc" mode="aspectFit" />
+        <text v-else class="icon">‹</text>
       </view>
     </view>
     <view class="center">
@@ -22,6 +23,7 @@ import { computed } from 'vue'
 const props = defineProps({
   title: { type: String, default: '' },
   back: { type: Boolean, default: false },
+  backIconSrc: { type: String, default: '' },
 })
 
 const showBack = computed(() => props.back)
@@ -46,11 +48,11 @@ function onBack() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18rpx 36rpx 10rpx;
+  padding: 18rpx 8rpx 10rpx;
 }
 
 .left {
-  width: 120rpx;
+  width: 96rpx;
   display: flex;
   align-items: center;
 }
@@ -63,7 +65,7 @@ function onBack() {
 }
 
 .right {
-  width: 120rpx;
+  width: 96rpx;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -73,6 +75,12 @@ function onBack() {
   font-size: 54rpx;
   font-weight: 700;
   line-height: 1;
+}
+
+.back-img {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .title {

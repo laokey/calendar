@@ -309,3 +309,19 @@ export function taskStatsForDate(state, key, memberId) {
   return { done, total, hearts }
 }
 
+export function reassignTasksByMember(state, fromMemberId, toMemberId) {
+  const fromId = String(fromMemberId || '')
+  const toId = String(toMemberId || '')
+  if (!fromId || !toId || fromId === toId) return state
+  state.tasks = (state.tasks || []).map((t) => (t && t.memberId === fromId ? { ...t, memberId: toId } : t))
+  saveTaskState(state)
+  return state
+}
+
+export function deleteTasksByMember(state, memberId) {
+  const mid = String(memberId || '')
+  if (!mid) return state
+  state.tasks = (state.tasks || []).filter((t) => !(t && t.memberId === mid))
+  saveTaskState(state)
+  return state
+}

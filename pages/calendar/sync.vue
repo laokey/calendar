@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="同步新日历" back>
+    <BlHeader title="同步新日历" back back-icon-src="/static/sync/icon_nav_back_small.png">
       <template #right>
         <text class="skip" @click="skip">跳过</text>
       </template>
@@ -11,13 +11,13 @@
     <view class="list">
       <view v-for="item in items" :key="item.title" class="row bl-card" @click="open(item.title)">
         <view class="icon-box">
-          <text class="icon-text">{{ item.icon }}</text>
+          <image class="icon-img" :src="item.iconSrc" mode="aspectFit" />
         </view>
         <view class="meta">
           <text class="title">{{ item.title }}</text>
           <text v-if="item.sub" class="sub bl-muted">{{ item.sub }}</text>
         </view>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/sync/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
   </view>
@@ -28,13 +28,13 @@ import { ref } from 'vue'
 import BlHeader from '../../components/BlHeader.vue'
 
 const items = ref([
-  { title: 'Google', icon: 'G' },
-  { title: 'Outlook', icon: 'O' },
-  { title: 'iCloud', icon: 'i', sub: '同步刷新需要大约15分钟' },
-  { title: 'Cozi', icon: 'C', sub: '同步刷新需要大约15分钟' },
-  { title: 'TeamSnap', icon: 'T' },
-  { title: 'Calendar URL', icon: 'U' },
-  { title: 'Subscribed Calendar', icon: 'S', sub: '同步刷新需要大约15分钟' },
+  { title: 'Google', iconSrc: '/static/sync/logo_google_calendar.png' },
+  { title: 'Outlook', iconSrc: '/static/sync/logo_outlook.png' },
+  { title: 'iCloud', iconSrc: '/static/sync/logo_icloud_calendar.png', sub: '同步刷新需要大约15分钟' },
+  { title: 'Cozi', iconSrc: '/static/sync/logo_cozi.png', sub: '同步刷新需要大约15分钟' },
+  { title: 'TeamSnap', iconSrc: '/static/sync/logo_teamsnap.png' },
+  { title: 'Calendar URL', iconSrc: '/static/sync/icon_calendar_url.png' },
+  { title: 'Subscribed Calendar', iconSrc: '/static/sync/icon_subscribed_calendar.png', sub: '同步刷新需要大约15分钟' },
 ])
 
 function open(name) {
@@ -84,10 +84,10 @@ function skip() {
   flex-shrink: 0;
 }
 
-.icon-text {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.7);
+.icon-img {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
 }
 
 .meta {
@@ -107,10 +107,9 @@ function skip() {
   font-weight: 600;
 }
 
-.chev {
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
 }
 </style>
-

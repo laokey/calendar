@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page form-page">
-    <BlHeader :title="isEdit ? '编辑任务' : '添加任务'" back>
+    <BlHeader :title="isEdit ? '编辑任务' : '添加任务'" back back-icon-src="/static/task/icon_nav_back_small.png">
       <template #right>
         <view class="top-save" @click="save">
           <text class="top-save-text">保存</text>
@@ -20,18 +20,18 @@
 
     <view class="block row-between" @click="emojiSheetOpen = true">
       <view class="row-left">
-        <view class="face" />
+        <image class="field-icon" src="/static/task/icon_smiley.png" mode="aspectFit" />
         <text class="label">表情符号(可选)</text>
       </view>
       <view class="row-right">
         <text class="val">{{ emoji || '无' }}</text>
-        <text class="chev">˅</text>
+        <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
       </view>
     </view>
 
     <view class="block row-between">
       <view class="row-left">
-        <view class="cal" />
+        <image class="field-icon" src="/static/task/icon_calendar.png" mode="aspectFit" />
         <text class="label">日期</text>
       </view>
       <switch :checked="dateEnabled" color="#3d6afb" @change="dateEnabled = !!$event.detail.value" />
@@ -39,12 +39,12 @@
 
     <view v-if="dateEnabled" class="block row-between" @click="openDate">
       <text class="val">{{ dateText }}</text>
-      <text class="chev">›</text>
+      <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
     </view>
 
     <view class="block row-between">
       <view class="row-left">
-        <view class="clock" />
+        <image class="field-icon" src="/static/task/icon_clock_blue.png" mode="aspectFit" />
         <text class="label">时间</text>
       </view>
       <switch :checked="timeEnabled" color="#3d6afb" @change="timeEnabled = !!$event.detail.value" />
@@ -52,12 +52,12 @@
 
     <view v-if="timeEnabled" class="block row-between" @click="openTime">
       <text class="val">{{ time }}</text>
-      <text class="chev">›</text>
+      <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
     </view>
 
     <view class="block row-between">
       <view class="row-left">
-        <view class="repeat" />
+        <image class="field-icon" src="/static/task/icon_repeat.png" mode="aspectFit" />
         <text class="label">重复</text>
       </view>
       <switch :checked="repeatEnabled" color="#3d6afb" @change="repeatEnabled = !!$event.detail.value" />
@@ -72,7 +72,9 @@
 
     <view v-if="tipOpen" class="tip">
       <text class="tip-text">用心心获取奖励，培养好习惯</text>
-      <view class="tip-close" @click="tipOpen = false"><text class="tip-close-text">×</text></view>
+      <view class="tip-close" @click="tipOpen = false">
+        <image class="tip-close-img" src="/static/task/icon_close_circle_grey.png" mode="aspectFit" />
+      </view>
     </view>
 
     <view class="block row-between">
@@ -91,12 +93,14 @@
       </view>
       <view class="members">
         <view v-for="m in members" :key="m.id" class="mem" @click="memberId = m.id">
-          <BlAvatar :glyph="m.glyph" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
           <view v-if="memberId === m.id" class="mem-check"><text class="check">✓</text></view>
           <text class="mem-name">{{ m.name }}</text>
         </view>
         <view class="mem add" @click="goAddMember">
-          <view class="add-circle"><text class="add-plus">+</text></view>
+          <view class="add-circle">
+            <image class="add-plus-img" src="/static/task/icon_plus.png" mode="aspectFit" />
+          </view>
           <text class="mem-name">添加</text>
         </view>
       </view>
@@ -104,16 +108,17 @@
 
     <view class="block row-between" @click="openPriority">
       <view class="row-left">
-        <view class="bolt" />
+        <image class="field-icon" src="/static/task/icon_bolt_blue.png" mode="aspectFit" />
         <text class="label">优先级</text>
       </view>
       <view class="row-right">
         <text class="val">{{ priorityText }}</text>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
 
     <view class="bottom-save" @click="save">
+      <image class="bottom-save-bg" src="/static/task/bg_task_gradient_card.png" mode="scaleToFill" />
       <text class="bottom-save-text">保存</text>
     </view>
 
@@ -129,30 +134,9 @@
       <view class="sheet-cancel" @click="emojiSheetOpen = false"><text class="sheet-cancel-text">取消</text></view>
     </BlSheet>
 
-    <BlSheet v-model="dateSheetOpen" title="日期" confirm-text="确定" @confirm="confirmDate">
-      <picker-view class="pv" :value="dateIndices" @change="onDateChange">
-        <picker-view-column class="col">
-          <view v-for="y in years" :key="y" class="pv-item"><text class="pv-text">{{ y }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="m in months" :key="m" class="pv-item"><text class="pv-text">{{ m }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="d in days" :key="d" class="pv-item"><text class="pv-text">{{ d }}</text></view>
-        </picker-view-column>
-      </picker-view>
-    </BlSheet>
+    <BlDatePickerSheet v-model="dateSheetOpen" title="日期" :value="date" @confirm="onDatePicked" />
 
-    <BlSheet v-model="timeSheetOpen" title="时间" confirm-text="确定" @confirm="confirmTime">
-      <picker-view class="pv" :value="timeIndices" @change="onTimeChange">
-        <picker-view-column class="col">
-          <view v-for="h in hours" :key="h" class="pv-item"><text class="pv-text">{{ h }}</text></view>
-        </picker-view-column>
-        <picker-view-column class="col">
-          <view v-for="m in minutes" :key="m" class="pv-item"><text class="pv-text">{{ m }}</text></view>
-        </picker-view-column>
-      </picker-view>
-    </BlSheet>
+    <BlTimePickerSheet v-model="timeSheetOpen" title="时间" :value="time" @confirm="onTimePicked" />
 
     <BlSheet v-model="prioritySheetOpen" title="" :confirm-text="''">
       <view class="prio-sheet">
@@ -162,8 +146,11 @@
             <text class="prio-text">{{ opt.label }}</text>
           </view>
           <view class="prio-right">
-            <view v-if="priorityDraft === opt.value" class="prio-check"><text class="prio-check-text">✓</text></view>
-            <view v-else class="prio-empty" />
+            <image
+              class="prio-sel-img"
+              :src="priorityDraft === opt.value ? '/static/task/icon_radio_on.png' : '/static/task/icon_radio_off.png'"
+              mode="aspectFit"
+            />
           </view>
         </view>
         <view class="prio-actions">
@@ -181,6 +168,8 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
+import BlDatePickerSheet from '../../components/BlDatePickerSheet.vue'
+import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
 import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
 import { addTask, ensureTaskState, findTask, updateTask } from '../../utils/taskStore'
 
@@ -209,41 +198,6 @@ const timeSheetOpen = ref(false)
 const prioritySheetOpen = ref(false)
 
 const emojiOptions = ['笑', '酷', '赞', '爱', '星', '书', '钢', '跑', '洗', '吃', '球', '家']
-
-const years = Array.from({ length: 21 }, (_, i) => 2020 + i)
-const months = Array.from({ length: 12 }, (_, i) => i + 1)
-const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
-const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
-const dateIndices = ref([0, 0, 0])
-const timeIndices = ref([0, 0])
-
-const days = computed(() => {
-  const y = years[dateIndices.value[0]] || 2026
-  const m = months[dateIndices.value[1]] || 1
-  const last = new Date(y, m, 0).getDate()
-  return Array.from({ length: last }, (_, i) => i + 1)
-})
-
-function syncDateIndicesByKey(key) {
-  const parts = String(key || '').split('-')
-  const y = parts.length === 3 ? Number(parts[0]) : 2026
-  const m = parts.length === 3 ? Number(parts[1]) : 1
-  const d = parts.length === 3 ? Number(parts[2]) : 1
-  const yIdx = Math.max(0, years.indexOf(y))
-  const mIdx = Math.max(0, months.indexOf(m))
-  const last = new Date(y, m, 0).getDate()
-  const day = Math.min(Math.max(1, d), last)
-  dateIndices.value = [yIdx, mIdx, day - 1]
-}
-
-function syncTimeIndicesByValue(t) {
-  const parts = String(t || '').split(':')
-  const h = parts.length === 2 ? parts[0] : '00'
-  const mm = parts.length === 2 ? parts[1] : '00'
-  const hIdx = Math.max(0, hours.indexOf(h))
-  const mIdx = Math.max(0, minutes.indexOf(mm))
-  timeIndices.value = [hIdx, mIdx]
-}
 
 function toCnDateText(key) {
   const parts = String(key || '').split('-')
@@ -309,47 +263,19 @@ function selectEmoji(e) {
 }
 
 function openDate() {
-  syncDateIndicesByKey(date.value)
   dateSheetOpen.value = true
 }
 
-function onDateChange(e) {
-  const v = e && e.detail ? e.detail.value : []
-  if (!Array.isArray(v) || v.length < 3) return
-  const yIdx = v[0]
-  const mIdx = v[1]
-  const dIdx = v[2]
-  dateIndices.value = [yIdx, mIdx, dIdx]
-  const y = years[yIdx] || 2026
-  const m = months[mIdx] || 1
-  const last = new Date(y, m, 0).getDate()
-  if (dIdx > last - 1) dateIndices.value = [yIdx, mIdx, last - 1]
-}
-
-function confirmDate() {
-  const y = years[dateIndices.value[0]] || 2026
-  const m = months[dateIndices.value[1]] || 1
-  const d = days.value[dateIndices.value[2]] || 1
-  date.value = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-  dateSheetOpen.value = false
+function onDatePicked(key) {
+  date.value = key
 }
 
 function openTime() {
-  syncTimeIndicesByValue(time.value)
   timeSheetOpen.value = true
 }
 
-function onTimeChange(e) {
-  const v = e && e.detail ? e.detail.value : []
-  if (!Array.isArray(v) || v.length < 2) return
-  timeIndices.value = [v[0], v[1]]
-}
-
-function confirmTime() {
-  const h = hours[timeIndices.value[0]] || '00'
-  const m = minutes[timeIndices.value[1]] || '00'
-  time.value = `${h}:${m}`
-  timeSheetOpen.value = false
+function onTimePicked(t) {
+  time.value = t
 }
 
 function openPriority() {
@@ -497,26 +423,17 @@ function save() {
   color: rgba(17, 17, 17, 0.6);
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.4);
-}
-
-.face,
-.cal,
-.clock,
-.repeat,
-.bolt {
+.field-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
+  flex-shrink: 0;
+  display: block;
 }
 
-.clock,
-.repeat {
-  border-radius: 999rpx;
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
 }
 
 .heart {
@@ -551,10 +468,10 @@ function save() {
   justify-content: flex-end;
 }
 
-.tip-close-text {
-  font-size: 42rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.45);
+.tip-close-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .stepper {
@@ -642,10 +559,10 @@ function save() {
   justify-content: center;
 }
 
-.add-plus {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.6);
+.add-plus-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .bottom-save {
@@ -654,14 +571,22 @@ function save() {
   right: 28rpx;
   bottom: 34rpx;
   height: 104rpx;
-  background: #3d6afb;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.bottom-save-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .bottom-save-text {
+  position: relative;
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
@@ -710,24 +635,6 @@ function save() {
   color: rgba(17, 17, 17, 0.8);
 }
 
-.pv {
-  height: 420rpx;
-  margin-top: 6rpx;
-}
-
-.pv-item {
-  height: 84rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pv-text {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.88);
-}
-
 .prio-sheet {
   padding: 6rpx 0 10rpx;
 }
@@ -758,27 +665,10 @@ function save() {
   color: rgba(17, 17, 17, 0.88);
 }
 
-.prio-empty {
+.prio-sel-img {
   width: 34rpx;
   height: 34rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.prio-check {
-  width: 34rpx;
-  height: 34rpx;
-  border-radius: 999rpx;
-  background: #3d6afb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.prio-check-text {
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 900;
+  display: block;
 }
 
 .prio-actions {
@@ -815,4 +705,3 @@ function save() {
   color: #ffffff;
 }
 </style>
-

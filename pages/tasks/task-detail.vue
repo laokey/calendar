@@ -1,10 +1,16 @@
 <template>
   <view class="bl-page detail-page">
-    <BlHeader back>
+    <BlHeader back back-icon-src="/static/task/icon_nav_back_small.png">
       <template #right>
         <view class="actions">
-          <view class="action" @click="goEdit"><text class="action-text">编辑</text></view>
-          <view class="action danger" @click="askDelete"><text class="action-text danger-text">删除</text></view>
+          <view class="action" @click="goEdit">
+            <image class="action-icon" src="/static/task/icon_edit_square.png" mode="aspectFit" />
+            <text class="action-text">编辑</text>
+          </view>
+          <view class="action danger" @click="askDelete">
+            <image class="action-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
+            <text class="action-text danger-text">删除</text>
+          </view>
         </view>
       </template>
     </BlHeader>
@@ -20,38 +26,42 @@
     </view>
 
     <view v-if="task.repeat" class="block row">
-      <view class="repeat" />
+      <image class="row-icon" src="/static/task/icon_repeat.png" mode="aspectFit" />
       <text class="row-text">每日</text>
     </view>
 
     <view class="block row">
-      <view class="heart" />
+      <image class="row-icon is-heart" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
       <text class="row-text">{{ task.hearts }}</text>
     </view>
 
     <view class="block assign-block">
       <view class="row-between">
         <view class="row-left">
-          <view class="people" />
+          <image class="row-icon" src="/static/task/icon_task_members_small.png" mode="aspectFit" />
           <text class="row-text">分配给</text>
         </view>
       </view>
       <view class="assign-row">
-        <BlAvatar :glyph="memberGlyph(task.memberId)" :color="memberColor(task.memberId)" :size="72" />
+        <BlAvatar :glyph="memberGlyph(task.memberId)" :src="memberAvatar(task.memberId)" :color="memberColor(task.memberId)" :size="72" />
         <text class="assign-name">{{ memberName(task.memberId) }}</text>
-        <view v-if="isDone" class="done-check"><text class="done-check-text">✓</text></view>
+        <image v-if="isDone" class="done-check-img" src="/static/task/icon_check_circle_green_small.png" mode="aspectFit" />
       </view>
     </view>
 
     <view v-if="isDone" class="block done-time">
-      <view class="clock" />
+      <image class="row-icon" src="/static/task/icon_clock_blue.png" mode="aspectFit" />
       <text class="done-text">完成于 {{ doneAtTextVal }}</text>
     </view>
 
     <view class="bottom" :class="{ grey: isDone }" @click="toggleDone">
       <text class="bottom-text">{{ isDone ? '标记为未完成' : '标记为完成' }}</text>
       <view class="bottom-icon">
-        <text class="bottom-icon-text">{{ isDone ? '×' : '✓' }}</text>
+        <image
+          class="bottom-icon-img"
+          :src="isDone ? '/static/task/icon_close_circle_grey.png' : '/static/task/icon_check_circle_blue.png'"
+          mode="aspectFit"
+        />
       </view>
     </view>
 
@@ -146,6 +156,11 @@ function memberColor(id) {
   return m ? m.color : '#3d6afb'
 }
 
+function memberAvatar(id) {
+  const m = (members.value || []).find((x) => x.id === id)
+  return m && m.avatarUrl ? m.avatarUrl : ''
+}
+
 function memberName(id) {
   const m = memberList().find((x) => x.id === id)
   return m ? m.name : ''
@@ -217,6 +232,13 @@ function toggleDone() {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10rpx;
+}
+
+.action-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .action-text {
@@ -283,20 +305,16 @@ function toggleDone() {
   color: rgba(17, 17, 17, 0.88);
 }
 
-.repeat,
-.people,
-.clock {
+.row-icon {
   width: 30rpx;
   height: 30rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.12);
+  flex-shrink: 0;
+  display: block;
 }
 
-.heart {
+.row-icon.is-heart {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: #ffb020;
 }
 
 .assign-block {
@@ -330,20 +348,10 @@ function toggleDone() {
   color: rgba(17, 17, 17, 0.9);
 }
 
-.done-check {
+.done-check-img {
   width: 44rpx;
   height: 44rpx;
-  border-radius: 999rpx;
-  background: #2ecc71;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.done-check-text {
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 900;
+  display: block;
 }
 
 .done-time {
@@ -402,11 +410,10 @@ function toggleDone() {
   background: rgba(255, 255, 255, 0.7);
 }
 
-.bottom-icon-text {
-  color: #3d6afb;
-  font-size: 36rpx;
-  font-weight: 900;
-  line-height: 1;
+.bottom-icon-img {
+  width: 36rpx;
+  height: 36rpx;
+  display: block;
 }
 
 .bottom.grey .bottom-icon-text {

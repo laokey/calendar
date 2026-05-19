@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page form-page">
-    <BlHeader title="添加奖励" back>
+    <BlHeader title="添加奖励" back back-icon-src="/static/reward/icon_nav_back_small.png">
       <template #right>
         <view class="top-save" @click="save">
           <text class="top-save-text">保存</text>
@@ -20,7 +20,7 @@
 
     <view class="block row-between" @click="emojiSheetOpen = true">
       <view class="row-left">
-        <view class="face" />
+        <image class="field-icon" src="/static/reward/icon_smiley.png" mode="aspectFit" />
         <text class="label">表情符号(可选)</text>
       </view>
       <text class="chev">˅</text>
@@ -28,7 +28,7 @@
 
     <view class="block row-between">
       <view class="row-left">
-        <view class="repeat" />
+        <image class="field-icon" src="/static/reward/icon_power.png" mode="aspectFit" />
         <text class="label">兑换后重置</text>
       </view>
       <switch :checked="resetAfter" color="#3d6afb" @change="resetAfter = !!$event.detail.value" />
@@ -46,7 +46,9 @@
 
     <view v-if="tipOpen" class="tip">
       <text class="tip-text">请输入兑换该奖励所需收集的心心数量。完成任务可赚取心心。</text>
-      <view class="tip-close" @click="tipOpen = false"><text class="tip-close-text">×</text></view>
+      <view class="tip-close" @click="tipOpen = false">
+        <image class="tip-close-img" src="/static/reward/icon_close_x.png" mode="aspectFit" />
+      </view>
     </view>
 
     <view class="block">
@@ -56,7 +58,7 @@
       </view>
       <view class="members">
         <view v-for="m in memberItems" :key="m.id" class="mem" @click="memberId = m.id">
-          <BlAvatar :glyph="m.glyph" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
           <view v-if="memberId === m.id" class="mem-check"><text class="check">✓</text></view>
           <text class="mem-name">{{ m.name }}</text>
         </view>
@@ -87,7 +89,7 @@
 
     <view class="block">
       <view class="row-left">
-        <view class="pen" />
+        <image class="field-icon" src="/static/reward/icon_title_t.png" mode="aspectFit" />
         <text class="label">描述</text>
       </view>
       <view class="input-wrap is-textarea">
@@ -115,7 +117,9 @@
       <view class="info">
         <view class="info-head">
           <text class="info-title">奖励与惩罚说明</text>
-          <view class="info-x" @click="infoOpen = false"><text class="info-x-text">×</text></view>
+            <view class="info-x" @click="infoOpen = false">
+              <image class="info-x-img" src="/static/reward/icon_close.png" mode="aspectFit" />
+            </view>
         </view>
         <text class="info-text">
           健康成长不仅需要掌声，也需要温柔的提醒。现在除了用心心兑换奖励，您还可以通过“行为约定”，让孩子直观地看到不当行为带来的后果与惩罚。
@@ -338,17 +342,11 @@ function save() {
   color: rgba(17, 17, 17, 0.4);
 }
 
-.face,
-.repeat,
-.pen {
+.field-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.repeat {
-  border-radius: 999rpx;
+  flex-shrink: 0;
+  display: block;
 }
 
 .tip {
@@ -378,10 +376,10 @@ function save() {
   justify-content: flex-end;
 }
 
-.tip-close-text {
-  font-size: 42rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.45);
+.tip-close-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .members {
@@ -581,10 +579,10 @@ function save() {
   justify-content: flex-end;
 }
 
-.info-x-text {
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.7);
+.info-x-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .info-subtitle {
@@ -620,4 +618,3 @@ function save() {
   font-weight: 900;
 }
 </style>
-

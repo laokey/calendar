@@ -1,13 +1,13 @@
 <template>
   <view class="bl-page reward-page">
-    <BlHeader title="奖励" back>
+    <BlHeader title="奖励" back back-icon-src="/static/reward/icon_nav_back_small.png">
       <template #right>
         <view class="right">
           <view class="icon-btn" @click="goGive">
-            <text class="icon-text">心+</text>
+            <image class="top-icon" src="/static/reward/icon_give_hearts.png" mode="aspectFit" />
           </view>
           <view class="icon-btn" @click="goSettings">
-            <text class="icon-text">设</text>
+            <image class="top-icon" src="/static/reward/icon_settings_list.png" mode="aspectFit" />
           </view>
         </view>
       </template>
@@ -23,10 +23,10 @@
           @click="selectMember(m.id)"
         >
           <view class="ring" :style="{ borderColor: m.id === 'me' ? '#4cc38a' : m.color }">
-            <BlAvatar :glyph="m.glyph" :color="m.id === 'me' ? '#4cc38a' : m.color" :size="92" />
+            <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.id === 'me' ? '#4cc38a' : m.color" :size="92" />
           </view>
           <view class="member-hearts">
-            <view class="heart" />
+            <image class="heart-img" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
             <text class="member-hearts-text">{{ balance(m.id) }}</text>
           </view>
         </view>
@@ -45,13 +45,13 @@
     <view class="panel" :class="{ punish: activeType === 'punish' }">
       <view class="panel-head">
         <view class="head-left">
-          <BlAvatar :glyph="activeMember.glyph" :color="activeMemberColor" :size="72" />
+          <BlAvatar :glyph="activeMember.glyph" :src="activeMember.avatarUrl" :color="activeMemberColor" :size="72" />
           <view class="head-meta">
             <text class="head-name">{{ activeMemberLabel }}</text>
           </view>
         </view>
         <view class="pill">
-          <view class="heart" />
+          <image class="heart-img" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
           <text class="pill-text">{{ balance(activeMemberId) }}</text>
         </view>
       </view>
@@ -72,18 +72,18 @@
             <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
               <view class="progress-fill" :style="{ width: progressWidth(it) }" />
               <view class="progress-text">
-                <view class="heart small" />
+                <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
                 <text class="progress-label">{{ balance(activeMemberId) }}/{{ it.hearts }}</text>
               </view>
             </view>
             <view v-else class="btn" :class="{ punish: activeType === 'punish', disabled: activeType === 'reward' && !canAfford(it) }">
               <template v-if="activeType === 'reward'">
                 <text class="btn-text">兑换</text>
-                <view class="heart small" />
+                <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
                 <text class="btn-text">{{ it.hearts }}</text>
               </template>
               <template v-else>
-                <view class="heart small black" />
+                <image class="heart-img is-small" src="/static/reward/icon_heart_black.png" mode="aspectFit" />
                 <text class="btn-text">{{ it.hearts }}</text>
               </template>
             </view>
@@ -92,25 +92,48 @@
       </view>
 
       <view v-else class="empty">
-        <view class="empty-illus" />
+        <view class="empty-illus">
+          <image class="empty-img" src="/static/reward/illus_empty_rewards.png" mode="aspectFit" />
+        </view>
         <text class="empty-text bl-muted">今天没有待完成的任务</text>
       </view>
     </view>
 
     <view class="fab" @click="addItem">
-      <text class="fab-plus">+</text>
+      <image class="fab-img" src="/static/reward/btn_add_pill.png" mode="aspectFit" />
     </view>
 
     <view v-if="celebrateOpen" class="celebrate">
-      <view class="float-heart h1" :class="{ black: celebrateType === 'punish' }" />
-      <view class="float-heart h2" :class="{ black: celebrateType === 'punish' }" />
-      <view class="float-heart h3" :class="{ black: celebrateType === 'punish' }" />
-      <view class="float-heart h4" :class="{ black: celebrateType === 'punish' }" />
-      <view class="float-heart h5" :class="{ black: celebrateType === 'punish' }" />
+      <image
+        class="float-heart h1"
+        :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+        mode="aspectFit"
+      />
+      <image
+        class="float-heart h2"
+        :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+        mode="aspectFit"
+      />
+      <image
+        class="float-heart h3"
+        :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+        mode="aspectFit"
+      />
+      <image
+        class="float-heart h4"
+        :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+        mode="aspectFit"
+      />
+      <image
+        class="float-heart h5"
+        :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+        mode="aspectFit"
+      />
     </view>
 
     <BlSheet v-model="resultSheetOpen" title="" :confirm-text="''">
       <view class="result">
+        <image class="result-illus" src="/static/reward/illus_reward_cards.png" mode="aspectFit" />
         <text class="result-title">{{ celebrateType === 'punish' ? '受到惩罚！' : '恭喜您！' }}</text>
         <text class="result-sub">
           {{ celebrateType === 'punish' ? '今天没有完成 ' : '今天完成了 ' }}
@@ -323,10 +346,10 @@ function goSettings() {
   justify-content: center;
 }
 
-.icon-text {
-  font-size: 24rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.85);
+.top-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .member-scroll {
@@ -379,18 +402,13 @@ function goSettings() {
   color: rgba(17, 17, 17, 0.75);
 }
 
-.heart {
+.heart-img {
   width: 18rpx;
   height: 18rpx;
-  border-radius: 6rpx;
-  background: #ffb020;
+  display: block;
 }
 
-.heart.black {
-  background: #111111;
-}
-
-.heart.small {
+.heart-img.is-small {
   width: 16rpx;
   height: 16rpx;
 }
@@ -552,10 +570,6 @@ function goSettings() {
   color: rgba(17, 17, 17, 0.55);
 }
 
-.btn.disabled .heart {
-  background: rgba(17, 17, 17, 0.25);
-}
-
 .btn-text {
   font-size: 28rpx;
   font-weight: 900;
@@ -619,8 +633,15 @@ function goSettings() {
 .empty-illus {
   width: 180rpx;
   height: 180rpx;
-  border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-img {
+  width: 180rpx;
+  height: 180rpx;
+  display: block;
 }
 
 .empty-text {
@@ -632,21 +653,17 @@ function goSettings() {
   position: fixed;
   right: 34rpx;
   bottom: 120rpx;
-  width: 116rpx;
-  height: 116rpx;
-  border-radius: 999rpx;
-  background: #3d6afb;
-  box-shadow: 0 18rpx 36rpx rgba(61, 106, 251, 0.35);
+  width: 160rpx;
+  height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.fab-plus {
-  color: #ffffff;
-  font-size: 64rpx;
-  font-weight: 700;
-  line-height: 1;
+.fab-img {
+  width: 160rpx;
+  height: 92rpx;
+  display: block;
 }
 
 .celebrate {
@@ -660,13 +677,8 @@ function goSettings() {
   position: absolute;
   width: 120rpx;
   height: 120rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 176, 32, 0.95);
-  box-shadow: 0 18rpx 36rpx rgba(0, 0, 0, 0.18);
-}
-
-.float-heart.black {
-  background: rgba(17, 17, 17, 0.85);
+  display: block;
+  filter: drop-shadow(0 18rpx 36rpx rgba(0, 0, 0, 0.18));
 }
 
 .h1 {
@@ -695,6 +707,13 @@ function goSettings() {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.result-illus {
+  width: 520rpx;
+  height: 260rpx;
+  display: block;
+  margin-bottom: 6rpx;
 }
 
 .result-title {

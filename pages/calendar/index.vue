@@ -2,23 +2,23 @@
   <view class="cal-page" :style="{ paddingTop: safeTop + 'px' }">
     <view class="topbar">
       <view class="icon-btn" @click="back">
-        <text class="icon">‹</text>
+        <image class="icon-img is-back" src="/static/calendar/icon_nav_back_small.png" mode="aspectFit" />
       </view>
       <text class="range">{{ rangeText }}</text>
       <view class="icon-btn" @click="openMembers">
-        <text class="icon-user">人</text>
+        <image class="icon-img is-user" src="/static/calendar/icon_nav_members.png" mode="aspectFit" />
       </view>
     </view>
 
     <view class="switcher">
-      <view class="icon-btn is-soft" @click="prev">
-        <text class="icon-sm">‹</text>
+      <view class="icon-btn" @click="prev">
+        <image class="icon-img is-nav" src="/static/calendar/icon_nav_prev_circle.png" mode="aspectFit" />
       </view>
       <view class="seg-wrap">
         <BlSegmented v-model="viewMode" :options="modeOptions" />
       </view>
-      <view class="icon-btn is-soft" @click="next">
-        <text class="icon-sm">›</text>
+      <view class="icon-btn" @click="next">
+        <image class="icon-img is-nav" src="/static/calendar/icon_nav_next_circle.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -32,8 +32,8 @@
             v-for="d in row"
             :key="d.key"
             class="cell"
-            :class="{ muted: !d.inMonth, selected: d.key === cursorDateKey }"
-            @click="setCursor(d.key)"
+            :class="{ muted: !d.inMonth, selected: d.key === cursorDateKey, today: d.isToday }"
+            @click="onMonthCellClick(d)"
           >
             <view class="day">
               <text class="day-num">{{ d.day }}</text>
@@ -43,10 +43,10 @@
                 v-for="ev in d.events"
                 :key="ev.id"
                 class="chip"
-                :style="{ background: ev.tagColor || '#4c8dff' }"
+                :style="{ background: monthEventChipBg(ev) }"
                 @click.stop="openEvent(ev.id)"
               >
-                <text class="chip-text">{{ ev.title }}</text>
+                <text class="chip-text" :style="{ color: monthEventChipTextColor(ev) }">{{ ev.title }}</text>
               </view>
             </view>
           </view>
@@ -55,39 +55,55 @@
     </view>
 
     <view v-else class="week">
-      <view v-for="day in weekList" :key="day.key" class="day-row">
+      <view v-for="day in weekList" :key="day.key" class="day-row" @click="onWeekDayRowClick(day)">
         <view class="left">
           <text class="left-wd">{{ day.weekday }}</text>
-          <text class="left-date">{{ day.date }}</text>
+          <view class="date-pill" :class="{ 'is-active': day.isToday }">
+            <text class="date-pill-text">{{ day.date }}</text>
+          </view>
         </view>
         <view class="right">
-          <view v-for="ev in day.events" :key="ev.id" class="event" :style="{ background: ev.color || '#ffffff' }" @click="openEvent(ev.id)">
-            <view class="event-left">
-              <text class="event-title">{{ ev.title }}</text>
-              <view class="event-time">
-                <view class="clock" />
-                <text class="event-time-text">{{ ev.allDay ? '全天' : `${ev.startTime || ''}–${ev.endTime || ''}` }}</text>
+          <template v-if="day.events && day.events.length">
+            <view v-for="ev in day.events" :key="ev.id" class="event" :style="{ background: eventCardBg(ev) }" @click="openEvent(ev.id)">
+              <view class="event-left">
+                <text class="event-title">{{ ev.title }}</text>
+                <view class="event-time">
+                  <image class="clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
+                  <text class="event-time-text">{{ ev.allDay ? '全天' : `${ev.startTime || ''}–${ev.endTime || ''}` }}</text>
+                </view>
+              </view>
+              <view class="event-right">
+                <view v-if="ev.memberIds && ev.memberIds.length > 1" class="avatars">
+                  <BlAvatar
+                    v-for="mid in ev.memberIds.slice(0, 4)"
+                    :key="mid"
+                    class="member-avatar"
+                    :glyph="memberGlyph(mid)"
+                    :color="memberColor(mid)"
+                    :src="memberAvatar(mid)"
+                    :size="54"
+                  />
+                </view>
+              <BlAvatar
+                v-else
+                class="member-avatar"
+                :glyph="memberGlyph(ev.memberIds && ev.memberIds[0])"
+                :color="memberColor(ev.memberIds && ev.memberIds[0])"
+                :src="memberAvatar(ev.memberIds && ev.memberIds[0])"
+                :size="58"
+              />
               </view>
             </view>
-            <view class="event-right">
-              <view v-if="ev.memberIds && ev.memberIds.length > 1" class="avatars">
-                <BlAvatar
-                  v-for="mid in ev.memberIds.slice(0, 4)"
-                  :key="mid"
-                  :glyph="memberGlyph(mid)"
-                  :color="memberColor(mid)"
-                  :size="54"
-                />
-              </view>
-              <BlAvatar v-else :glyph="memberGlyph(ev.memberIds && ev.memberIds[0])" :color="memberColor(ev.memberIds && ev.memberIds[0])" :size="58" />
-            </view>
+          </template>
+          <view v-else class="event event-empty" @click.stop="addEventFor(day.key)">
+            <text class="event-empty-text">无活动</text>
           </view>
         </view>
       </view>
     </view>
 
     <view class="fab" @click="addEvent">
-      <text class="fab-plus">+</text>
+      <image class="fab-img" src="/static/calendar/btn_fab_add.png" mode="aspectFit" />
     </view>
   </view>
 </template>
@@ -127,7 +143,13 @@ const cursorDateKey = ref(state.value.cursorDate)
 
 const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
-const rangeText = computed(() => weekRangeText(cursorDateKey.value))
+const rangeText = computed(() => {
+  if (viewMode.value === 'month') {
+    const d = parseKey(cursorDateKey.value)
+    return `${d.getFullYear()}年-${String(d.getMonth() + 1).padStart(2, '0')}月`
+  }
+  return weekRangeText(cursorDateKey.value)
+})
 
 function parseKey(key) {
   const parts = String(key || '').split('-')
@@ -137,6 +159,10 @@ function parseKey(key) {
 
 function formatKey(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function todayKey() {
+  return formatKey(new Date())
 }
 
 watch(viewMode, (v) => {
@@ -152,6 +178,7 @@ function refreshMembers() {
 }
 
 onMounted(() => {
+  cursorDateKey.value = todayKey()
   refreshMembers()
 })
 
@@ -159,6 +186,7 @@ const monthRows = computed(() => {
   const rows = monthMatrix(cursorDateKey.value)
   const cursor = parseKey(cursorDateKey.value)
   const m = cursor.getMonth()
+  const tKey = todayKey()
   return rows.map((r) =>
     r.map((d) => {
       const key = formatKey(d)
@@ -167,6 +195,7 @@ const monthRows = computed(() => {
         day: d.getDate(),
         inMonth: d.getMonth() === m,
         events: eventsForDate(state.value, key).slice(0, 3),
+        isToday: key === tKey,
       }
     }),
   )
@@ -174,6 +203,7 @@ const monthRows = computed(() => {
 
 const weekList = computed(() => {
   const days = weekDays(cursorDateKey.value)
+  const tKey = todayKey()
   return days.map((d) => {
     const key = formatKey(d)
     const label = dayLabel(d)
@@ -182,6 +212,7 @@ const weekList = computed(() => {
       weekday: label.weekday,
       date: label.date,
       events: eventsForDate(state.value, key),
+      isToday: key === tKey,
     }
   })
 })
@@ -190,16 +221,49 @@ function setCursor(key) {
   cursorDateKey.value = key
 }
 
-function prev() {
+function onMonthCellClick(d) {
+  if (!d || !d.key) return
+  if (!d.events || !d.events.length) {
+    addEventFor(d.key)
+    return
+  }
+  setCursor(d.key)
+}
+
+function onWeekDayRowClick(day) {
+  if (!day || !day.key) return
+  if (!day.events || !day.events.length) addEventFor(day.key)
+}
+
+function shiftWeek(deltaWeeks) {
   const d = parseKey(cursorDateKey.value)
-  d.setDate(d.getDate() - 7)
+  d.setDate(d.getDate() + 7 * deltaWeeks)
   setCursor(formatKey(d))
 }
 
-function next() {
+function shiftMonth(deltaMonths) {
   const d = parseKey(cursorDateKey.value)
-  d.setDate(d.getDate() + 7)
-  setCursor(formatKey(d))
+  const day = d.getDate()
+  const target = new Date(d.getFullYear(), d.getMonth() + deltaMonths, 1)
+  const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, last))
+  setCursor(formatKey(target))
+}
+
+function prev() {
+  if (viewMode.value === 'month') {
+    shiftMonth(-1)
+    return
+  }
+  shiftWeek(-1)
+}
+
+function next() {
+  if (viewMode.value === 'month') {
+    shiftMonth(1)
+    return
+  }
+  shiftWeek(1)
 }
 
 function back() {
@@ -207,7 +271,11 @@ function back() {
 }
 
 function addEvent() {
-  uni.navigateTo({ url: `/pages/calendar/event-form?date=${cursorDateKey.value}` })
+  addEventFor(cursorDateKey.value)
+}
+
+function addEventFor(dateKey) {
+  uni.navigateTo({ url: `/pages/calendar/event-form?date=${dateKey}` })
 }
 
 function openEvent(id) {
@@ -228,6 +296,60 @@ function memberColor(id) {
   return m ? m.color : '#3d6afb'
 }
 
+function memberAvatar(id) {
+  const m = (members.value || []).find((x) => x.id === id)
+  return m && m.avatarUrl ? m.avatarUrl : ''
+}
+
+function rgbaFromColor(color, alpha) {
+  const c = String(color || '').trim()
+  if (!c) return `rgba(61, 106, 251, ${alpha})`
+  if (c.startsWith('rgba(')) {
+    const inner = c.slice(5, -1)
+    const parts = inner.split(',').map((x) => x.trim())
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+    return c
+  }
+  if (c.startsWith('rgb(')) {
+    const inner = c.slice(4, -1)
+    const parts = inner.split(',').map((x) => x.trim())
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+    return c
+  }
+  if (c[0] === '#') {
+    let hex = c.slice(1)
+    if (hex.length === 3) {
+      hex = hex
+        .split('')
+        .map((x) => x + x)
+        .join('')
+    }
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16)
+      const g = parseInt(hex.slice(2, 4), 16)
+      const b = parseInt(hex.slice(4, 6), 16)
+      if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) return `rgba(${r}, ${g}, ${b}, ${alpha})`
+    }
+  }
+  return c
+}
+
+function eventCardBg(ev) {
+  const ids = ev && Array.isArray(ev.memberIds) ? ev.memberIds.filter(Boolean) : []
+  if (ids.length === 1) return rgbaFromColor(memberColor(ids[0]), 0.1)
+  return 'rgba(17, 17, 17, 0.04)'
+}
+
+function monthEventChipBg(ev) {
+  const ids = ev && Array.isArray(ev.memberIds) ? ev.memberIds.filter(Boolean) : []
+  if (ids.length === 1) return rgbaFromColor(memberColor(ids[0]), 0.5)
+  return 'rgba(17, 17, 17, 0.5)'
+}
+
+function monthEventChipTextColor(ev) {
+  return '#ffffff'
+}
+
 uni.$on && uni.$on('calendar:refresh', () => {
   state.value = ensureCalendarState()
   viewMode.value = state.value.viewMode || 'month'
@@ -239,6 +361,9 @@ uni.$on && uni.$on('calendar:refresh', () => {
 <style scoped lang="scss">
 .cal-page {
   padding: 18rpx 28rpx 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .topbar {
@@ -262,26 +387,29 @@ uni.$on && uni.$on('calendar:refresh', () => {
   justify-content: center;
 }
 
-.icon-btn.is-soft {
-  background: rgba(17, 17, 17, 0.04);
-}
-
 .icon {
   font-size: 56rpx;
   font-weight: 700;
   line-height: 1;
 }
 
-.icon-sm {
-  font-size: 48rpx;
-  font-weight: 700;
-  line-height: 1;
+.icon-img {
+  display: block;
 }
 
-.icon-user {
-  font-size: 34rpx;
-  font-weight: 900;
-  line-height: 1;
+.icon-img.is-back {
+  width: 34rpx;
+  height: 34rpx;
+}
+
+.icon-img.is-user {
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.icon-img.is-nav {
+  width: 58rpx;
+  height: 58rpx;
 }
 
 .switcher {
@@ -338,17 +466,29 @@ uni.$on && uni.$on('calendar:refresh', () => {
 }
 
 .cell.muted .day-num {
-  color: rgba(17, 17, 17, 0.25);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .cell.selected .day-num {
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.cell.today .day {
+  background: rgba(61, 106, 251, 0.14);
+}
+
+.cell.today .day-num {
   color: #3d6afb;
 }
 
 .day {
+  width: 62rpx;
+  height: 62rpx;
+  border-radius: 999rpx;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 8rpx;
+  margin: 0 auto 8rpx;
 }
 
 .day-num {
@@ -416,6 +556,29 @@ uni.$on && uni.$on('calendar:refresh', () => {
   color: rgba(17, 17, 17, 0.9);
 }
 
+.date-pill {
+  min-width: 62rpx;
+  height: 62rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-pill.is-active {
+  background: rgba(61, 106, 251, 0.14);
+}
+
+.date-pill-text {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.date-pill.is-active .date-pill-text {
+  color: #3d6afb;
+}
+
 .right {
   flex: 1;
   display: flex;
@@ -429,6 +592,17 @@ uni.$on && uni.$on('calendar:refresh', () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.event.event-empty {
+  min-height: 104rpx;
+  background: rgba(17, 17, 17, 0.04);
+}
+
+.event-empty-text {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.45);
 }
 
 .event-title {
@@ -446,8 +620,7 @@ uni.$on && uni.$on('calendar:refresh', () => {
 .clock {
   width: 26rpx;
   height: 26rpx;
-  border-radius: 999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.55);
+  display: block;
 }
 
 .event-time-text {
@@ -459,27 +632,33 @@ uni.$on && uni.$on('calendar:refresh', () => {
 .avatars {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 0;
+}
+
+.member-avatar {
+  border: 4rpx solid #ffffff;
+  box-sizing: border-box;
+}
+
+.member-avatar + .member-avatar {
+  margin-left: -14rpx;
 }
 
 .fab {
   position: fixed;
   right: 34rpx;
   bottom: 120rpx;
-  width: 116rpx;
-  height: 116rpx;
+  width: 152rpx;
+  height: 96rpx;
   border-radius: 999rpx;
-  background: #3d6afb;
-  box-shadow: 0 18rpx 36rpx rgba(61, 106, 251, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.fab-plus {
-  color: #ffffff;
-  font-size: 64rpx;
-  font-weight: 700;
-  line-height: 1;
+.fab-img {
+  width: 152rpx;
+  height: 96rpx;
+  display: block;
 }
 </style>

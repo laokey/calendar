@@ -1,6 +1,7 @@
 <template>
   <view class="avatar" :style="{ width: sizeRpx, height: sizeRpx, background: color }">
-    <text class="glyph" :style="{ fontSize: fontRpx }">{{ glyph }}</text>
+    <image v-if="src" class="img" :src="src" mode="aspectFill" />
+    <text v-else class="glyph" :style="{ fontSize: fontRpx }">{{ glyph }}</text>
   </view>
 </template>
 
@@ -9,6 +10,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   glyph: { type: String, default: '' },
+  src: { type: String, default: '' },
   color: { type: String, default: '#3d6afb' },
   size: { type: Number, default: 72 },
 })
@@ -23,6 +25,13 @@ const fontRpx = computed(() => `${Math.floor(props.size * 0.42)}rpx`)
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .glyph {
@@ -31,4 +40,3 @@ const fontRpx = computed(() => `${Math.floor(props.size * 0.42)}rpx`)
   line-height: 1;
 }
 </style>
-

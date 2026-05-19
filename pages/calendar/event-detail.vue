@@ -3,8 +3,12 @@
     <BlHeader back>
       <template #right>
         <view class="actions">
-          <view class="action edit" @click="goEdit"><text class="action-text">编辑</text></view>
-          <view class="action del" @click="confirmDelete"><text class="action-text del-text">删除</text></view>
+          <view class="action edit" @click="goEdit">
+            <image class="action-icon" src="/static/calendar/icon_edit_square.png" mode="aspectFit" />
+          </view>
+          <view class="action del" @click="confirmDelete">
+            <image class="action-icon" src="/static/calendar/icon_trash.png" mode="aspectFit" />
+          </view>
         </view>
       </template>
     </BlHeader>
@@ -18,34 +22,35 @@
     </view>
 
     <view v-if="event.repeat" class="block repeat-row">
-      <view class="repeat-icon" />
+      <image class="row-icon" src="/static/calendar/icon_form_target.png" mode="aspectFit" />
       <text class="repeat-text">{{ repeatText }}</text>
     </view>
 
     <view class="block">
       <view class="member-row" @click="openMemberManage">
         <text class="member-title">成员管理</text>
-        <text class="member-link">›</text>
+        <image class="member-link" src="/static/calendar/icon_nav_next_circle_small.png" mode="aspectFit" />
       </view>
       <view class="member-list">
         <view v-for="m in selectedMembers" :key="m.id" class="member-item">
-          <BlAvatar :glyph="m.glyph" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
           <text class="member-name">{{ m.name }}</text>
         </view>
       </view>
     </view>
 
     <view v-if="event.desc" class="block info">
-      <view class="info-icon" />
+      <image class="row-icon" src="/static/calendar/icon_form_title_edit.png" mode="aspectFit" />
       <text class="info-text">{{ event.desc }}</text>
     </view>
 
     <view v-if="event.location" class="block info">
-      <view class="loc-icon" />
+      <image class="row-icon" src="/static/calendar/icon_form_location.png" mode="aspectFit" />
       <text class="info-text">{{ event.location }}</text>
     </view>
 
     <view class="bottom-edit" @click="goEdit">
+      <image class="bottom-edit-bg" src="/static/calendar/btn_primary_gradient.png" mode="scaleToFill" />
       <text class="bottom-edit-text">编辑</text>
     </view>
   </view>
@@ -148,6 +153,13 @@ function confirmDelete() {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10rpx;
+}
+
+.action-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .action-text {
@@ -212,11 +224,11 @@ function confirmDelete() {
   gap: 14rpx;
 }
 
-.repeat-icon {
+.row-icon {
   width: 30rpx;
   height: 30rpx;
-  border-radius: 999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.55);
+  flex-shrink: 0;
+  display: block;
 }
 
 .repeat-text {
@@ -238,9 +250,9 @@ function confirmDelete() {
 }
 
 .member-link {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.4);
+  width: 40rpx;
+  height: 40rpx;
+  display: block;
 }
 
 .member-list {
@@ -298,17 +310,24 @@ function confirmDelete() {
   right: 28rpx;
   bottom: 34rpx;
   height: 104rpx;
-  background: #3d6afb;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.bottom-edit-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .bottom-edit-text {
+  position: relative;
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
 }
 </style>
-

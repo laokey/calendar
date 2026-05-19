@@ -8,7 +8,7 @@
       <input v-model="localPart" class="bl-input-field" placeholder="设备名称" placeholder-class="ph" />
       <view class="bl-input-suffix" @click="cycleDomain">
         <text>{{ domain }}</text>
-        <text class="down">▾</text>
+        <image class="down-img" src="/static/calendar/icon_chevron_down.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -79,10 +79,10 @@ function save() {
   color: rgba(17, 17, 17, 0.7);
 }
 
-.down {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.65);
+.down-img {
+  width: 22rpx;
+  height: 22rpx;
+  display: block;
 }
 
 .ph {
@@ -94,4 +94,3 @@ function save() {
   margin-top: 26rpx;
 }
 </style>
-
