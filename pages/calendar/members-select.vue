@@ -34,11 +34,11 @@
             :src="
               isReassign
                 ? pickedId === m.id
-                  ? '/static/calendar/icon_radio_on.png'
-                  : '/static/calendar/icon_radio_off.png'
+                  ? '/static/common/icon_radio_on.png'
+                  : '/static/common/icon_radio_off.png'
                 : selectedIds.includes(m.id)
-                  ? '/static/calendar/icon_radio_on.png'
-                  : '/static/calendar/icon_radio_off.png'
+                  ? '/static/common/icon_radio_on.png'
+                  : '/static/common/icon_radio_off.png'
             "
             mode="aspectFit"
           />

@@ -48,7 +48,7 @@ function onBack() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18rpx 8rpx 10rpx;
+  padding: 18rpx 28rpx 10rpx;
 }
 
 .left {

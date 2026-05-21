@@ -135,7 +135,7 @@
                 <view class="assign">
                   <BlAvatar :glyph="memberGlyph(t.memberId)" :src="memberAvatar(t.memberId)" :color="memberColor(t.memberId)" :size="58" />
                   <view class="check" @click.stop="toggleDone(t)">
-                    <image class="check-img" src="/static/calendar/icon_radio_off.png" mode="aspectFit" />
+                    <image class="check-img" src="/static/common/icon_radio_off.png" mode="aspectFit" />
                   </view>
                 </view>
               </view>

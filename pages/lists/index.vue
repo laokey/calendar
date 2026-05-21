@@ -71,6 +71,9 @@ function hexToRgb(hex) {
 <style scoped lang="scss">
 .lists-page {
   padding-bottom: 80rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .add-btn {
@@ -92,6 +95,7 @@ function hexToRgb(hex) {
   color: #3d6afb;
   font-size: 28rpx;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .grid {
@@ -158,4 +162,3 @@ function hexToRgb(hex) {
   font-weight: 800;
 }
 </style>
-

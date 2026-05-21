@@ -19,7 +19,7 @@
         <text class="row-text">{{ d.name }}</text>
         <image
           class="row-sel"
-          :src="selectedId === d.id ? '/static/calendar/icon_radio_on.png' : '/static/calendar/icon_radio_off.png'"
+          :src="selectedId === d.id ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
           mode="aspectFit"
         />
       </view>

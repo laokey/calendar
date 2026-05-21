@@ -32,7 +32,7 @@
           <text class="sort-text">{{ opt.label }}</text>
           <image
             class="sort-sel-img"
-            :src="sortDraft === opt.value ? '/static/task/icon_radio_on.png' : '/static/task/icon_radio_off.png'"
+            :src="sortDraft === opt.value ? '/static/task/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
             mode="aspectFit"
           />
         </view>

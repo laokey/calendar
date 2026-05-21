@@ -40,7 +40,7 @@
         </view>
         <image
           class="mode-sel"
-          :src="playMode === 'auto' ? '/static/calendar/icon_radio_on.png' : '/static/calendar/icon_radio_off.png'"
+          :src="playMode === 'auto' ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
           mode="aspectFit"
         />
       </view>
@@ -55,7 +55,7 @@
         </view>
         <image
           class="mode-sel"
-          :src="playMode === 'manual' ? '/static/calendar/icon_radio_on.png' : '/static/calendar/icon_radio_off.png'"
+          :src="playMode === 'manual' ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
           mode="aspectFit"
         />
       </view>

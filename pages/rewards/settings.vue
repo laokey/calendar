@@ -33,7 +33,7 @@
           <view class="mark">
             <image
               class="mark-img"
-              :src="sort === 'asc' ? '/static/reward/icon_check_circle_blue.png' : '/static/calendar/icon_radio_off.png'"
+              :src="sort === 'asc' ? '/static/reward/icon_check_circle_blue.png' : '/static/common/icon_radio_off.png'"
               mode="aspectFit"
             />
           </view>

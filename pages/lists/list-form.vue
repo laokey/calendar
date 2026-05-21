@@ -2,7 +2,7 @@
   <view class="bl-page form-page">
     <BlHeader title="添加清单" back />
 
-    <view class="bl-card">
+    <view class="bl-card title-card">
       <view class="bl-input">
         <input v-model="title" class="bl-input-field" placeholder="清单名称" placeholder-class="ph" />
         <view v-if="title" class="clear" @click="title = ''"><text class="clear-text">×</text></view>
@@ -90,6 +90,17 @@ function save() {
 <style scoped lang="scss">
 .form-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.title-card {
+  padding: 28rpx;
+}
+
+.bl-input-field {
+  min-width: 0;
 }
 
 .ph {
@@ -169,4 +180,3 @@ function save() {
   font-weight: 900;
 }
 </style>
-

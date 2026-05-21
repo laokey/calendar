@@ -181,6 +181,7 @@ button {
   border-radius: 24rpx;
   background: rgba(17, 17, 17, 0.04);
   padding: 0 22rpx;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 14rpx;
