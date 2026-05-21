@@ -305,7 +305,7 @@ export function taskStatsForDate(state, key, memberId) {
   const list = tasksForDate(state, key, { memberId: memberId || 'all' })
   const done = list.filter((t) => isTaskDone(t)).length
   const total = list.length
-  const hearts = list.filter((t) => isTaskDone(t)).reduce((sum, t) => sum + (Number(t.hearts || 0) || 0), 0)
+  const hearts = list.reduce((sum, t) => sum + (Number(t.hearts || 0) || 0), 0)
   return { done, total, hearts }
 }
 

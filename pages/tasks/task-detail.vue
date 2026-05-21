@@ -5,11 +5,9 @@
         <view class="actions">
           <view class="action" @click="goEdit">
             <image class="action-icon" src="/static/task/icon_edit_square.png" mode="aspectFit" />
-            <text class="action-text">编辑</text>
           </view>
-          <view class="action danger" @click="askDelete">
-            <image class="action-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
-            <text class="action-text danger-text">删除</text>
+          <view class="action" @click="askDelete">
+            <image class="action-icon danger" src="/static/task/icon_trash_red.png" mode="aspectFit" />
           </view>
         </view>
       </template>
@@ -157,7 +155,7 @@ function memberColor(id) {
 }
 
 function memberAvatar(id) {
-  const m = (members.value || []).find((x) => x.id === id)
+  const m = memberList().find((x) => x.id === id)
   return m && m.avatarUrl ? m.avatarUrl : ''
 }
 
@@ -221,18 +219,18 @@ function toggleDone() {
 .actions {
   display: flex;
   align-items: center;
-  gap: 14rpx;
+  gap: 8rpx;
 }
 
 .action {
   height: 64rpx;
   padding: 0 18rpx;
   border-radius: 16rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10rpx;
+  gap: 8rpx;
 }
 
 .action-icon {
@@ -248,7 +246,7 @@ function toggleDone() {
 }
 
 .action.danger {
-  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
 }
 
 .danger-text {

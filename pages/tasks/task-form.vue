@@ -9,9 +9,12 @@
     </BlHeader>
 
     <view class="block">
-      <view class="field-title">
-        <text class="req">*</text>
-        <text>标题</text>
+      <view class="field-row">
+        <view class="row-left">
+          <image class="field-icon" src="/static/task/icon_title_t.png" mode="aspectFit" />
+          <text class="req">*</text>
+          <text class="label">标题</text>
+        </view>
       </view>
       <view class="input-wrap">
         <input v-model="title" class="input" placeholder="请输入标题" placeholder-class="ph" />
@@ -23,28 +26,25 @@
         <image class="field-icon" src="/static/task/icon_smiley.png" mode="aspectFit" />
         <text class="label">表情符号(可选)</text>
       </view>
-      <view class="row-right">
-        <text class="val">{{ emoji || '无' }}</text>
-        <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
+      <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
+    </view>
+
+    <view class="block">
+      <view class="row-between">
+        <view class="row-left">
+          <image class="field-icon" src="/static/task/icon_calendar.png" mode="aspectFit" />
+          <text class="label">日期</text>
+        </view>
+        <switch :checked="dateEnabled" color="#3d6afb" @change="dateEnabled = !!$event.detail.value" />
+      </view>
+      <view v-if="dateEnabled" class="row-val-full" @click="openDate">
+        <text class="val">{{ dateText }}</text>
       </view>
     </view>
 
     <view class="block row-between">
       <view class="row-left">
-        <image class="field-icon" src="/static/task/icon_calendar.png" mode="aspectFit" />
-        <text class="label">日期</text>
-      </view>
-      <switch :checked="dateEnabled" color="#3d6afb" @change="dateEnabled = !!$event.detail.value" />
-    </view>
-
-    <view v-if="dateEnabled" class="block row-between" @click="openDate">
-      <text class="val">{{ dateText }}</text>
-      <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
-    </view>
-
-    <view class="block row-between">
-      <view class="row-left">
-        <image class="field-icon" src="/static/task/icon_clock_blue.png" mode="aspectFit" />
+        <image class="field-icon" src="/static/task/icon_clock_grey.png" mode="aspectFit" />
         <text class="label">时间</text>
       </view>
       <switch :checked="timeEnabled" color="#3d6afb" @change="timeEnabled = !!$event.detail.value" />
@@ -63,9 +63,9 @@
       <switch :checked="repeatEnabled" color="#3d6afb" @change="repeatEnabled = !!$event.detail.value" />
     </view>
 
-    <view class="block">
+    <view class="block row-between">
       <view class="row-left">
-        <view class="heart" />
+        <image class="field-icon" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
         <text class="label">心心</text>
       </view>
     </view>
@@ -73,33 +73,31 @@
     <view v-if="tipOpen" class="tip">
       <text class="tip-text">用心心获取奖励，培养好习惯</text>
       <view class="tip-close" @click="tipOpen = false">
-        <image class="tip-close-img" src="/static/task/icon_close_circle_grey.png" mode="aspectFit" />
-      </view>
-    </view>
-
-    <view class="block row-between">
-      <text class="label">心心数量</text>
-      <view class="stepper">
-        <view class="step" @click="hearts = Math.max(0, hearts - 1)"><text class="step-text">-</text></view>
-        <text class="step-val">{{ hearts }}</text>
-        <view class="step" @click="hearts = hearts + 1"><text class="step-text">+</text></view>
+        <image class="tip-close-img" src="/static/task/icon_close.png" mode="aspectFit" />
       </view>
     </view>
 
     <view class="block">
-      <view class="field-title">
-        <text class="req">*</text>
-        <text>选择成员</text>
+      <view class="field-row">
+        <view class="row-left">
+          <image class="field-icon" src="/static/task/icon_task_members_small.png" mode="aspectFit" />
+          <text class="req">*</text>
+          <text class="label">选择成员</text>
+        </view>
       </view>
       <view class="members">
         <view v-for="m in members" :key="m.id" class="mem" @click="memberId = m.id">
-          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
-          <view v-if="memberId === m.id" class="mem-check"><text class="check">✓</text></view>
+          <view class="avatar-wrap">
+            <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="84" />
+            <view v-if="memberId === m.id" class="mem-check-badge">
+              <image class="badge-check-img" src="/static/task/icon_check_circle_green.png" mode="aspectFit" />
+            </view>
+          </view>
           <text class="mem-name">{{ m.name }}</text>
         </view>
         <view class="mem add" @click="goAddMember">
           <view class="add-circle">
-            <image class="add-plus-img" src="/static/task/icon_plus.png" mode="aspectFit" />
+            <image class="add-plus-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
           </view>
           <text class="mem-name">添加</text>
         </view>
@@ -108,18 +106,19 @@
 
     <view class="block row-between" @click="openPriority">
       <view class="row-left">
-        <image class="field-icon" src="/static/task/icon_bolt_blue.png" mode="aspectFit" />
+        <image class="field-icon" src="/static/task/icon_bolt_black.png" mode="aspectFit" />
         <text class="label">优先级</text>
       </view>
       <view class="row-right">
         <text class="val">{{ priorityText }}</text>
-        <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
+        <image class="field-icon right-bolt" :class="{ 'is-none': priority === 'none' }" :src="priorityIconSrc" mode="aspectFit" />
       </view>
     </view>
 
-    <view class="bottom-save" @click="save">
-      <image class="bottom-save-bg" src="/static/task/bg_task_gradient_card.png" mode="scaleToFill" />
-      <text class="bottom-save-text">保存</text>
+    <view class="save-placeholder"></view>
+
+    <view class="bottom-action">
+      <button class="save-btn" @click="save">保存</button>
     </view>
 
     <BlSheet v-model="emojiSheetOpen" title="选择表情" :confirm-text="''">
@@ -142,15 +141,17 @@
       <view class="prio-sheet">
         <view v-for="opt in priorityOptions" :key="opt.value" class="prio-item" @click="priorityDraft = opt.value">
           <view class="prio-left">
-            <view class="prio-dot" :style="{ background: opt.color }" />
+            <image class="prio-icon" :src="opt.icon" mode="aspectFit" />
             <text class="prio-text">{{ opt.label }}</text>
           </view>
           <view class="prio-right">
             <image
-              class="prio-sel-img"
-              :src="priorityDraft === opt.value ? '/static/task/icon_radio_on.png' : '/static/task/icon_radio_off.png'"
+              v-if="priorityDraft === opt.value"
+              class="prio-check-img"
+              src="/static/task/icon_check_circle_blue.png"
               mode="aspectFit"
             />
+            <view v-else class="prio-radio" />
           </view>
         </view>
         <view class="prio-actions">
@@ -213,10 +214,10 @@ const members = computed(() => [
 ])
 
 const priorityOptions = [
-  { label: '高优先级', value: 'high', color: '#ff3b30' },
-  { label: '中优先级', value: 'mid', color: '#ffb020' },
-  { label: '低优先级', value: 'low', color: '#3d6afb' },
-  { label: '无优先级', value: 'none', color: 'rgba(17, 17, 17, 0.2)' },
+  { label: '高优先级', value: 'high', icon: '/static/task/icon_bolt_red.png' },
+  { label: '中优先级', value: 'mid', icon: '/static/task/icon_bolt_yellow.png' },
+  { label: '低优先级', value: 'low', icon: '/static/task/icon_bolt_blue.png' },
+  { label: '无优先级', value: 'none', icon: '/static/task/icon_bolt_black_small.png' },
 ]
 
 const priorityDraft = ref('none')
@@ -224,6 +225,11 @@ const priorityDraft = ref('none')
 const priorityText = computed(() => {
   const opt = priorityOptions.find((x) => x.value === priority.value)
   return opt ? opt.label : '无优先级'
+})
+
+const priorityIconSrc = computed(() => {
+  const opt = priorityOptions.find((x) => x.value === priority.value)
+  return opt ? opt.icon : '/static/task/icon_bolt_black_small.png'
 })
 
 onLoad((options) => {
@@ -334,7 +340,19 @@ function save() {
 
 <style scoped lang="scss">
 .form-page {
-  padding-bottom: 240rpx;
+  padding: 28rpx 8rpx 40rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+:deep(.bl-header) {
+  margin-left: -8rpx !important;
+  margin-right: -8rpx !important;
+}
+
+.save-placeholder {
+  height: 160rpx;
 }
 
 .top-save {
@@ -354,9 +372,9 @@ function save() {
 .block {
   background: #ffffff;
   border-radius: 28rpx;
-  padding: 20rpx 22rpx;
-  margin-top: 16rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  padding: 24rpx 28rpx;
+  margin: 20rpx 0 0;
+  box-shadow: 0 4rpx 20rpx rgba(17, 17, 17, 0.04);
 }
 
 .field-title {
@@ -399,197 +417,226 @@ function save() {
   justify-content: space-between;
 }
 
+.block {
+  background: #fafafa;
+  border-radius: 28rpx;
+  padding: 24rpx 28rpx;
+  margin: 20rpx 28rpx 0;
+  box-shadow: 0 4rpx 20rpx rgba(17, 17, 17, 0.04);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.req {
+  color: #ff4d4f;
+  margin-right: 4rpx;
+}
+
+.input-wrap {
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: rgba(17, 17, 17, 0.02);
+  padding: 0 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #111111;
+}
+
+.ph {
+  color: rgba(17, 17, 17, 0.25);
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .row-left {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
 .row-right {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 12rpx;
 }
 
 .label {
   font-size: 30rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.88);
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.row-val-full {
+  margin-top: 12rpx;
+  padding-left: 56rpx;
 }
 
 .val {
   font-size: 28rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.6);
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.55);
 }
 
 .field-icon {
-  width: 28rpx;
-  height: 28rpx;
+  width: 40rpx;
+  height: 40rpx;
   flex-shrink: 0;
   display: block;
 }
 
+.right-bolt {
+  opacity: 0.25;
+}
+
+.right-bolt.is-none {
+  opacity: 0.35;
+}
+
 .chev-img {
-  width: 22rpx;
-  height: 22rpx;
+  width: 28rpx;
+  height: 28rpx;
   display: block;
 }
 
-.heart {
-  width: 26rpx;
-  height: 26rpx;
-  border-radius: 8rpx;
-  background: #ffb020;
-}
-
 .tip {
-  margin-top: 14rpx;
-  background: #eaf2ff;
-  border-radius: 18rpx;
-  height: 76rpx;
-  padding: 0 18rpx;
+  margin: 20rpx 0 0;
+  background: #f0f5ff;
+  border-radius: 28rpx;
+  height: 84rpx;
+  padding: 0 28rpx 0 84rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .tip-text {
-  font-size: 26rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.75);
+  font-size: 28rpx;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.7);
 }
 
 .tip-close {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.tip-close-img {
-  width: 28rpx;
-  height: 28rpx;
-  display: block;
-}
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-}
-
-.step {
-  width: 62rpx;
-  height: 62rpx;
-  border-radius: 18rpx;
-  background: rgba(17, 17, 17, 0.06);
+  width: 44rpx;
+  height: 44rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.step-text {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.75);
-}
-
-.step-val {
-  min-width: 52rpx;
-  text-align: center;
-  font-size: 30rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.8);
+.tip-close-img {
+  width: 24rpx;
+  height: 24rpx;
+  display: block;
+  opacity: 0.4;
 }
 
 .members {
   display: flex;
   flex-wrap: wrap;
-  gap: 20rpx;
-  padding-top: 10rpx;
+  gap: 24rpx;
+  padding-top: 16rpx;
 }
 
 .mem {
-  width: 116rpx;
+  width: 110rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
 }
 
-.mem-check {
+.avatar-wrap {
+  position: relative;
+  width: 84rpx;
+  height: 84rpx;
+}
+
+.mem-check-badge {
   position: absolute;
-  top: 44rpx;
-  right: 16rpx;
-  width: 26rpx;
-  height: 26rpx;
+  right: -2rpx;
+  bottom: -2rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background: #ffffff;
   border-radius: 999rpx;
-  background: #2ecc71;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
 }
 
-.check {
-  font-size: 18rpx;
-  font-weight: 900;
-  color: #ffffff;
+.badge-check-img {
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .mem-name {
-  margin-top: 10rpx;
+  margin-top: 12rpx;
   font-size: 24rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.75);
-}
-
-.mem.add .mem-name {
-  color: rgba(17, 17, 17, 0.55);
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.65);
 }
 
 .add-circle {
-  width: 72rpx;
-  height: 72rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #ffffff;
+  border: 2rpx solid rgba(17, 17, 17, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .add-plus-img {
-  width: 28rpx;
-  height: 28rpx;
+  width: 62rpx;
+  height: 62rpx;
   display: block;
+  opacity: 0.7;
 }
 
-.bottom-save {
+.mem.add .mem-name {
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.bottom-action {
   position: fixed;
-  left: 28rpx;
-  right: 28rpx;
-  bottom: 34rpx;
-  height: 104rpx;
-  border-radius: 999rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
 }
 
-.bottom-save-bg {
-  position: absolute;
-  inset: 0;
+.save-btn {
   width: 100%;
-  height: 100%;
-}
-
-.bottom-save-text {
-  position: relative;
+  height: 100rpx;
+  background: #3d6afb;
+  border-radius: 999rpx;
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.save-btn::after {
+  border: none;
 }
 
 .emoji-grid {
@@ -636,11 +683,11 @@ function save() {
 }
 
 .prio-sheet {
-  padding: 6rpx 0 10rpx;
+  padding: 10rpx 18rpx 18rpx;
 }
 
 .prio-item {
-  height: 88rpx;
+  height: 92rpx;
   padding: 0 10rpx;
   display: flex;
   align-items: center;
@@ -653,10 +700,10 @@ function save() {
   gap: 14rpx;
 }
 
-.prio-dot {
-  width: 26rpx;
-  height: 26rpx;
-  border-radius: 999rpx;
+.prio-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .prio-text {
@@ -665,7 +712,16 @@ function save() {
   color: rgba(17, 17, 17, 0.88);
 }
 
-.prio-sel-img {
+.prio-radio {
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 999rpx;
+  border: 4rpx solid rgba(17, 17, 17, 0.18);
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.prio-check-img {
   width: 34rpx;
   height: 34rpx;
   display: block;
@@ -675,12 +731,12 @@ function save() {
   margin-top: 14rpx;
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 18rpx;
 }
 
 .prio-btn {
   flex: 1;
-  height: 92rpx;
+  height: 96rpx;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
