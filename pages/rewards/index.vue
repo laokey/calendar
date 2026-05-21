@@ -133,7 +133,6 @@
 
     <BlSheet v-model="resultSheetOpen" title="" :confirm-text="''">
       <view class="result">
-        <image class="result-illus" src="/static/reward/illus_reward_cards.png" mode="aspectFit" />
         <text class="result-title">{{ celebrateType === 'punish' ? '受到惩罚！' : '恭喜您！' }}</text>
         <text class="result-sub">
           {{ celebrateType === 'punish' ? '今天没有完成 ' : '今天完成了 ' }}
@@ -325,8 +324,12 @@ function goSettings() {
 </script>
 
 <style scoped lang="scss">
+.bl-page {
+  height: 100vh;
+  background: #ffffff;
+}
 .reward-page {
-  padding-bottom: 240rpx;
+  padding-bottom: 0rpx;
 }
 
 .right {

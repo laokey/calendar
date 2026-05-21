@@ -33,7 +33,7 @@
           <view class="mark">
             <image
               class="mark-img"
-              :src="sort === 'asc' ? '/static/reward/icon_check_circle_green.png' : '/static/reward/icon_radio_off.png'"
+              :src="sort === 'asc' ? '/static/reward/icon_check_circle_blue.png' : '/static/calendar/icon_radio_off.png'"
               mode="aspectFit"
             />
           </view>
@@ -43,7 +43,7 @@
           <view class="mark">
             <image
               class="mark-img"
-              :src="sort === 'desc' ? '/static/reward/icon_check_circle_green.png' : '/static/reward/icon_radio_off.png'"
+              :src="sort === 'desc' ? '/static/reward/icon_check_circle_blue.png' : '/static/calendar/icon_radio_off.png'"
               mode="aspectFit"
             />
           </view>
