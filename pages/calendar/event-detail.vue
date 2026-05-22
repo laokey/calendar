@@ -114,7 +114,7 @@ function goEdit() {
 
 function openMemberManage() {
   const ids = encodeURIComponent(JSON.stringify(event.value.memberIds || []))
-  uni.navigateTo({ url: `/pages/calendar/members-select?ids=${ids}&eventId=${event.value.id}` })
+  uni.navigateTo({ url: `/pages/members/members-select?ids=${ids}&eventId=${event.value.id}` })
 }
 
 function confirmDelete() {

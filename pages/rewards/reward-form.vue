@@ -323,7 +323,7 @@ function selectEmoji(e) {
 }
 
 function goAddMember() {
-  uni.navigateTo({ url: "/pages/calendar/member-add" });
+  uni.navigateTo({ url: "/pages/members/member-add" });
 }
 
 function validate() {

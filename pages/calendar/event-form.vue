@@ -385,7 +385,7 @@ function onRepeatToggle(e) {
 
 function openMemberSelect() {
   const ids = encodeURIComponent(JSON.stringify(selectedMemberIds.value || []))
-  uni.navigateTo({ url: `/pages/calendar/members-select?ids=${ids}&from=${encodeURIComponent(isEdit.value ? 'edit' : 'add')}` })
+  uni.navigateTo({ url: `/pages/members/members-select?ids=${ids}&from=${encodeURIComponent(isEdit.value ? 'edit' : 'add')}` })
 }
 
 function toggleSync() {

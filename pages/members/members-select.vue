@@ -133,7 +133,7 @@ function save() {
 }
 
 function goAdd() {
-  uni.navigateTo({ url: '/pages/calendar/member-add' })
+  uni.navigateTo({ url: '/pages/members/member-add' })
 }
 
 function goAddEvent() {
@@ -182,13 +182,15 @@ function confirmReassignDelete() {
 <style scoped lang="scss">
 .select-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
+  min-height: 100vh;
 }
 
 .reassign-top {
   margin-top: 18rpx;
   height: 108rpx;
   border-radius: 26rpx;
-  background: #eaf2ff;
+  background: #f5f6f7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,7 +256,7 @@ function confirmReassignDelete() {
 
 .item {
   height: 118rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   border-radius: 24rpx;
   padding: 0 22rpx;
   display: flex;

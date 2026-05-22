@@ -265,19 +265,19 @@
       }
     },
     {
-      "path": "pages/calendar/members",
+      "path": "pages/members/index",
       "style": {
         "navigationStyle": "custom"
       }
     },
     {
-      "path": "pages/calendar/members-select",
+      "path": "pages/members/members-select",
       "style": {
         "navigationStyle": "custom"
       }
     },
     {
-      "path": "pages/calendar/member-add",
+      "path": "pages/members/member-add",
       "style": {
         "navigationStyle": "custom"
       }

@@ -139,7 +139,7 @@ function open(title) {
     return
   }
   if (title === '成员管理') {
-    uni.navigateTo({ url: '/pages/calendar/members' })
+    uni.navigateTo({ url: '/pages/members/index' })
     return
   }
   if (title === '设备管理') {

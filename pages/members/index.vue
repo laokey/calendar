@@ -101,12 +101,12 @@ const memberList = computed(() => (members.value || []).filter((m) => (m && m.gr
 const colorList = computed(() => (members.value || []).filter((m) => (m && m.group) === 'calendarColor'))
 
 function goAdd() {
-  uni.navigateTo({ url: '/pages/calendar/member-add' })
+  uni.navigateTo({ url: '/pages/members/member-add' })
 }
 
 function openEdit(id) {
   if (dragging.value) return
-  uni.navigateTo({ url: `/pages/calendar/member-add?id=${encodeURIComponent(String(id || ''))}` })
+  uni.navigateTo({ url: `/pages/members/member-add?id=${encodeURIComponent(String(id || ''))}` })
 }
 
 const dragging = ref(false)
@@ -221,7 +221,7 @@ function onDragEnd() {
 }
 
 .section {
-  margin-top: 10rpx;
+  margin-top: 20rpx;
 }
 
 .section-title {
@@ -243,13 +243,16 @@ function onDragEnd() {
 
 .row {
   height: 118rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   border-radius: 24rpx;
   padding: 0 22rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  border: 2rpx solid rgba(17, 17, 17, 0.04);
+}
+
+.row + .row {
   margin-top: 14rpx;
 }
 

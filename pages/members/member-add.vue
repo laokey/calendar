@@ -18,7 +18,7 @@
       </view>
     </view>
 
-    <view class="block">
+    <view class="block input-block">
       <view class="input-wrap">
         <input v-model="name" class="input" placeholder="请输入名称" placeholder-class="ph" />
         <view v-if="name" class="clear-btn" @click="name = ''">
@@ -27,7 +27,7 @@
       </view>
     </view>
 
-    <view class="block">
+    <view class="block color-block">
       <text class="label">选择颜色</text>
       <view class="colors">
         <view
@@ -199,7 +199,7 @@ function onDelete() {
     success: (res) => {
       const tapIndex = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       if (tapIndex === 0) {
-        uni.navigateTo({ url: `/pages/calendar/members-select?mode=reassign&fromId=${encodeURIComponent(memberId.value)}` })
+        uni.navigateTo({ url: `/pages/members/members-select?mode=reassign&fromId=${encodeURIComponent(memberId.value)}` })
         return
       }
       if (tapIndex === 1) {
@@ -221,6 +221,8 @@ function onDelete() {
 <style scoped lang="scss">
 .add-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
+  min-height: 100vh;
 }
 
 .top-trash {
@@ -272,17 +274,24 @@ function onDelete() {
 }
 
 .block {
-  background: #ffffff;
+  background: #f5f6f7;
   border-radius: 28rpx;
   padding: 20rpx 22rpx;
   margin-top: 18rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  border: 2rpx solid rgba(17, 17, 17, 0.04);
+}
+
+.input-block {
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .input-wrap {
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #f5f6f7;
+  border: 2rpx solid rgba(17, 17, 17, 0.06);
   padding: 0 18rpx;
   display: flex;
   align-items: center;

@@ -428,7 +428,7 @@ function swipeDelete(t) {
 }
 
 function openMembers() {
-  uni.navigateTo({ url: '/pages/calendar/members' })
+  uni.navigateTo({ url: '/pages/members/index' })
 }
 
 function openSettings() {

@@ -283,7 +283,7 @@ function openEvent(id) {
 }
 
 function openMembers() {
-  uni.navigateTo({ url: '/pages/calendar/members' })
+  uni.navigateTo({ url: '/pages/members/index' })
 }
 
 function memberGlyph(id) {
