@@ -2,12 +2,23 @@
   <view class="bl-page detail-page">
     <BlHeader title="餐点详情" back>
       <template #right>
-        <view class="top-del" @click="confirmOpen = true"><text class="top-del-text">删</text></view>
+        <view class="top-del" @click="confirmOpen = true">
+          <image
+            class="top-del-icon"
+            src="/static/meals/icon_trash.png"
+            mode="aspectFit"
+          />
+        </view>
       </template>
     </BlHeader>
 
     <view class="hero">
-      <image v-if="photoPath" class="hero-img" :src="photoPath" mode="aspectFill" />
+      <image
+        v-if="photoPath"
+        class="hero-img"
+        :src="photoPath"
+        mode="aspectFill"
+      />
       <view v-else class="hero-ph" />
     </view>
 
@@ -19,13 +30,23 @@
 
       <view class="row" @click="catOpen = true">
         <view class="row-left">
-          <view class="grid" />
+          <image
+            class="row-icon"
+            src="/static/meals/icon_grid.png"
+            mode="aspectFit"
+          />
           <text class="row-title">分类</text>
         </view>
         <view class="row-right">
-          <view class="badge" :style="{ background: catColor }"><text class="glyph">{{ catGlyph }}</text></view>
+          <view class="badge" :style="{ background: catColor }"
+            ><text class="glyph">{{ catGlyph }}</text></view
+          >
           <text class="cat-name">{{ catName }}</text>
-          <text class="arrow">˅</text>
+          <image
+            class="row-icon"
+            src="/static/common/icon_down.png"
+            mode="aspectFit"
+          />
         </view>
       </view>
     </view>
@@ -36,25 +57,42 @@
 
     <BlSheet v-model="catOpen" title="分类" :confirm-text="''">
       <view class="cat-list">
-        <view v-for="c in categories" :key="c.id" class="cat-item" @click="selectCategory(c.id)">
+        <view
+          v-for="c in categories"
+          :key="c.id"
+          class="cat-item"
+          @click="selectCategory(c.id)"
+        >
           <view class="cat-left">
-            <view class="cat-badge" :style="{ background: c.color }"><text class="cat-glyph">{{ c.glyph }}</text></view>
+            <view class="cat-badge" :style="{ background: c.color }"
+              ><text class="cat-glyph">{{ c.glyph }}</text></view
+            >
             <text class="cat-name2">{{ c.name }}</text>
           </view>
           <view class="cat-right">
-            <view v-if="categoryId === c.id" class="cat-check"><text class="cat-check-text">✓</text></view>
+            <view v-if="categoryId === c.id" class="cat-check"
+              ><text class="cat-check-text">✓</text></view
+            >
             <view v-else class="cat-dot" />
           </view>
         </view>
       </view>
     </BlSheet>
 
-    <view v-if="confirmOpen" class="dialog-mask" @click.self="confirmOpen = false">
+    <view
+      v-if="confirmOpen"
+      class="dialog-mask"
+      @click.self="confirmOpen = false"
+    >
       <view class="dialog">
         <text class="dialog-title">您确定要删除吗?</text>
         <view class="dialog-actions">
-          <view class="dialog-btn cancel" @click="confirmOpen = false"><text class="dialog-btn-text">取消</text></view>
-          <view class="dialog-btn ok" @click="del"><text class="dialog-btn-text ok-text">删除</text></view>
+          <view class="dialog-btn cancel" @click="confirmOpen = false"
+            ><text class="dialog-btn-text">取消</text></view
+          >
+          <view class="dialog-btn ok" @click="del"
+            ><text class="dialog-btn-text ok-text">删除</text></view
+          >
         </view>
       </view>
     </view>
@@ -62,10 +100,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-import BlHeader from '../../components/BlHeader.vue'
-import BlSheet from '../../components/BlSheet.vue'
+import { computed, ref } from "vue";
+import { onLoad, onShow } from "@dcloudio/uni-app";
+import BlHeader from "../../components/BlHeader.vue";
+import BlSheet from "../../components/BlSheet.vue";
 import {
   cnDateText,
   deletePlan,
@@ -75,62 +113,77 @@ import {
   findRecipe,
   listCategories,
   updatePlan,
-} from '../../utils/mealStore'
+} from "../../utils/mealStore";
 
-const mealState = ref(ensureMealState())
-const planId = ref('')
+const mealState = ref(ensureMealState());
+const planId = ref("");
 
-const catOpen = ref(false)
-const confirmOpen = ref(false)
+const catOpen = ref(false);
+const confirmOpen = ref(false);
 
 function refresh() {
-  mealState.value = ensureMealState()
+  mealState.value = ensureMealState();
 }
 
 onLoad((options) => {
-  planId.value = options && options.id ? String(options.id) : ''
-  refresh()
-})
+  planId.value = options && options.id ? String(options.id) : "";
+  refresh();
+});
 
-onShow(() => refresh())
+onShow(() => refresh());
 
-const plan = computed(() => (planId.value ? findPlan(mealState.value, planId.value) : null))
-const recipe = computed(() => (plan.value ? findRecipe(mealState.value, plan.value.recipeId) : null))
+const plan = computed(() =>
+  planId.value ? findPlan(mealState.value, planId.value) : null,
+);
+const recipe = computed(() =>
+  plan.value ? findRecipe(mealState.value, plan.value.recipeId) : null,
+);
 
-const title = computed(() => (recipe.value ? recipe.value.title : ''))
-const photoPath = computed(() => (recipe.value ? recipe.value.photoPath : ''))
-const dateText = computed(() => (plan.value ? cnDateText(plan.value.date) : ''))
+const title = computed(() => (recipe.value ? recipe.value.title : ""));
+const photoPath = computed(() => (recipe.value ? recipe.value.photoPath : ""));
+const dateText = computed(() =>
+  plan.value ? cnDateText(plan.value.date) : "",
+);
 
-const categories = computed(() => listCategories(mealState.value, { enabledOnly: true }))
-const categoryId = computed(() => (plan.value ? plan.value.categoryId : ''))
-const cat = computed(() => (categoryId.value ? findCategory(mealState.value, categoryId.value) : null))
-const catName = computed(() => (cat.value ? cat.value.name : ''))
-const catGlyph = computed(() => (cat.value ? cat.value.glyph : ''))
-const catColor = computed(() => (cat.value ? cat.value.color : '#3d6afb'))
+const categories = computed(() =>
+  listCategories(mealState.value, { enabledOnly: true }),
+);
+const categoryId = computed(() => (plan.value ? plan.value.categoryId : ""));
+const cat = computed(() =>
+  categoryId.value ? findCategory(mealState.value, categoryId.value) : null,
+);
+const catName = computed(() => (cat.value ? cat.value.name : ""));
+const catGlyph = computed(() => (cat.value ? cat.value.glyph : ""));
+const catColor = computed(() => (cat.value ? cat.value.color : "#3d6afb"));
 
 function selectCategory(id) {
-  if (!planId.value) return
-  updatePlan(mealState.value, planId.value, { categoryId: id })
-  catOpen.value = false
-  refresh()
+  if (!planId.value) return;
+  updatePlan(mealState.value, planId.value, { categoryId: id });
+  catOpen.value = false;
+  refresh();
 }
 
 function goEdit() {
-  if (!plan.value) return
-  uni.navigateTo({ url: `/pages/meals/meal-plan-form?planId=${plan.value.id}` })
+  if (!plan.value) return;
+  uni.navigateTo({
+    url: `/pages/meals/meal-plan-form?planId=${plan.value.id}`,
+  });
 }
 
 function del() {
-  if (!planId.value) return
-  deletePlan(mealState.value, planId.value)
-  confirmOpen.value = false
-  uni.navigateBack()
+  if (!planId.value) return;
+  deletePlan(mealState.value, planId.value);
+  confirmOpen.value = false;
+  uni.navigateBack();
 }
 </script>
 
 <style scoped lang="scss">
 .detail-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .top-del {
@@ -141,10 +194,11 @@ function del() {
   justify-content: flex-end;
 }
 
-.top-del-text {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: #ff3b30;
+.top-del-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
+  opacity: 0.85;
 }
 
 .hero {
@@ -170,10 +224,10 @@ function del() {
 
 .card {
   margin-top: 18rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   border-radius: 28rpx;
   padding: 22rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  box-shadow: none;
 }
 
 .title {
@@ -211,11 +265,11 @@ function del() {
   gap: 12rpx;
 }
 
-.grid {
+.row-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
+  display: block;
+  opacity: 0.8;
 }
 
 .row-title {

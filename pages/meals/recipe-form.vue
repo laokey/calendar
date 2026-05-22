@@ -5,7 +5,7 @@
     <view class="photo" @click="pickPhoto">
       <image v-if="photoPath" class="photo-img" :src="photoPath" mode="aspectFill" />
       <view v-else class="photo-ph">
-        <text class="ph-plus">+</text>
+        <image class="ph-icon" src="/static/calendar/icon_plus.png" mode="aspectFit" />
         <text class="ph-text">添加照片</text>
       </view>
       <view v-if="photoPath" class="photo-x" @click.stop="photoPath = ''"><text class="photo-x-text">×</text></view>
@@ -14,7 +14,7 @@
     <view class="block">
       <view class="row col">
         <view class="row-title">
-          <view class="fork" />
+          <image class="row-icon" src="/static/meals/icon_fork.png" mode="aspectFit" />
           <text class="row-title-text">我们吃什么</text>
         </view>
         <view class="input-wrap">
@@ -26,10 +26,10 @@
     <view class="block" @click="catOpen = true">
       <view class="row">
         <view class="row-title">
-          <view class="grid" />
+          <image class="row-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
           <text class="row-title-text">分类</text>
         </view>
-        <text class="arrow">˅</text>
+        <image class="chev-icon" src="/static/common/icon_down.png" mode="aspectFit" />
       </view>
       <text class="sub">{{ categoryName }}</text>
     </view>
@@ -37,7 +37,7 @@
     <view class="block">
       <view class="row col">
         <view class="row-title">
-          <view class="note" />
+          <image class="row-icon" src="/static/meals/icon_note.png" mode="aspectFit" />
           <text class="row-title-text">说明或配料</text>
         </view>
         <view class="input-wrap is-textarea">
@@ -144,16 +144,18 @@ function save() {
 <style scoped lang="scss">
 .recipe-form-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .photo {
-  margin-top: 8rpx;
+  margin: 24rpx auto 18rpx;
   width: 260rpx;
   height: 260rpx;
   border-radius: 28rpx;
   overflow: hidden;
-  background: rgba(17, 17, 17, 0.04);
-  align-self: center;
+  background: #f5f6f7;
   position: relative;
 }
 
@@ -172,10 +174,11 @@ function save() {
   gap: 8rpx;
 }
 
-.ph-plus {
-  font-size: 54rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.55);
+.ph-icon {
+  width: 54rpx;
+  height: 54rpx;
+  display: block;
+  opacity: 0.6;
 }
 
 .ph-text {
@@ -204,11 +207,11 @@ function save() {
 }
 
 .block {
-  margin-top: 18rpx;
-  background: #ffffff;
-  border-radius: 28rpx;
-  padding: 18rpx 22rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  margin-top: 16rpx;
+  background: #f5f6f7;
+  border-radius: 24rpx;
+  padding: 18rpx 22rpx 20rpx;
+  box-shadow: none;
 }
 
 .row {
@@ -220,7 +223,7 @@ function save() {
 .row.col {
   flex-direction: column;
   align-items: flex-start;
-  gap: 12rpx;
+  gap: 10rpx;
 }
 
 .row-title {
@@ -229,49 +232,46 @@ function save() {
   gap: 12rpx;
 }
 
-.fork,
-.grid,
-.note {
+.row-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
+  display: block;
+  opacity: 0.8;
 }
 
 .row-title-text {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.9);
 }
 
 .input-wrap {
   width: 100%;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
-  padding: 0 18rpx;
+  margin-top: 6rpx;
+  background: transparent;
+  padding: 0;
   display: flex;
   align-items: center;
 }
 
 .input-wrap.is-textarea {
-  height: 160rpx;
-  padding-top: 16rpx;
+  height: auto;
+  padding-top: 0;
   align-items: flex-start;
 }
 
 .input {
   width: 100%;
-  font-size: 34rpx;
-  font-weight: 900;
+  font-size: 28rpx;
+  font-weight: 800;
   color: #111111;
 }
 
 .textarea {
   width: 100%;
-  height: 126rpx;
-  font-size: 30rpx;
-  font-weight: 700;
+  height: 110rpx;
+  font-size: 28rpx;
+  font-weight: 800;
   color: #111111;
 }
 
@@ -279,18 +279,19 @@ function save() {
   color: rgba(17, 17, 17, 0.35);
 }
 
-.arrow {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.35);
+.chev-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+  opacity: 0.65;
 }
 
 .sub {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   font-size: 28rpx;
   font-weight: 800;
-  color: rgba(17, 17, 17, 0.6);
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .bottom {
@@ -394,4 +395,3 @@ function save() {
   background: rgba(17, 17, 17, 0.18);
 }
 </style>
-

@@ -6,7 +6,7 @@
           <view class="hdr-btn" @click="goEdit">
             <image
               class="hdr-icon"
-              src="/static/task/icon_edit_pencil.png"
+              src="/static/common/icon_edit_pencil.png"
               mode="aspectFit"
             />
           </view>

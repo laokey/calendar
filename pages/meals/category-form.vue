@@ -10,7 +10,7 @@
 
     <view class="bl-card">
       <view class="row-title">
-        <view class="tag" />
+        <image class="row-icon" src="/static/meals/icon_tag.png" mode="aspectFit" />
         <text class="row-title-text">名称</text>
       </view>
       <view class="input-wrap">
@@ -20,7 +20,7 @@
 
     <view class="bl-card colors-card">
       <view class="row-title">
-        <view class="palette" />
+        <image class="row-icon" src="/static/meals/icon_palette.png" mode="aspectFit" />
         <text class="row-title-text">选择颜色</text>
       </view>
       <view class="colors">
@@ -98,6 +98,14 @@ function save() {
 <style scoped lang="scss">
 .cat-form-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.bl-card {
+  background: #f5f6f7;
+  box-shadow: none;
 }
 
 .top-save {
@@ -120,12 +128,11 @@ function save() {
   gap: 12rpx;
 }
 
-.tag,
-.palette {
+.row-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 8rpx;
-  background: rgba(17, 17, 17, 0.12);
+  display: block;
+  opacity: 0.8;
 }
 
 .row-title-text {
@@ -207,4 +214,3 @@ function save() {
   font-weight: 900;
 }
 </style>
-

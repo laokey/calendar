@@ -5,7 +5,7 @@
     <view class="block">
       <view class="row">
         <view class="left">
-          <view class="icon cal" />
+          <image class="row-icon" src="/static/meals/icon_calendar.png" mode="aspectFit" />
           <text class="label">日期</text>
         </view>
         <text class="value">{{ dateText }}</text>
@@ -15,12 +15,12 @@
 
       <view class="row" @click="catOpen = true">
         <view class="left">
-          <view class="icon grid" />
+          <image class="row-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
           <text class="label">分类</text>
         </view>
         <view class="right">
           <text class="value">{{ categoryName }}</text>
-          <text class="arrow">˅</text>
+          <image class="row-icon" src="/static/common/icon_down.png" mode="aspectFit" />
         </view>
       </view>
 
@@ -28,7 +28,7 @@
 
       <view class="row col">
         <view class="left">
-          <view class="icon note" />
+          <image class="row-icon" src="/static/meals/icon_note.png" mode="aspectFit" />
           <text class="label">笔记</text>
         </view>
         <view class="note-wrap">
@@ -40,7 +40,7 @@
 
       <view class="row">
         <view class="left">
-          <view class="icon rep" />
+          <image class="row-icon" src="/static/common/icon_refresh.png" mode="aspectFit" />
           <text class="label">重复</text>
         </view>
         <switch :checked="repeat" color="#3d6afb" @change="repeat = !!$event.detail.value" />
@@ -56,12 +56,12 @@
             <view v-else class="thumb-ph" />
           </view>
           <text class="recipe-title">{{ r.title }}</text>
-          <text class="chev">›</text>
+          <image class="row-icon" src="/static/common/icon_right.png" mode="aspectFit" />
         </view>
       </view>
       <view v-else class="recipe-empty" @click="openRecipeBox">
         <text class="recipe-empty-text bl-muted">去食谱盒选择</text>
-        <text class="chev">›</text>
+        <image class="row-icon" src="/static/common/icon_right.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -225,14 +225,17 @@ function onBottom() {
 <style scoped lang="scss">
 .plan-form-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .block {
   margin-top: 12rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   border-radius: 28rpx;
   padding: 10rpx 22rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  box-shadow: none;
 }
 
 .row {
@@ -246,6 +249,9 @@ function onBottom() {
   height: auto;
   padding: 18rpx 0;
   align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 14rpx;
 }
 
 .left {
@@ -254,15 +260,18 @@ function onBottom() {
   gap: 12rpx;
 }
 
+.row-icon {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+  opacity: 0.8;
+}
+
 .icon {
   width: 28rpx;
   height: 28rpx;
   border-radius: 8rpx;
   background: rgba(17, 17, 17, 0.12);
-}
-
-.icon.cal {
-  border-radius: 10rpx;
 }
 
 .icon.rep {
@@ -300,7 +309,7 @@ function onBottom() {
 
 .note-wrap {
   width: 100%;
-  margin-top: 14rpx;
+  margin-top: 0;
   border-radius: 24rpx;
   background: rgba(17, 17, 17, 0.04);
   padding: 12rpx 16rpx;

@@ -101,7 +101,7 @@
           <view v-for="t in pendingTasks" :key="t.id" class="swipe-item" :class="{ 'is-open': isSwipeRevealed(t.id) }">
             <view class="swipe-actions">
               <view class="swipe-btn swipe-edit" @click.stop="swipeEdit(t)">
-                <image class="swipe-icon" src="/static/task/icon_edit_pencil.png" mode="aspectFit" />
+                <image class="swipe-icon" src="/static/common/icon_edit_pencil.png" mode="aspectFit" />
               </view>
               <view class="swipe-btn swipe-delete" @click.stop="swipeDelete(t)">
                 <image class="swipe-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
@@ -156,7 +156,7 @@
             <view v-for="t in doneTasks" :key="t.id" class="swipe-item" :class="{ 'is-open': isSwipeRevealed(t.id) }">
               <view class="swipe-actions">
                 <view class="swipe-btn swipe-edit" @click.stop="swipeEdit(t)">
-                  <image class="swipe-icon" src="/static/task/icon_edit_pencil.png" mode="aspectFit" />
+                  <image class="swipe-icon" src="/static/common/icon_edit_pencil.png" mode="aspectFit" />
                 </view>
                 <view class="swipe-btn swipe-delete" @click.stop="swipeDelete(t)">
                   <image class="swipe-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
@@ -202,7 +202,7 @@
     </view>
 
     <view class="fab" @click="addTask">
-      <image class="fab-img" src="/static/calendar/btn_fab_add.png" mode="aspectFit" />
+      <image class="fab-img" src="/static/common/btn_fab_add.png" mode="aspectFit" />
     </view>
 
     <BlSheet v-model="actionSheetOpen" title="" :confirm-text="''">

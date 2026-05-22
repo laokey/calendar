@@ -9,8 +9,10 @@
           <text class="name">{{ c.name }}</text>
         </view>
         <view class="right">
-          <switch :checked="c.enabled !== false" color="#3d6afb" @change="toggle(c.id, $event.detail.value)" />
-          <view class="edit" @click="goEdit(c.id)"><text class="edit-text">编</text></view>
+          <switch class="sw" :checked="c.enabled !== false" color="#3d6afb" @change="toggle(c.id, $event.detail.value)" />
+          <view class="edit" @click="goEdit(c.id)">
+            <image class="edit-icon" src="/static/common/icon_edit_pencil.png" mode="aspectFit" />
+          </view>
         </view>
       </view>
     </view>
@@ -46,6 +48,9 @@ function goEdit(id) {
 <style scoped lang="scss">
 .cats-page {
   padding-bottom: 80rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .list {
@@ -58,9 +63,8 @@ function goEdit(id) {
 .row {
   height: 104rpx;
   border-radius: 24rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   padding: 0 18rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -99,6 +103,11 @@ function goEdit(id) {
   gap: 18rpx;
 }
 
+.sw {
+  transform: scale(0.86);
+  transform-origin: right center;
+}
+
 .edit {
   width: 72rpx;
   height: 72rpx;
@@ -107,10 +116,10 @@ function goEdit(id) {
   justify-content: center;
 }
 
-.edit-text {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.7);
+.edit-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+  opacity: 0.8;
 }
 </style>
-

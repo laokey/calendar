@@ -103,7 +103,7 @@
     </view>
 
     <view class="fab" @click="addEvent">
-      <image class="fab-img" src="/static/calendar/btn_fab_add.png" mode="aspectFit" />
+      <image class="fab-img" src="/static/common/btn_fab_add.png" mode="aspectFit" />
     </view>
   </view>
 </template>

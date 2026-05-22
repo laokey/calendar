@@ -4,7 +4,7 @@
 
     <view class="top-bar">
       <view class="cat-btn" @click="goCategories">
-        <view class="grid-icon" />
+        <image class="cat-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
         <text class="cat-text">类别</text>
       </view>
 
@@ -15,45 +15,50 @@
       </view>
     </view>
 
-    <scroll-view scroll-x class="days" show-scrollbar="false">
-      <view class="days-row">
-        <view v-for="d in days" :key="d.key" class="day" @click="selectDay(d.key)">
-          <text class="day-w">{{ d.weekday }}</text>
-          <view class="day-b" :class="{ on: d.key === activeDateKey }">
-            <text class="day-n" :class="{ on: d.key === activeDateKey }">{{ d.date }}</text>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
-
     <view class="sections">
       <view v-for="d in days" :key="d.key" class="section">
         <view class="section-head">
-          <text class="sec-title">{{ d.weekday }}—{{ d.date }}</text>
+          <view v-if="d.key === todayKey" class="sec-today">
+            <text class="sec-week">{{ d.weekday }}</text>
+            <view class="sec-date-on"><text class="sec-date-on-text">{{ d.date }}</text></view>
+          </view>
+          <text v-else class="sec-title">{{ d.weekday }} {{ d.date }}</text>
         </view>
 
-        <BlSegmented v-model="activeCategoryId" :options="categoryOptions" />
+        <view class="tabs">
+          <view
+            v-for="opt in categoryOptions"
+            :key="opt.value"
+            class="tab"
+            @click="setDayCategory(d.key, opt.value)"
+          >
+            <text class="tab-text" :class="{ on: dayCategoryId(d.key) === opt.value }">{{ opt.label }}</text>
+            <view class="tab-line" :class="{ on: dayCategoryId(d.key) === opt.value }" />
+          </view>
+        </view>
 
-        <view v-if="itemsFor(d.key).length" class="meal-items">
-          <view v-for="it in itemsFor(d.key)" :key="it.id" class="meal-item" @click="openDetail(it.id)">
+        <view v-if="dayItems(d.key).length" class="meal-items">
+          <view v-for="it in dayItems(d.key)" :key="it.id" class="meal-item" @click="openDetail(it.id)">
             <view class="thumb">
               <image v-if="it.photoPath" class="thumb-img" :src="it.photoPath" mode="aspectFill" />
               <view v-else class="thumb-ph" />
             </view>
             <text class="meal-title">{{ it.title }}</text>
-            <view class="meal-del" @click.stop="removePlan(it.id)"><text class="meal-del-text">删</text></view>
+            <view class="meal-del" @click.stop="removePlan(it.id)">
+              <image class="meal-del-icon" src="/static/meals/icon_trash.png" mode="aspectFit" />
+            </view>
           </view>
         </view>
 
-        <view v-else class="add-card" @click="openPlanForm(d.key)">
-          <text class="add-plus">+</text>
+        <view class="add-card" @click="openPlanForm(d.key, dayCategoryId(d.key))">
+          <image class="add-icon" src="/static/common/icon_plus.png" mode="aspectFit" />
           <text class="add-text">添加</text>
         </view>
       </view>
     </view>
 
-    <view class="fab" @click="openPlanForm(activeDateKey)">
-      <text class="fab-plus">+</text>
+    <view class="fab" @click="openPlanForm(activeDateKey, dayCategoryId(activeDateKey))">
+      <image class="fab-img" src="/static/common/btn_fab_add.png" mode="aspectFit" />
     </view>
   </view>
 </template>
@@ -62,14 +67,12 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
-import BlSegmented from '../../components/BlSegmented.vue'
 import {
   clearRecipeSelectTmp,
   ensureMealState,
   findRecipe,
   listCategories,
   plansForDateCategory,
-  setActiveCategoryId,
   setActiveDateKey,
   setWeekStartKey,
   weekDaysForKey,
@@ -78,27 +81,47 @@ import {
 } from '../../utils/mealStore'
 
 const mealState = ref(ensureMealState())
+const todayKey = ref('')
+const dayCategoryMap = ref({})
 
 function refresh() {
   mealState.value = ensureMealState()
   const enabled = listCategories(mealState.value, { enabledOnly: true })
-  if (enabled.length && !enabled.some((c) => c.id === activeCategoryId.value)) {
-    mealState.value = setActiveCategoryId(mealState.value, enabled[0].id)
+  const fallback = enabled[0] ? enabled[0].id : ''
+  for (const k of Object.keys(dayCategoryMap.value || {})) {
+    const v = dayCategoryMap.value[k]
+    if (!enabled.some((c) => c.id === v)) dayCategoryMap.value[k] = fallback
   }
 }
 
-onShow(() => refresh())
+function startOfWeekDate(d) {
+  const x = new Date(d)
+  const dow = x.getDay()
+  x.setHours(0, 0, 0, 0)
+  x.setDate(x.getDate() - dow)
+  return x
+}
+
+function initToday() {
+  const key = formatKey(new Date())
+  const weekKey = formatKey(startOfWeekDate(new Date()))
+  todayKey.value = key
+  if (mealState.value.weekStartKey !== weekKey) {
+    mealState.value = setWeekStartKey(mealState.value, weekKey)
+  }
+  if (mealState.value.activeDateKey !== key) {
+    mealState.value = setActiveDateKey(mealState.value, key)
+  }
+}
+
+onShow(() => {
+  mealState.value = ensureMealState()
+  initToday()
+  refresh()
+})
 
 const weekStartKey = computed(() => mealState.value.weekStartKey)
 const activeDateKey = computed(() => mealState.value.activeDateKey)
-const activeCategoryId = computed({
-  get() {
-    return mealState.value.activeCategoryId
-  },
-  set(v) {
-    mealState.value = setActiveCategoryId(mealState.value, v)
-  },
-})
 
 const days = computed(() => weekDaysForKey(weekStartKey.value))
 const weekText = computed(() => weekRangeText(weekStartKey.value))
@@ -106,6 +129,26 @@ const weekText = computed(() => weekRangeText(weekStartKey.value))
 const categoryOptions = computed(() =>
   listCategories(mealState.value, { enabledOnly: true }).map((c) => ({ label: c.name, value: c.id }))
 )
+
+const defaultCategoryId = computed(() => {
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const stateId = String(mealState.value.activeCategoryId || '')
+  if (stateId && enabled.some((c) => c.id === stateId)) return stateId
+  return enabled[0] ? enabled[0].id : ''
+})
+
+function dayCategoryId(dateKeyVal) {
+  const k = String(dateKeyVal || '')
+  const v = dayCategoryMap.value && dayCategoryMap.value[k] ? String(dayCategoryMap.value[k]) : ''
+  return v || defaultCategoryId.value
+}
+
+function setDayCategory(dateKeyVal, categoryIdVal) {
+  const k = String(dateKeyVal || '')
+  const v = String(categoryIdVal || '')
+  if (!k) return
+  dayCategoryMap.value = { ...(dayCategoryMap.value || {}), [k]: v }
+}
 
 function shiftWeek(deltaDays) {
   const cur = days.value[0] ? days.value[0].key : weekStartKey.value
@@ -115,12 +158,8 @@ function shiftWeek(deltaDays) {
   refresh()
 }
 
-function selectDay(key) {
-  mealState.value = setActiveDateKey(mealState.value, key)
-}
-
-function itemsFor(dateKeyVal) {
-  const plans = plansForDateCategory(mealState.value, dateKeyVal, activeCategoryId.value)
+function itemsFor(dateKeyVal, categoryIdVal) {
+  const plans = plansForDateCategory(mealState.value, dateKeyVal, categoryIdVal)
   return plans
     .map((p) => {
       const r = findRecipe(mealState.value, p.recipeId)
@@ -129,9 +168,14 @@ function itemsFor(dateKeyVal) {
     .filter(Boolean)
 }
 
-function openPlanForm(dateKeyVal) {
+function dayItems(dateKeyVal) {
+  return itemsFor(dateKeyVal, dayCategoryId(dateKeyVal))
+}
+
+function openPlanForm(dateKeyVal, categoryIdVal) {
   clearRecipeSelectTmp()
-  uni.navigateTo({ url: `/pages/meals/meal-plan-form?date=${dateKeyVal}&categoryId=${activeCategoryId.value}` })
+  const catId = String(categoryIdVal || dayCategoryId(dateKeyVal) || '')
+  uni.navigateTo({ url: `/pages/meals/meal-plan-form?date=${dateKeyVal}&categoryId=${catId}` })
 }
 
 function openDetail(planId) {
@@ -164,6 +208,9 @@ function formatKey(d) {
 <style scoped lang="scss">
 .meals-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .top-bar {
@@ -178,17 +225,16 @@ function formatKey(d) {
   height: 76rpx;
   padding: 0 18rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #f5f6f7;
   display: flex;
   align-items: center;
   gap: 10rpx;
 }
 
-.grid-icon {
+.cat-icon {
   width: 34rpx;
   height: 34rpx;
-  border-radius: 10rpx;
-  background: rgba(17, 17, 17, 0.14);
+  display: block;
 }
 
 .cat-text {
@@ -201,7 +247,7 @@ function formatKey(d) {
   flex: 1;
   height: 76rpx;
   border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #f5f6f7;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,69 +275,93 @@ function formatKey(d) {
   color: rgba(17, 17, 17, 0.9);
 }
 
-.days {
-  margin-top: 14rpx;
-}
-
-.days-row {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 6rpx 0;
-}
-
-.day {
-  width: 98rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10rpx;
-}
-
-.day-w {
-  font-size: 24rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.7);
-}
-
-.day-b {
-  width: 58rpx;
-  height: 58rpx;
-  border-radius: 999rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.day-b.on {
-  background: #3d6afb;
-}
-
-.day-n {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.9);
-}
-
-.day-n.on {
-  color: #ffffff;
-}
-
 .sections {
-  margin-top: 10rpx;
+  margin-top: 14rpx;
   display: flex;
   flex-direction: column;
-  gap: 26rpx;
+  gap: 18rpx;
+}
+
+.section {
+  background: #f5f6f7;
+  border-radius: 28rpx;
+  padding: 18rpx 22rpx 22rpx;
 }
 
 .section-head {
   margin-bottom: 12rpx;
 }
 
+.sec-today {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.sec-week {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.sec-date-on {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 999rpx;
+  background: #3d6afb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sec-date-on-text {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #ffffff;
+}
+
 .sec-title {
   font-size: 32rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.9);
+}
+
+.tabs {
+  margin-top: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tab {
+  flex: 1;
+  height: 70rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+
+.tab-text {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.tab-text.on {
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.tab-line {
+  width: 30rpx;
+  height: 6rpx;
+  border-radius: 999rpx;
+  background: transparent;
+}
+
+.tab-line.on {
+  background: #3d6afb;
 }
 
 .meal-items {
@@ -304,7 +374,7 @@ function formatKey(d) {
 .meal-item {
   height: 106rpx;
   border-radius: 24rpx;
-  background: rgba(76, 195, 138, 0.12);
+  background: rgba(17, 17, 17, 0.04);
   display: flex;
   align-items: center;
   padding: 0 18rpx 0 14rpx;
@@ -345,27 +415,27 @@ function formatKey(d) {
   justify-content: center;
 }
 
-.meal-del-text {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.45);
+.meal-del-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .add-card {
   margin-top: 14rpx;
   height: 106rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.03);
+  background: rgba(17, 17, 17, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10rpx;
 }
 
-.add-plus {
-  font-size: 36rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.85);
+.add-icon {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
 }
 
 .add-text {
@@ -374,25 +444,22 @@ function formatKey(d) {
   color: rgba(17, 17, 17, 0.85);
 }
 
+
 .fab {
   position: fixed;
   right: 34rpx;
   bottom: 120rpx;
-  width: 116rpx;
-  height: 116rpx;
+  width: 152rpx;
+  height: 96rpx;
   border-radius: 999rpx;
-  background: #3d6afb;
-  box-shadow: 0 18rpx 36rpx rgba(61, 106, 251, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.fab-plus {
-  color: #ffffff;
-  font-size: 64rpx;
-  font-weight: 700;
-  line-height: 1;
+.fab-img {
+  width: 152rpx;
+  height: 96rpx;
+  display: block;
 }
 </style>
-

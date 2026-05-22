@@ -3,7 +3,7 @@
     <BlHeader title="食谱盒" back>
       <template #right>
         <view class="top-add" @click="goAddRecipe">
-          <text class="top-add-plus">+</text>
+          <image class="top-add-icon" src="/static/meals/icon_plus.png" mode="aspectFit" />
           <text class="top-add-text">添加食谱</text>
         </view>
       </template>
@@ -12,7 +12,7 @@
     <BlSegmented v-model="activeTab" :options="tabOptions" />
 
     <view class="search">
-      <view class="search-icon" />
+      <image class="search-icon" src="/static/meals/icon_search.png" mode="aspectFit" />
       <input v-model="q" class="search-input" placeholder="搜索" placeholder-class="ph" />
     </view>
 
@@ -28,7 +28,9 @@
           <view v-else class="thumb-ph" />
         </view>
         <text class="title">{{ r.title }}</text>
-        <view class="more" @click.stop="openActions(r.id)"><text class="more-text">···</text></view>
+        <view class="more" @click.stop="openActions(r.id)">
+          <image class="more-icon" src="/static/meals/icon_more.png" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -188,6 +190,9 @@ function doDelete() {
 <style scoped lang="scss">
 .box-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .top-add {
@@ -196,26 +201,27 @@ function doDelete() {
   align-items: center;
   justify-content: flex-end;
   gap: 6rpx;
+
 }
 
-.top-add-plus {
-  color: #3d6afb;
-  font-size: 34rpx;
-  font-weight: 900;
-  line-height: 1;
+.top-add-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
 }
 
 .top-add-text {
   color: #3d6afb;
   font-size: 28rpx;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .search {
   margin-top: 14rpx;
   height: 92rpx;
   border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #f5f6f7;
   padding: 0 18rpx;
   display: flex;
   align-items: center;
@@ -225,8 +231,8 @@ function doDelete() {
 .search-icon {
   width: 28rpx;
   height: 28rpx;
-  border-radius: 999rpx;
-  border: 3rpx solid rgba(17, 17, 17, 0.25);
+  display: block;
+  opacity: 0.75;
 }
 
 .search-input {
@@ -249,7 +255,7 @@ function doDelete() {
 .row {
   height: 104rpx;
   border-radius: 24rpx;
-  background: #ffffff;
+  background: #f5f6f7;
   padding: 0 12rpx 0 10rpx;
   display: flex;
   align-items: center;
@@ -324,10 +330,11 @@ function doDelete() {
   justify-content: center;
 }
 
-.more-text {
-  font-size: 36rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.6);
+.more-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+  opacity: 0.75;
 }
 
 .bottom {
