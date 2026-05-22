@@ -10,14 +10,14 @@
       </view>
     </view>
 
-    <text class="hint">已发送{{ items.length }}张照片/视频</text>
+    <text class="hint">已发送{{ selectedCount }}张照片/视频</text>
 
     <view class="rows">
       <view v-for="(it, idx) in items" :key="it.uri" class="row">
         <view class="thumb-wrap">
           <image class="thumb" :src="it.uri" mode="aspectFill" />
-          <view class="thumb-badge" :class="{ active: idx === 0 }">
-            <text class="thumb-check">✓</text>
+          <view class="thumb-badge" :class="{ active: !!it.selected }" @click.stop="toggleSelected(idx)">
+            <text v-if="it.selected" class="thumb-check">✓</text>
           </view>
         </view>
         <view class="note">
@@ -32,7 +32,7 @@
       </view>
     </view>
 
-    <view class="send" :class="{ disabled: items.length === 0 }" @click="submit">
+    <view class="send" :class="{ disabled: selectedCount === 0 }" @click="submit">
       <text class="send-text">发送</text>
     </view>
   </view>
@@ -52,13 +52,16 @@ onLoad((options) => {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
     if (parsed && parsed.albumId) payload.albumId = String(parsed.albumId)
-    payload.items = Array.isArray(parsed.items) ? parsed.items.map((x) => ({ ...x })) : []
+    payload.items = Array.isArray(parsed.items)
+      ? parsed.items.map((x) => ({ ...x, selected: x && typeof x.selected === 'boolean' ? x.selected : true }))
+      : []
   } catch (e) {
     payload.items = []
   }
 })
 
 const items = computed(() => payload.items)
+const selectedCount = computed(() => (payload.items || []).filter((x) => x && x.selected).length)
 
 const safeTop = computed(() => {
   try {
@@ -93,13 +96,21 @@ function clearAll() {
   })
 }
 
+function toggleSelected(index) {
+  const list = payload.items || []
+  const it = list[index]
+  if (!it) return
+  it.selected = !it.selected
+}
+
 function submit() {
-  if (!items.value.length || !payload.albumId) return
+  const selected = (items.value || []).filter((x) => x && x.selected)
+  if (!selected.length || !payload.albumId) return
   const s = ensureGalleryState()
   const deviceId = s.activeDeviceId
-  addTransferTasks(s, { deviceId, albumId: payload.albumId, items: items.value })
+  addTransferTasks(s, { deviceId, albumId: payload.albumId, items: selected })
   uni.removeStorageSync('gallery_pending_upload')
-  uni.navigateTo({ url: '/pages/gallery/transfers' })
+  uni.navigateTo({ url: `/pages/gallery/transfers?albumId=${encodeURIComponent(payload.albumId)}&autoBack=1` })
 }
 </script>
 
@@ -107,7 +118,8 @@ function submit() {
 .page {
   min-height: 100vh;
   background: #ffffff;
-  padding: 0 28rpx 40rpx;
+  padding: 0 28rpx calc(160rpx + constant(safe-area-inset-bottom));
+  padding: 0 28rpx calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .head {
@@ -192,24 +204,23 @@ function submit() {
   position: absolute;
   top: 10rpx;
   right: 10rpx;
-  width: 42rpx;
-  height: 42rpx;
-  border-radius: 12rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2rpx solid rgba(17, 17, 17, 0.18);
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 9999rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2rpx solid rgba(17, 17, 17, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: transparent;
 }
 
 .thumb-badge.active {
   background: #3d6afb;
   border-color: #3d6afb;
-  color: #ffffff;
 }
 
 .thumb-check {
+  color: #ffffff;
   font-size: 22rpx;
   font-weight: 900;
   line-height: 1;
@@ -239,13 +250,18 @@ function submit() {
 }
 
 .send {
-  margin-top: 28rpx;
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: calc(24rpx + constant(safe-area-inset-bottom));
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
   height: 104rpx;
   border-radius: 9999rpx;
   background: #3d6afb;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
 }
 
 .send.disabled {

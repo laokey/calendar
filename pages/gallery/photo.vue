@@ -6,7 +6,7 @@
       </view>
       <text class="head-title">相片详情</text>
       <view class="head-right">
-        <text class="danger" @click="confirmDelete">删除</text>
+        <image class="danger" src="/static/gallery/icon_trash.png" mode="aspectFit" @click="confirmDelete" />
       </view>
     </view>
 
@@ -17,18 +17,22 @@
 
       <view class="ops">
         <view class="op" @click="toggleLike">
-          <text class="op-icon">{{ photo.liked ? '♥' : '♡' }}</text>
+          <image
+            class="op-icon"
+            :src="photo.liked ? '/static/gallery/icon_heart_filled.png' : '/static/gallery/icon_heart_outline.png'"
+            mode="aspectFit"
+          />
         </view>
         <view class="op" @click="refresh">
-          <text class="op-icon">↻</text>
+          <image class="op-icon" src="/static/gallery/icon_refresh_outline.png" mode="aspectFit" />
         </view>
         <view class="op" @click="share">
-          <text class="op-icon">⤴</text>
+          <image class="op-icon" src="/static/gallery/icon_move.png" mode="aspectFit" />
         </view>
       </view>
 
       <view class="title-wrap">
-        <view class="pencil"><text class="pencil-text">✎</text></view>
+        <view class="pencil"><image class="pencil-icon" src="/static/gallery/icon_edit.png" mode="aspectFit" /></view>
         <input
           v-model="titleDraft"
           class="title-input"
@@ -39,7 +43,7 @@
       </view>
 
       <view class="info">
-        <view class="mini-icon" />
+        <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
         <text class="info-text">{{ deviceName }}</text>
         <view class="dot" />
         <text class="info-text">{{ photo.createdAt }}</text>
@@ -58,7 +62,7 @@
     <view class="composer">
       <input v-model="commentDraft" class="composer-input" placeholder="添加评论" placeholder-class="ph" confirm-type="send" @confirm="send" />
       <view class="send" :class="{ disabled: !commentDraft.trim() }" @click="send">
-        <text class="send-icon">➤</text>
+        <image class="send-icon" src="/static/gallery/icon_send.png" mode="aspectFit" />
       </view>
     </view>
   </view>
@@ -206,9 +210,9 @@ function confirmDelete() {
 }
 
 .danger {
-  font-size: 28rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.35);
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.65;
 }
 
 .body {
@@ -245,9 +249,9 @@ function confirmDelete() {
 }
 
 .op-icon {
-  font-size: 42rpx;
-  font-weight: 800;
-  line-height: 1;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.75;
 }
 
 .title-wrap {
@@ -271,10 +275,10 @@ function confirmDelete() {
   justify-content: center;
 }
 
-.pencil-text {
-  font-size: 22rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.6);
+.pencil-icon {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.6;
 }
 
 .title-input {
@@ -300,8 +304,6 @@ function confirmDelete() {
 .mini-icon {
   width: 34rpx;
   height: 24rpx;
-  border-radius: 6rpx;
-  background: linear-gradient(135deg, #ffd24d 0%, #3d6afb 100%);
 }
 
 .info-text {
@@ -386,20 +388,18 @@ function confirmDelete() {
   width: 86rpx;
   height: 86rpx;
   border-radius: 26rpx;
-  background: #3d6afb;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .send.disabled {
-  background: rgba(17, 17, 17, 0.18);
+  opacity: 0.35;
 }
 
 .send-icon {
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 900;
-  margin-left: 4rpx;
+  width: 64rpx;
+  height: 64rpx;
 }
 </style>

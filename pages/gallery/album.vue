@@ -14,16 +14,29 @@
     </view>
 
     <view class="cover">
-      <image v-if="coverUri" class="cover-img" :src="coverUri" mode="aspectFill" />
+      <image
+        v-if="coverUri"
+        class="cover-img"
+        :src="coverUri"
+        mode="aspectFill"
+      />
       <view v-else class="cover-ph">
-        <view class="cover-ph-icon" />
+        <image
+          class="cover-ph-icon"
+          src="/static/gallery/icon_image.png"
+          mode="aspectFit"
+        />
       </view>
 
       <view class="cover-info">
         <view class="cover-line">
           <text class="album-name">{{ album?.name }}</text>
           <view class="edit" @click="openRename">
-            <text class="edit-icon">✎</text>
+            <image
+              class="edit-icon"
+              src="/static/gallery/icon_edit.png"
+              mode="aspectFit"
+            />
           </view>
         </view>
         <text class="sub">数量:{{ photos.length }}</text>
@@ -34,7 +47,11 @@
     <view class="tools">
       <view class="tool-left" @click="openSlideshow">
         <view class="play">
-          <text class="play-icon">▶</text>
+          <image
+            class="play-icon"
+            src="/static/gallery/icon_play_dark.png"
+            mode="aspectFit"
+          />
         </view>
         <text class="tool-text">幻灯片</text>
       </view>
@@ -44,8 +61,11 @@
 
     <view v-if="photos.length === 0" class="empty">
       <view class="empty-icon">
-        <view class="empty-pic" />
-        <view class="empty-plus"><text class="empty-plus-text">+</text></view>
+        <image
+          class="empty-pic"
+          src="/static/gallery/bg_none_galley.png"
+          mode="aspectFit"
+        />
       </view>
       <text class="empty-text">暂无照片</text>
       <view class="empty-btn" @click="openUpload">
@@ -54,28 +74,67 @@
     </view>
 
     <view v-else class="grid">
-      <view v-for="p in photos" :key="p.id" class="cell" @click="tapPhoto(p.id)">
+      <view
+        v-for="p in photos"
+        :key="p.id"
+        class="cell"
+        @click="tapPhoto(p.id)"
+      >
         <image class="cell-img" :src="p.uri" mode="aspectFill" />
-        <view v-if="p.type === 'video'" class="video"><text class="video-icon">▶</text></view>
+        <view v-if="p.type === 'video'" class="video">
+          <view class="video-icon">
+            <image
+              class="video-icon-img"
+              src="/static/gallery/icon_play.png"
+              mode="aspectFit"
+            />
+          </view>
+        </view>
 
         <view v-if="selectMode" class="sel" @click.stop="togglePhoto(p.id)">
           <view class="sel-box" :class="{ checked: selectedSet.has(p.id) }">
-            <text v-if="selectedSet.has(p.id)" class="sel-check">✓</text>
+            <image
+              v-if="selectedSet.has(p.id)"
+              class="sel-check"
+              src="/static/common/icon_checkbox_checked.png"
+              mode="aspectFit"
+            />
           </view>
         </view>
       </view>
     </view>
 
     <view class="fab" @click="openUpload">
-      <text class="fab-text">+</text>
+      <image
+        class="fab-img"
+        src="/static/common/btn_fab_add.png"
+        mode="aspectFit"
+      />
     </view>
 
     <view v-if="selectMode" class="bar">
-      <text class="bar-left">{{ selectedCount }}/{{ photos.length }}项已选择</text>
+      <text class="bar-left"
+        >{{ selectedCount }}/{{ photos.length }}项已选择</text
+      >
       <view class="bar-actions">
-        <view class="bar-btn" @click="openMove"><text class="bar-icon">↗</text></view>
-        <view class="bar-btn" @click="openCopy"><text class="bar-icon">⧉</text></view>
-        <view class="bar-btn" @click="confirmDeleteSelected"><text class="bar-icon">🗑</text></view>
+        <view class="bar-btn" @click="openMove"
+          ><image
+            class="bar-icon"
+            src="/static/gallery/icon_move.png"
+            mode="aspectFit"
+        /></view>
+        <view class="bar-btn" @click="openCopy"
+          ><image
+            class="bar-icon"
+            src="/static/gallery/icon_copy.png"
+            mode="aspectFit"
+        /></view>
+        <view class="bar-btn" @click="confirmDeleteSelected"
+          ><image
+            class="bar-icon"
+            src="/static/gallery/icon_trash.png"
+            mode="aspectFit"
+        /></view>
       </view>
     </view>
 
@@ -83,12 +142,26 @@
       <view class="sheet" @click.stop>
         <view class="sheet-head">
           <text class="sheet-title">编辑名称</text>
-          <text class="sheet-x" @click="closeRename">×</text>
+          <image
+            class="sheet-x"
+            src="/static/gallery/icon_close.png"
+            mode="aspectFit"
+            @click="closeRename"
+          />
         </view>
         <view class="sheet-input">
-          <input v-model="renameValue" class="sheet-field" placeholder="输入相册名称" placeholder-class="sheet-ph" />
+          <input
+            v-model="renameValue"
+            class="sheet-field"
+            placeholder="输入相册名称"
+            placeholder-class="sheet-ph"
+          />
         </view>
-        <view class="sheet-btn" :class="{ disabled: !renameValue.trim() }" @click="submitRename">
+        <view
+          class="sheet-btn"
+          :class="{ disabled: !renameValue.trim() }"
+          @click="submitRename"
+        >
           <text class="sheet-btn-text">确定</text>
         </view>
       </view>
@@ -97,8 +170,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { computed, ref } from "vue";
+import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
   deleteAlbum,
   deletePhotos,
@@ -106,172 +179,178 @@ import {
   listAlbums,
   listPhotos,
   renameAlbum,
-} from '../../utils/galleryStore'
+} from "../../utils/galleryStore";
 
-const albumId = ref('')
-const state = ref(ensureGalleryState())
-const selectMode = ref(false)
-const selectedIds = ref([])
-const renameVisible = ref(false)
-const renameValue = ref('')
+const albumId = ref("");
+const state = ref(ensureGalleryState());
+const selectMode = ref(false);
+const selectedIds = ref([]);
+const renameVisible = ref(false);
+const renameValue = ref("");
 
 onLoad((options) => {
-  albumId.value = options && options.albumId ? String(options.albumId) : ''
-})
+  albumId.value = options && options.albumId ? String(options.albumId) : "";
+});
 
 onShow(() => {
-  state.value = ensureGalleryState()
+  state.value = ensureGalleryState();
   if (albumId.value && !album.value) {
-    uni.showToast({ title: '相册不存在', icon: 'none' })
-    setTimeout(() => uni.navigateBack(), 300)
+    uni.showToast({ title: "相册不存在", icon: "none" });
+    setTimeout(() => uni.navigateBack(), 300);
   }
-})
+});
 
 const safeTop = computed(() => {
   try {
-    const info = uni.getSystemInfoSync()
-    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
-    return insets && typeof insets.top === 'number' ? insets.top : 0
+    const info = uni.getSystemInfoSync();
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null;
+    return insets && typeof insets.top === "number" ? insets.top : 0;
   } catch (e) {
-    return 0
+    return 0;
   }
-})
+});
 
 const album = computed(() => {
-  const all = listAlbums(state.value, state.value.activeDeviceId)
-  return all.find((a) => a.id === albumId.value) || null
-})
+  const all = listAlbums(state.value, state.value.activeDeviceId);
+  return all.find((a) => a.id === albumId.value) || null;
+});
 
-const photos = computed(() => listPhotos(state.value, albumId.value))
+const photos = computed(() => listPhotos(state.value, albumId.value));
 
 const coverUri = computed(() => {
-  const list = photos.value
-  return list[0] ? list[0].uri : ''
-})
+  const list = photos.value;
+  return list[0] ? list[0].uri : "";
+});
 
 const headerTitle = computed(() => {
-  if (selectMode.value) return '选择'
-  return album.value ? album.value.name : ''
-})
+  if (selectMode.value) return "选择";
+  return album.value ? album.value.name : "";
+});
 
-const selectedSet = computed(() => new Set(selectedIds.value))
-const selectedCount = computed(() => selectedIds.value.length)
+const selectedSet = computed(() => new Set(selectedIds.value));
+const selectedCount = computed(() => selectedIds.value.length);
 
 function back() {
-  uni.navigateBack()
+  uni.navigateBack();
 }
 
 function enterSelect() {
-  if (photos.value.length === 0) return
-  selectMode.value = true
-  selectedIds.value = []
+  if (photos.value.length === 0) return;
+  selectMode.value = true;
+  selectedIds.value = [];
 }
 
 function exitSelect() {
-  selectMode.value = false
-  selectedIds.value = []
+  selectMode.value = false;
+  selectedIds.value = [];
 }
 
 function togglePhoto(id) {
-  const next = new Set(selectedIds.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selectedIds.value = Array.from(next)
+  const next = new Set(selectedIds.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  selectedIds.value = Array.from(next);
 }
 
 function toggleSelectAll() {
   if (selectedIds.value.length === photos.value.length) {
-    selectedIds.value = []
-    return
+    selectedIds.value = [];
+    return;
   }
-  selectedIds.value = photos.value.map((p) => p.id)
+  selectedIds.value = photos.value.map((p) => p.id);
 }
 
 function tapPhoto(id) {
   if (selectMode.value) {
-    togglePhoto(id)
-    return
+    togglePhoto(id);
+    return;
   }
-  uni.navigateTo({ url: `/pages/gallery/photo?albumId=${encodeURIComponent(albumId.value)}&photoId=${encodeURIComponent(id)}` })
+  uni.navigateTo({
+    url: `/pages/gallery/photo?albumId=${encodeURIComponent(albumId.value)}&photoId=${encodeURIComponent(id)}`,
+  });
 }
 
 function openSlideshow() {
-  if (photos.value.length === 0) return
-  uni.navigateTo({ url: `/pages/gallery/slideshow?albumId=${encodeURIComponent(albumId.value)}` })
+  if (photos.value.length === 0) return;
+  uni.navigateTo({
+    url: `/pages/gallery/slideshow?albumId=${encodeURIComponent(albumId.value)}`,
+  });
 }
 
 function openUpload() {
-  uni.navigateTo({ url: `/pages/gallery/upload?albumId=${encodeURIComponent(albumId.value)}` })
+  uni.navigateTo({
+    url: `/pages/gallery/upload?albumId=${encodeURIComponent(albumId.value)}`,
+  });
 }
 
 function confirmDeleteAlbum() {
-  if (!album.value) return
+  if (!album.value) return;
   uni.showModal({
-    title: '删除相册',
-    content: '相册一旦删除将无法恢复',
-    cancelText: '取消',
-    confirmText: '确定',
+    title: "删除相册",
+    content: "相册一旦删除将无法恢复",
+    cancelText: "取消",
+    confirmText: "确定",
     success: (res) => {
-      if (!res.confirm) return
-      const s = ensureGalleryState()
-      deleteAlbum(s, albumId.value)
-      uni.navigateBack()
+      if (!res.confirm) return;
+      const s = ensureGalleryState();
+      deleteAlbum(s, albumId.value);
+      uni.navigateBack();
     },
-  })
+  });
 }
 
 function confirmDeleteSelected() {
-  if (selectedIds.value.length === 0) return
+  if (selectedIds.value.length === 0) return;
   uni.showModal({
-    title: '删除图片',
+    title: "删除图片",
     content: `将删除${selectedIds.value.length}张照片，删除后无法恢复`,
-    cancelText: '取消',
-    confirmText: '确定',
+    cancelText: "取消",
+    confirmText: "确定",
     success: (res) => {
-      if (!res.confirm) return
-      const s = ensureGalleryState()
-      deletePhotos(s, albumId.value, selectedIds.value)
-      state.value = ensureGalleryState()
-      exitSelect()
+      if (!res.confirm) return;
+      const s = ensureGalleryState();
+      deletePhotos(s, albumId.value, selectedIds.value);
+      state.value = ensureGalleryState();
+      exitSelect();
     },
-  })
+  });
 }
 
 function openMove() {
-  if (selectedIds.value.length === 0) return
+  if (selectedIds.value.length === 0) return;
   uni.navigateTo({
     url: `/pages/gallery/choose-album?mode=move&fromAlbumId=${encodeURIComponent(albumId.value)}&ids=${encodeURIComponent(
-      selectedIds.value.join(','),
+      selectedIds.value.join(","),
     )}`,
-  })
+  });
 }
 
 function openCopy() {
-  if (selectedIds.value.length === 0) return
+  if (selectedIds.value.length === 0) return;
   uni.navigateTo({
     url: `/pages/gallery/choose-album?mode=copy&fromAlbumId=${encodeURIComponent(albumId.value)}&ids=${encodeURIComponent(
-      selectedIds.value.join(','),
+      selectedIds.value.join(","),
     )}`,
-  })
+  });
 }
 
 function openRename() {
-  if (!album.value) return
-  renameValue.value = album.value.name
-  renameVisible.value = true
+  if (!album.value) return;
+  renameValue.value = album.value.name;
+  renameVisible.value = true;
 }
 
 function closeRename() {
-  renameVisible.value = false
+  renameVisible.value = false;
 }
 
 function submitRename() {
-  const v = renameValue.value.trim()
-  if (!v) return
-  const s = ensureGalleryState()
-  renameAlbum(s, albumId.value, v)
-  state.value = ensureGalleryState()
-  renameVisible.value = false
+  const v = renameValue.value.trim();
+  if (!v) return;
+  const s = ensureGalleryState();
+  renameAlbum(s, albumId.value, v);
+  state.value = ensureGalleryState();
+  renameVisible.value = false;
 }
 </script>
 
@@ -368,8 +447,7 @@ function submitRename() {
 .cover-ph-icon {
   width: 110rpx;
   height: 90rpx;
-  border-radius: 18rpx;
-  background: rgba(17, 17, 17, 0.12);
+  opacity: 0.38;
 }
 
 .cover-info {
@@ -404,9 +482,9 @@ function submitRename() {
 }
 
 .edit-icon {
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 900;
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.95;
 }
 
 .sub {
@@ -441,10 +519,9 @@ function submitRename() {
 }
 
 .play-icon {
-  font-size: 20rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.65);
-  margin-left: 2rpx;
+  width: 20rpx;
+  height: 20rpx;
+  opacity: 0.65;
 }
 
 .tool-text {
@@ -468,10 +545,8 @@ function submitRename() {
 }
 
 .empty-icon {
-  width: 150rpx;
-  height: 150rpx;
-  border-radius: 40rpx;
-  background: rgba(61, 106, 251, 0.08);
+  width: 240rpx;
+  height: 240rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -479,30 +554,8 @@ function submitRename() {
 }
 
 .empty-pic {
-  width: 84rpx;
-  height: 70rpx;
-  border-radius: 14rpx;
-  background: rgba(17, 17, 17, 0.08);
-}
-
-.empty-plus {
-  position: absolute;
-  bottom: 18rpx;
-  right: 18rpx;
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-plus-text {
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 900;
-  line-height: 1;
+  width: 200rpx;
+  height: 200rpx;
 }
 
 .empty-text {
@@ -562,13 +615,15 @@ function submitRename() {
   height: 64rpx;
   border-radius: 9999rpx;
   background: rgba(0, 0, 0, 0.45);
-  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
-  font-weight: 900;
-  padding-left: 4rpx;
+}
+
+.video-icon-img {
+  width: 30rpx;
+  height: 30rpx;
+  margin-left: 4rpx;
 }
 
 .sel {
@@ -594,66 +649,62 @@ function submitRename() {
 }
 
 .sel-check {
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 900;
-  line-height: 1;
+  width: 28rpx;
+  height: 28rpx;
 }
+
 
 .fab {
   position: fixed;
-  right: 28rpx;
-  bottom: 58rpx;
-  width: 118rpx;
-  height: 118rpx;
-  border-radius: 9999rpx;
-  background: #3d6afb;
+  right: 34rpx;
+  bottom: 120rpx;
+  width: 152rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
 }
 
-.fab-text {
-  color: #ffffff;
-  font-size: 58rpx;
-  font-weight: 700;
-  line-height: 1;
-  margin-top: -4rpx;
+.fab-img {
+  width: 152rpx;
+  height: 96rpx;
+  display: block;
 }
 
 .bar {
   position: fixed;
   left: 18rpx;
   right: 18rpx;
-  bottom: 24rpx;
-  height: 120rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10rpx 30rpx rgba(17, 17, 17, 0.12);
+  bottom: calc(22rpx + constant(safe-area-inset-bottom));
+  bottom: calc(22rpx + env(safe-area-inset-bottom));
+  height: 96rpx;
+  border-radius: 9999rpx;
+  background: rgba(245, 246, 247, 0.98);
+  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 22rpx;
+  padding: 0 18rpx;
   z-index: 60;
 }
 
 .bar-left {
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: 800;
-  color: rgba(17, 17, 17, 0.75);
+  color: rgba(17, 17, 17, 0.6);
 }
 
 .bar-actions {
   display: flex;
   align-items: center;
-  gap: 22rpx;
+  gap: 18rpx;
 }
 
 .bar-btn {
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 22rpx;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 18rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -661,8 +712,8 @@ function submitRename() {
 }
 
 .bar-icon {
-  font-size: 34rpx;
-  font-weight: 900;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .sheet-mask {
@@ -702,12 +753,9 @@ function submitRename() {
   top: 0;
   width: 72rpx;
   height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.55);
+  padding: 20rpx;
+  box-sizing: border-box;
+  opacity: 0.55;
 }
 
 .sheet-input {

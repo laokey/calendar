@@ -2,12 +2,16 @@
   <view class="page">
     <view class="top" :style="{ paddingTop: safeTop + 'px' }">
       <view class="top-left" @click="toggleDeviceMenu">
-        <view class="mini-icon" />
+        <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
         <text class="top-title">{{ activeDevice.name }}</text>
-        <text class="top-arrow">{{ showDeviceMenu ? '▴' : '▾' }}</text>
+        <image
+          class="top-arrow"
+          :src="showDeviceMenu ? '/static/gallery/icon_arrow_up.png' : '/static/gallery/icon_arrow_down.png'"
+          mode="aspectFit"
+        />
       </view>
       <view class="top-right" @click="openAddAlbum">
-        <text class="plus">+</text>
+        <image class="plus" src="/static/gallery/icon_add.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -21,10 +25,10 @@
           @click="selectDevice(d.id)"
         >
           <view class="device-row">
-            <view class="device-icon" />
+            <image class="device-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
             <text class="device-name">{{ d.name }}</text>
           </view>
-          <text v-if="d.id === state.activeDeviceId" class="device-check">✓</text>
+          <image v-if="d.id === state.activeDeviceId" class="device-check" src="/static/gallery/icon_check.png" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -32,8 +36,7 @@
     <view v-if="albums.length === 0" class="empty">
       <view class="empty-hero">
         <view class="empty-icon">
-          <view class="empty-pic" />
-          <view class="empty-plus"><text class="empty-plus-text">+</text></view>
+          <image class="empty-pic" src="/static/gallery/bg_none_galley.png" mode="aspectFit" />
         </view>
       </view>
       <text class="empty-text">暂无相册，快来添加你的相册吧！～</text>
@@ -61,7 +64,7 @@
       <view class="sheet" @click.stop>
         <view class="sheet-head">
           <text class="sheet-title">添加相册</text>
-          <text class="sheet-x" @click="closeAddAlbum">×</text>
+          <image class="sheet-x" src="/static/gallery/icon_close.png" mode="aspectFit" @click="closeAddAlbum" />
         </view>
         <view class="sheet-input">
           <input v-model="newAlbumName" class="sheet-field" placeholder="输入相册名称" placeholder-class="sheet-ph" />
@@ -168,8 +171,6 @@ function createAlbum() {
 .mini-icon {
   width: 34rpx;
   height: 24rpx;
-  border-radius: 6rpx;
-  background: linear-gradient(135deg, #ffd24d 0%, #3d6afb 100%);
 }
 
 .top-title {
@@ -178,15 +179,14 @@ function createAlbum() {
 }
 
 .top-arrow {
-  font-size: 26rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.55);
-  margin-top: 2rpx;
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.55;
 }
 
 .top-right {
-  width: 72rpx;
-  height: 72rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 9999rpx;
   display: flex;
   align-items: center;
@@ -194,10 +194,9 @@ function createAlbum() {
 }
 
 .plus {
-  font-size: 48rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.8);
-  line-height: 1;
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.8;
 }
 
 .mask {
@@ -238,8 +237,6 @@ function createAlbum() {
 .device-icon {
   width: 34rpx;
   height: 24rpx;
-  border-radius: 6rpx;
-  background: linear-gradient(135deg, #ffd24d 0%, #3d6afb 100%);
 }
 
 .device-name {
@@ -248,9 +245,8 @@ function createAlbum() {
 }
 
 .device-check {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: #3d6afb;
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .empty {
@@ -262,18 +258,16 @@ function createAlbum() {
 }
 
 .empty-hero {
-  width: 200rpx;
-  height: 200rpx;
+  width: 240rpx;
+  height: 240rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .empty-icon {
-  width: 150rpx;
-  height: 150rpx;
-  border-radius: 40rpx;
-  background: rgba(61, 106, 251, 0.08);
+  width: 200rpx;
+  height: 200rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,30 +275,8 @@ function createAlbum() {
 }
 
 .empty-pic {
-  width: 84rpx;
-  height: 70rpx;
-  border-radius: 14rpx;
-  background: rgba(17, 17, 17, 0.08);
-}
-
-.empty-plus {
-  position: absolute;
-  bottom: 18rpx;
-  right: 18rpx;
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-plus-text {
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 900;
-  line-height: 1;
+  width: 200rpx;
+  height: 200rpx;
 }
 
 .empty-text {
@@ -436,12 +408,9 @@ function createAlbum() {
   top: 0;
   width: 72rpx;
   height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.55);
+  padding: 20rpx;
+  box-sizing: border-box;
+  opacity: 0.55;
 }
 
 .sheet-input {

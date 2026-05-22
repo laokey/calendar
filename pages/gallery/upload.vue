@@ -11,9 +11,9 @@
     <text class="hint">选择相片上传到指定的相册</text>
 
     <view class="device-row">
-      <view class="mini-icon" />
+      <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
       <text class="device-name">{{ activeDevice.name }}</text>
-      <text class="device-arrow">▴</text>
+      <image class="device-arrow" src="/static/gallery/icon_arrow_up.png" mode="aspectFit" />
     </view>
 
     <view class="list">
@@ -26,7 +26,7 @@
       >
         <text class="item-text">{{ a.name }}</text>
         <view class="radio" :class="{ checked: a.id === targetAlbumId }">
-          <text v-if="a.id === targetAlbumId" class="radio-check">✓</text>
+          <image v-if="a.id === targetAlbumId" class="radio-check" src="/static/common/icon_checkbox_checked.png" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -169,8 +169,6 @@ function pickFromCamera() {
 .mini-icon {
   width: 34rpx;
   height: 24rpx;
-  border-radius: 6rpx;
-  background: linear-gradient(135deg, #ffd24d 0%, #3d6afb 100%);
 }
 
 .device-name {
@@ -179,10 +177,9 @@ function pickFromCamera() {
 }
 
 .device-arrow {
-  font-size: 26rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.55);
-  margin-top: 2rpx;
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.55;
 }
 
 .list {
@@ -235,8 +232,8 @@ function pickFromCamera() {
 }
 
 .radio-check {
-  font-size: 26rpx;
-  font-weight: 900;
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .actions {

@@ -23,7 +23,7 @@
         <view class="meta">
           <view class="row">
             <text class="name">{{ t.name }}</text>
-            <view class="x" @click="remove(t.id)"><text class="x-text">×</text></view>
+            <view class="x" @click="remove(t.id)"><image class="x-icon" src="/static/gallery/icon_close.png" mode="aspectFit" /></view>
           </view>
           <text class="time">{{ t.createdAt }}</text>
 
@@ -36,7 +36,7 @@
           <view v-else class="error" :class="{ net: t.errorCode === 'network', red: t.errorCode !== 'network' }">
             <text class="error-text">{{ t.errorText }}</text>
             <view v-if="t.errorCode === 'network'" class="retry" @click="retry(t.id)">
-              <text class="retry-text">↻</text>
+              <image class="retry-icon" src="/static/gallery/icon_refresh.png" mode="aspectFit" />
             </view>
           </view>
         </view>
@@ -47,20 +47,44 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { onHide, onShow } from '@dcloudio/uni-app'
+import { onHide, onLoad, onShow } from '@dcloudio/uni-app'
 import { ensureGalleryState, removeTransfer, retryTransfer, tickTransfers } from '../../utils/galleryStore'
 
 const tab = ref('uploading')
 const state = ref(ensureGalleryState())
 const timer = ref(null)
+const albumId = ref('')
+const autoBack = ref(false)
+const redirected = ref(false)
+
+onLoad((options) => {
+  albumId.value = options && options.albumId ? String(options.albumId) : ''
+  autoBack.value = !!(options && String(options.autoBack || '') === '1')
+})
+
+function maybeAutoBack(nextState) {
+  if (!autoBack.value || redirected.value || !albumId.value) return
+  const list = nextState && nextState.transfers ? nextState.transfers : []
+  const hasUploading = list.some((t) => t.status === 'uploading')
+  const hasFailed = list.some((t) => t.status === 'failed')
+  if (hasUploading || hasFailed) return
+  redirected.value = true
+  if (timer.value) clearInterval(timer.value)
+  timer.value = null
+  uni.redirectTo({ url: `/pages/gallery/album?albumId=${encodeURIComponent(albumId.value)}` })
+}
 
 onShow(() => {
   state.value = ensureGalleryState()
+  redirected.value = false
   if (timer.value) clearInterval(timer.value)
   timer.value = setInterval(() => {
     const s = ensureGalleryState()
-    state.value = tickTransfers(s)
+    const next = tickTransfers(s)
+    state.value = next
+    maybeAutoBack(next)
   }, 650)
+  maybeAutoBack(state.value)
 })
 
 onHide(() => {
@@ -96,6 +120,7 @@ function remove(id) {
   const s = ensureGalleryState()
   removeTransfer(s, id)
   state.value = ensureGalleryState()
+  maybeAutoBack(state.value)
 }
 
 function retry(id) {
@@ -231,10 +256,10 @@ function retry(id) {
   color: rgba(17, 17, 17, 0.35);
 }
 
-.x-text {
-  font-size: 40rpx;
-  font-weight: 800;
-  line-height: 1;
+.x-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.55;
 }
 
 .time {
@@ -292,15 +317,14 @@ function retry(id) {
   width: 64rpx;
   height: 56rpx;
   border-radius: 14rpx;
-  background: #3d6afb;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
 }
 
-.retry-text {
-  font-size: 34rpx;
-  font-weight: 900;
+.retry-icon {
+  width: 44rpx;
+  height: 44rpx;
 }
 </style>
