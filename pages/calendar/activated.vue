@@ -52,7 +52,7 @@ function share() {
 }
 
 function goSync() {
-  uni.navigateTo({ url: '/pages/calendar/sync' })
+  uni.navigateTo({ url: '/pages/sync/sync-home' })
 }
 </script>
 

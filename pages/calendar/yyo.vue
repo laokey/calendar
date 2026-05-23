@@ -135,7 +135,7 @@ function open(title) {
     return
   }
   if (title === '同步') {
-    uni.navigateTo({ url: '/pages/calendar/sync' })
+    uni.navigateTo({ url: '/pages/sync/sync-home' })
     return
   }
   if (title === '成员管理') {
