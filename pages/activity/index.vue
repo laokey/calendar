@@ -17,10 +17,7 @@
 
     <view v-if="tab === 'dynamic'">
       <view v-if="state.dynamics.length === 0" class="empty">
-        <view class="empty-icon">
-          <view class="empty-face" />
-          <view class="empty-dot" />
-        </view>
+        <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
         <text class="empty-text">暂无动态</text>
       </view>
 
@@ -39,7 +36,7 @@
               <view class="row">
                 <text class="task">{{ item.task.title }}</text>
                 <view class="points">
-                  <text class="star">★</text>
+                  <image class="star-icon" src="/static/message/icon_star.png" mode="aspectFit" />
                   <text class="points-text">{{ item.task.points > 0 ? '+' + item.task.points : item.task.points }}</text>
                 </view>
               </view>
@@ -57,18 +54,19 @@
 
     <view v-else-if="tab === 'notice'">
       <view v-if="state.notices.length === 0" class="empty">
-        <view class="empty-icon">
-          <view class="empty-face" />
-          <view class="empty-dot" />
-        </view>
+        <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
         <text class="empty-text">暂无通知</text>
       </view>
 
       <view v-else class="list">
         <view v-for="n in state.notices" :key="n.id" class="notice" @click="openNotice(n.id)">
           <view class="n-head">
-            <view class="n-icon" :class="{ green: n.type === 'message', blue: n.type !== 'message' }">
-              <text class="n-icon-text">{{ n.type === 'message' ? '🔔' : '📣' }}</text>
+            <view class="n-icon">
+              <image
+                class="n-icon-img"
+                :src="n.type === 'message' ? '/static/message/icon_notice_bell.png' : '/static/message/icon_notice_speaker.png'"
+                mode="aspectFit"
+              />
             </view>
             <text class="n-title">{{ n.title }}</text>
             <text class="n-time">{{ n.timeText }}</text>
@@ -85,10 +83,7 @@
 
     <view v-else>
       <view v-if="state.invites.length === 0" class="empty">
-        <view class="empty-icon">
-          <view class="empty-face" />
-          <view class="empty-dot" />
-        </view>
+        <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
         <text class="empty-text">暂无邀请</text>
       </view>
 
@@ -222,32 +217,8 @@ function reject(id) {
   text-align: center;
 }
 
-.empty-icon {
-  width: 170rpx;
-  height: 170rpx;
-  border-radius: 9999rpx;
-  background: rgba(61, 106, 251, 0.08);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-face {
-  width: 94rpx;
-  height: 70rpx;
-  border-radius: 18rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.empty-dot {
-  position: absolute;
-  top: 20rpx;
-  right: 26rpx;
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.25);
+.empty-img {
+  width: 280rpx;
 }
 
 .empty-text {
@@ -341,9 +312,9 @@ function reject(id) {
   gap: 8rpx;
 }
 
-.star {
-  color: #ffcc00;
-  font-size: 26rpx;
+.star-icon {
+  width: 26rpx;
+  height: 26rpx;
 }
 
 .points-text {
@@ -408,16 +379,9 @@ function reject(id) {
   justify-content: center;
 }
 
-.n-icon.green {
-  background: #34c38f;
-}
-
-.n-icon.blue {
-  background: #3d6afb;
-}
-
-.n-icon-text {
-  font-size: 26rpx;
+.n-icon-img {
+  width: 56rpx;
+  height: 56rpx;
 }
 
 .n-title {

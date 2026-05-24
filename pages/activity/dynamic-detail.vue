@@ -30,7 +30,9 @@
       </view>
       <view class="line" />
       <view class="row">
-        <text class="r-ico star">★</text>
+        <view class="r-ico">
+          <image class="r-ico-img" src="/static/message/icon_star.png" mode="aspectFit" />
+        </view>
         <text class="r-text">{{ item.detail.starText }}</text>
       </view>
       <view class="line" />
@@ -248,8 +250,9 @@ function toggleDone() {
   font-weight: 900;
 }
 
-.r-ico.star {
-  color: #ffcc00;
+.r-ico-img {
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .r-text {
