@@ -1,9 +1,9 @@
 <template>
   <view class="page">
     <view class="head" :style="{ paddingTop: safeTop + 'px' }">
-      <view class="head-left" @click="back"><text class="back">‹</text></view>
+      <view class="head-left" @click="back"><image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" /></view>
       <text class="title">预览</text>
-      <view class="head-right" @click="refresh"><text class="refresh">↻</text></view>
+      <view class="head-right" @click="refresh"><image class="refresh-img" src="/static/my/icon_refresh.png" mode="aspectFit" /></view>
     </view>
 
     <view v-if="record" class="pill">
@@ -32,7 +32,7 @@
 
     <text class="section">显示模式</text>
     <view class="mode">
-      <view class="mode-ico"><text class="mode-ico-text">▶</text></view>
+      <view class="mode-ico"><image class="mode-ico-img" src="/static/my/icon_play.png" mode="aspectFit" /></view>
       <view class="mode-meta">
         <text class="mode-title">自动播放</text>
         <text class="mode-sub">收到相框后，祝福会自动打开</text>
@@ -108,11 +108,10 @@ function refresh() {
   align-items: center;
 }
 
-.back {
-  font-size: 56rpx;
-  font-weight: 700;
-  line-height: 1;
-  color: rgba(17, 17, 17, 0.85);
+.back-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.75;
 }
 
 .title {
@@ -127,10 +126,10 @@ function refresh() {
   justify-content: flex-end;
 }
 
-.refresh {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.55);
+.refresh-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.65;
 }
 
 .pill {
@@ -273,11 +272,9 @@ function refresh() {
   justify-content: center;
 }
 
-.mode-ico-text {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: #3d6afb;
-  margin-left: 2rpx;
+.mode-ico-img {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .mode-meta {

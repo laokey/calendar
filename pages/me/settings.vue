@@ -7,31 +7,31 @@
         <text class="label">切换语言</text>
         <view class="right">
           <text class="value muted">{{ langText }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goNotice">
         <text class="label">推送通知</text>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="restore">
         <text class="label">恢复订阅</text>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="goAgreement">
         <text class="label">用户协议</text>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="clear">
         <text class="label">清除缓存</text>
         <view class="right">
           <text class="value muted">{{ cacheText }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goPermissions">
         <text class="label">系统权限管理</text>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
     </view>
 
@@ -170,10 +170,10 @@ function logout() {
   color: rgba(17, 17, 17, 0.45);
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 
 .logout {

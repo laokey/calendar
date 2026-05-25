@@ -9,7 +9,7 @@
     <view class="list">
       <view class="item" @click="toggle('camera')">
         <view class="left">
-          <view class="ico"><text class="ico-text">📷</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_perm_camera.png" mode="aspectFit" /></view>
           <view class="meta">
             <text class="title">允许访问相机</text>
             <text class="sub">拍摄后发送照片或视频以及其他场景</text>
@@ -17,13 +17,13 @@
         </view>
         <view class="right">
           <text class="status">{{ perms.camera ? '已启用' : '未启用' }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
 
       <view class="item" @click="toggle('microphone')">
         <view class="left">
-          <view class="ico"><text class="ico-text">🎤</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_perm_microphone.png" mode="aspectFit" /></view>
           <view class="meta">
             <text class="title">允许访问麦克风</text>
             <text class="sub">用于发送视频等场景</text>
@@ -31,13 +31,13 @@
         </view>
         <view class="right">
           <text class="status">{{ perms.microphone ? '已启用' : '未启用' }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
 
       <view class="item" @click="toggle('calendar')">
         <view class="left">
-          <view class="ico"><text class="ico-text">🗓</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_calendar.png" mode="aspectFit" /></view>
           <view class="meta">
             <text class="title">允许访问日历</text>
             <text class="sub">用于访问本地日历等场景</text>
@@ -45,7 +45,7 @@
         </view>
         <view class="right">
           <text class="status blue">{{ perms.calendar ? '已启用' : '设置' }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -132,8 +132,10 @@ function toggle(key) {
   justify-content: center;
 }
 
-.ico-text {
-  font-size: 34rpx;
+.ico-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.75;
 }
 
 .meta {
@@ -171,9 +173,9 @@ function toggle(key) {
   color: #3d6afb;
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 </style>

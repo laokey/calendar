@@ -8,7 +8,7 @@
         <image class="ph-logo" src="../../ui/芝麻日历-登录注册/logo.png" mode="aspectFit" />
       </view>
       <view class="cam" @click="chooseAvatar">
-        <text class="cam-text">📷</text>
+        <image class="cam-img" src="/static/my/icon_perm_camera.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -17,13 +17,13 @@
         <text class="label">姓名</text>
         <view class="right">
           <text class="value">{{ profile.name }}</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goEmail">
         <text class="label">邮箱</text>
         <view class="right">
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <picker mode="date" :value="birthdayPickerValue" @change="onBirthdayChange">
@@ -31,14 +31,14 @@
           <text class="label">生日</text>
           <view class="right">
             <text class="value muted">{{ profile.birthday }}</text>
-            <text class="chev">›</text>
+            <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
           </view>
         </view>
       </picker>
       <view class="row" @click="goPassword">
         <text class="label">密码</text>
         <view class="right">
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="deleteAccount">
@@ -47,7 +47,7 @@
           <text class="sub">删除账号后将无法恢复，请谨慎操作</text>
         </view>
         <view class="right">
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -183,10 +183,10 @@ function deleteAccount() {
   box-shadow: 0 10rpx 30rpx rgba(61, 106, 251, 0.25);
 }
 
-.cam-text {
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 900;
+.cam-img {
+  width: 40rpx;
+  height: 40rpx;
+  filter: brightness(0) invert(1);
 }
 
 .card {
@@ -231,10 +231,10 @@ function deleteAccount() {
   color: rgba(17, 17, 17, 0.45);
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 
 .left {

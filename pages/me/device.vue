@@ -5,7 +5,7 @@
     <view class="hero">
       <view class="device-pic">
         <image class="device-img" src="/static/device/device_hero_plain.png" mode="aspectFit" />
-        <view class="device-badge"><text class="device-badge-text">⌁</text></view>
+        <view class="device-badge"><image class="device-badge-img" src="/static/my/icon_device.png" mode="aspectFit" /></view>
       </view>
       <text class="hero-title">邀请您的家人或朋友</text>
       <text class="hero-sub">您要传给哪个设备？</text>
@@ -81,10 +81,10 @@ function send() {
   box-shadow: 0 16rpx 36rpx rgba(255, 176, 32, 0.25);
 }
 
-.device-badge-text {
-  color: #ffffff;
-  font-size: 40rpx;
-  font-weight: 900;
+.device-badge-img {
+  width: 44rpx;
+  height: 44rpx;
+  filter: brightness(0) invert(1);
 }
 
 .hero-title {

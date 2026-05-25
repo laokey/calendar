@@ -5,19 +5,19 @@
     <view class="card">
       <view class="row" @click="open('隐私政策')">
         <text class="label">隐私政策</text>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="row" @click="open('用户协议')">
         <text class="label">用户协议</text>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="row" @click="open('会员服务协议')">
         <text class="label">会员服务协议</text>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="row" @click="open('自动续费协议')">
         <text class="label">自动续费协议</text>
-        <text class="chev">›</text>
+        <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
   </view>
@@ -66,9 +66,9 @@ function open(title) {
   color: rgba(17, 17, 17, 0.9);
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 </style>

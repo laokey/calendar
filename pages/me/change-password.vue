@@ -5,15 +5,21 @@
     <view class="stack">
       <view class="input-wrap">
         <input v-model="oldPwd" class="input" :password="!showOld" placeholder="原密码" placeholder-class="ph" confirm-type="next" />
-        <view class="eye" @click="showOld = !showOld"><text class="eye-text">{{ showOld ? '○' : '◉' }}</text></view>
+        <view class="eye" @click="showOld = !showOld">
+          <image class="eye-img" :src="showOld ? '/static/my/icon_eye_open.png' : '/static/my/icon_eye_closed.png'" mode="aspectFit" />
+        </view>
       </view>
       <view class="input-wrap">
         <input v-model="newPwd" class="input" :password="!showNew" placeholder="新密码" placeholder-class="ph" confirm-type="next" />
-        <view class="eye" @click="showNew = !showNew"><text class="eye-text">{{ showNew ? '○' : '◉' }}</text></view>
+        <view class="eye" @click="showNew = !showNew">
+          <image class="eye-img" :src="showNew ? '/static/my/icon_eye_open.png' : '/static/my/icon_eye_closed.png'" mode="aspectFit" />
+        </view>
       </view>
       <view class="input-wrap">
         <input v-model="newPwd2" class="input" :password="!showNew2" placeholder="再次输入新密码" placeholder-class="ph" confirm-type="done" @confirm="submit" />
-        <view class="eye" @click="showNew2 = !showNew2"><text class="eye-text">{{ showNew2 ? '○' : '◉' }}</text></view>
+        <view class="eye" @click="showNew2 = !showNew2">
+          <image class="eye-img" :src="showNew2 ? '/static/my/icon_eye_open.png' : '/static/my/icon_eye_closed.png'" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -100,9 +106,10 @@ function submit() {
   color: rgba(17, 17, 17, 0.5);
 }
 
-.eye-text {
-  font-size: 30rpx;
-  font-weight: 900;
+.eye-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.7;
 }
 
 .btn {

@@ -20,7 +20,11 @@
           @confirm="submit"
         />
         <view class="eye" @click="showPassword = !showPassword">
-          <text class="eye-text">{{ showPassword ? '○' : '◉' }}</text>
+          <image
+            class="eye-img"
+            :src="showPassword ? '/static/my/icon_eye_open.png' : '/static/my/icon_eye_closed.png'"
+            mode="aspectFit"
+          />
         </view>
       </view>
     </view>
@@ -106,9 +110,10 @@ function submit() {
   color: rgba(17, 17, 17, 0.5);
 }
 
-.eye-text {
-  font-size: 30rpx;
-  font-weight: 900;
+.eye-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.7;
 }
 
 .btn {

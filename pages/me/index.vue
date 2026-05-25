@@ -9,55 +9,55 @@
         <text class="p-name">{{ profile.name }}</text>
         <text class="p-email">{{ profile.email }}</text>
       </view>
-      <text class="chev">›</text>
+      <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
     </view>
 
     <view class="quick">
       <view class="q-card blue" @click="goCards">
         <text class="q-title">卡片记录</text>
-        <view class="q-ico"><text class="q-ico-text">✉</text></view>
+        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_cards.png" mode="aspectFit" /></view>
       </view>
       <view class="q-card purple" @click="goDevice">
         <text class="q-title">设备</text>
-        <view class="q-ico"><text class="q-ico-text">⌁</text></view>
+        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_device.png" mode="aspectFit" /></view>
       </view>
     </view>
 
     <view class="menu">
       <view class="m-item" @click="openSupport">
         <view class="m-left">
-          <view class="m-icon"><text class="m-ico">🎧</text></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_support.png" mode="aspectFit" /></view>
           <text class="m-text">客服</text>
         </view>
-        <text class="m-chev">›</text>
+        <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="openSupport">
         <view class="m-left">
-          <view class="m-icon"><text class="m-ico">❔</text></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_help.png" mode="aspectFit" /></view>
           <text class="m-text">帮助中心</text>
         </view>
-        <text class="m-chev">›</text>
+        <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goCalendar">
         <view class="m-left">
-          <view class="m-icon"><text class="m-ico">▦</text></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_calendar.png" mode="aspectFit" /></view>
           <text class="m-text">芝麻日历</text>
         </view>
-        <text class="m-chev">›</text>
+        <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goAbout">
         <view class="m-left">
-          <view class="m-icon"><text class="m-ico">👤</text></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_info.png" mode="aspectFit" /></view>
           <text class="m-text">关于我们</text>
         </view>
-        <text class="m-chev">›</text>
+        <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goSettings">
         <view class="m-left">
-          <view class="m-icon"><text class="m-ico">⚙</text></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_settings.png" mode="aspectFit" /></view>
           <text class="m-text">设置</text>
         </view>
-        <text class="m-chev">›</text>
+        <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
 
@@ -196,10 +196,9 @@ function copyWechat() {
   color: rgba(17, 17, 17, 0.55);
 }
 
-.chev {
-  font-size: 44rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.35);
+.chev-img {
+  width: 24rpx;
+  height: 24rpx;
 }
 
 .quick {
@@ -243,10 +242,9 @@ function copyWechat() {
   justify-content: center;
 }
 
-.q-ico-text {
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 900;
+.q-ico-img {
+  width: 44rpx;
+  height: 44rpx;
 }
 
 .menu {
@@ -285,8 +283,9 @@ function copyWechat() {
   justify-content: center;
 }
 
-.m-ico {
-  font-size: 24rpx;
+.m-ico-img {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .m-text {
@@ -295,10 +294,10 @@ function copyWechat() {
   color: rgba(17, 17, 17, 0.85);
 }
 
-.m-chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.m-chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 
 .mask {

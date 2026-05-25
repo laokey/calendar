@@ -12,27 +12,27 @@
     <view class="card">
       <view class="row" @click="checkUpdate">
         <view class="left">
-          <view class="ico blue"><text class="ico-text">i</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_info.png" mode="aspectFit" /></view>
           <text class="label">版本</text>
         </view>
         <view class="right">
           <text class="value muted">已是最新版本</text>
-          <text class="chev">›</text>
+          <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="open('小红书')">
         <view class="left">
-          <view class="ico red"><text class="ico-text">书</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_xhs.png" mode="aspectFit" /></view>
           <text class="label">小红书</text>
         </view>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="open('微信公众号')">
         <view class="left">
-          <view class="ico green"><text class="ico-text">微</text></view>
+          <view class="ico"><image class="ico-img" src="/static/my/icon_wechat.png" mode="aspectFit" /></view>
           <text class="label">微信公众号</text>
         </view>
-        <view class="right"><text class="chev">›</text></view>
+        <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
     </view>
   </view>
@@ -114,27 +114,15 @@ function open(title) {
   width: 44rpx;
   height: 44rpx;
   border-radius: 14rpx;
+  background: rgba(17, 17, 17, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-weight: 900;
 }
 
-.ico.blue {
-  background: #3d6afb;
-}
-
-.ico.red {
-  background: #ff5a5f;
-}
-
-.ico.green {
-  background: #34c38f;
-}
-
-.ico-text {
-  font-size: 24rpx;
+.ico-img {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .label {
@@ -158,9 +146,9 @@ function open(title) {
   color: rgba(17, 17, 17, 0.45);
 }
 
-.chev {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.25);
+.chev-img {
+  width: 22rpx;
+  height: 22rpx;
+  opacity: 0.55;
 }
 </style>

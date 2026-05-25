@@ -1,23 +1,20 @@
 <template>
   <view class="page">
     <view class="head" :style="{ paddingTop: safeTop + 'px' }">
-      <view class="head-left" @click="back"><text class="back">‹</text></view>
+      <view class="head-left" @click="back"><image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" /></view>
       <text class="title">卡片记录</text>
       <view class="head-right" @click="clearAll"><text class="clear">清除</text></view>
     </view>
 
     <view v-if="items.length === 0" class="empty">
-      <view class="empty-icon">
-        <view class="empty-face" />
-        <view class="empty-mark" />
-      </view>
+      <image class="empty-img" src="/static/my/img_empty_cards.png" mode="widthFix" />
       <text class="empty-text">尚无卡片记录</text>
     </view>
 
     <view v-else class="list">
       <view v-for="it in items" :key="it.id" class="card">
         <view class="top">
-          <view class="env"><text class="env-text">✉</text></view>
+          <view class="env"><image class="env-img" src="/static/my/icon_cards.png" mode="aspectFit" /></view>
           <view class="meta">
             <text class="c-title">{{ it.title }}</text>
             <text class="c-sub">设备：{{ it.device }}</text>
@@ -28,9 +25,9 @@
         <view class="bottom">
           <text class="badge" :class="{ unread: it.status === 'unread' }">{{ it.status === 'unread' ? '未读' : '已读' }}</text>
           <view class="actions">
-            <view class="a-btn" @click="undo(it.id)"><text class="a-text">↩</text></view>
-            <view class="a-btn" @click="preview(it.id)"><text class="a-text">▢</text></view>
-            <view class="a-btn danger" @click="remove(it.id)"><text class="a-text">🗑</text></view>
+            <view class="a-btn" @click="undo(it.id)"><image class="a-img" src="/static/my/icon_refresh.png" mode="aspectFit" /></view>
+            <view class="a-btn" @click="preview(it.id)"><image class="a-img" src="/static/my/icon_preview.png" mode="aspectFit" /></view>
+            <view class="a-btn danger" @click="remove(it.id)"><image class="a-img danger-img" src="/static/my/icon_trash.png" mode="aspectFit" /></view>
           </view>
         </view>
       </view>
@@ -149,6 +146,12 @@ function remove(id) {
   color: rgba(17, 17, 17, 0.85);
 }
 
+.back-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.75;
+}
+
 .title {
   font-size: 34rpx;
   font-weight: 900;
@@ -175,32 +178,8 @@ function remove(id) {
   text-align: center;
 }
 
-.empty-icon {
-  width: 170rpx;
-  height: 170rpx;
-  border-radius: 9999rpx;
-  background: rgba(61, 106, 251, 0.08);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-face {
-  width: 94rpx;
-  height: 70rpx;
-  border-radius: 18rpx;
-  background: rgba(17, 17, 17, 0.12);
-}
-
-.empty-mark {
-  position: absolute;
-  top: 20rpx;
-  right: 26rpx;
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.25);
+.empty-img {
+  width: 280rpx;
 }
 
 .empty-text {
@@ -240,8 +219,9 @@ function remove(id) {
   justify-content: center;
 }
 
-.env-text {
-  font-size: 48rpx;
+.env-img {
+  width: 56rpx;
+  height: 56rpx;
 }
 
 .meta {
@@ -310,8 +290,13 @@ function remove(id) {
   color: #ff4b3f;
 }
 
-.a-text {
-  font-size: 32rpx;
-  font-weight: 900;
+.a-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.7;
+}
+
+.danger-img {
+  opacity: 1;
 }
 </style>
