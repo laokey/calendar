@@ -147,7 +147,7 @@ function open(title) {
     return
   }
   if (title === '用户管理') {
-    uni.navigateTo({ url: '/pages/calendar/find' })
+    uni.navigateTo({ url: '/pages/users/index' })
     return
   }
   if (title === '相册') {

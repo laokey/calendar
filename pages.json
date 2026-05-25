@@ -277,6 +277,12 @@
       }
     },
     {
+      "path": "pages/users/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/calendar/pending",
       "style": {
         "navigationStyle": "custom"
