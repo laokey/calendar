@@ -5,7 +5,7 @@
     <view class="avatar-wrap">
       <image v-if="profile.avatarUrl" class="avatar" :src="profile.avatarUrl" mode="aspectFill" />
       <view v-else class="avatar ph">
-        <image class="ph-logo" src="../../ui/芝麻日历-登录注册/logo.png" mode="aspectFit" />
+        <image class="ph-logo" src="/static/logo.png" mode="aspectFit" />
       </view>
       <view class="cam" @click="chooseAvatar">
         <image class="cam-img" src="/static/my/icon_perm_camera.png" mode="aspectFit" />
@@ -30,7 +30,7 @@
         <view class="row">
           <text class="label">生日</text>
           <view class="right">
-            <text class="value muted">{{ profile.birthday }}</text>
+            <text class="value">{{ profile.birthday }}</text>
             <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
           </view>
         </view>
@@ -44,7 +44,7 @@
       <view class="row" @click="deleteAccount">
         <view class="left">
           <text class="label">账户删除</text>
-          <text class="sub">删除账号后将无法恢复，请谨慎操作</text>
+          <text class="value">删除账号后将无法恢复，请谨慎操作</text>
         </view>
         <view class="right">
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
@@ -163,8 +163,8 @@ function deleteAccount() {
 }
 
 .ph-logo {
-  width: 110rpx;
-  height: 110rpx;
+  width: 180rpx;
+  height: 180rpx;
   opacity: 0.9;
 }
 
@@ -224,7 +224,7 @@ function deleteAccount() {
 .value {
   font-size: 28rpx;
   font-weight: 800;
-  color: rgba(17, 17, 17, 0.75);
+  color: #999999;
 }
 
 .muted {

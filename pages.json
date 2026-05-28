@@ -133,6 +133,12 @@
       }
     },
     {
+      "path": "pages/me/notice",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/me/language",
       "style": {
         "navigationStyle": "custom"
@@ -175,6 +181,36 @@
       }
     },
     {
+      "path": "pages/me/device-linked",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/device-linked-manage",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/device-unlinked",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/device-unlinked-manage",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/me/device-activate",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/register/index",
       "style": {
         "navigationStyle": "custom"
@@ -206,6 +242,12 @@
     },
     {
       "path": "pages/device/activate",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/device/manage",
       "style": {
         "navigationStyle": "custom"
       }

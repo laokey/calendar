@@ -25,7 +25,7 @@
     <view class="list">
       <view v-for="m in members" :key="m.id" class="item" @click="onPick(m.id)">
         <view class="left">
-          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="48" />
           <text class="name">{{ m.name }}</text>
         </view>
         <view class="right">
@@ -34,10 +34,10 @@
             :src="
               isReassign
                 ? pickedId === m.id
-                  ? '/static/common/icon_radio_on.png'
+                  ? '/static/common/icon_checkbox_checked.png'
                   : '/static/common/icon_radio_off.png'
                 : selectedIds.includes(m.id)
-                  ? '/static/common/icon_radio_on.png'
+                  ? '/static/common/icon_checkbox_checked.png'
                   : '/static/common/icon_radio_off.png'
             "
             mode="aspectFit"
@@ -188,9 +188,9 @@ function confirmReassignDelete() {
 
 .reassign-top {
   margin-top: 18rpx;
-  height: 108rpx;
+  height: 98rpx;
   border-radius: 26rpx;
-  background: #f5f6f7;
+  background: #EDF3FF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -255,15 +255,17 @@ function confirmReassignDelete() {
 }
 
 .item {
-  height: 118rpx;
-  background: #f5f6f7;
+  height: 108rpx;
+  background: #fafafa;
   border-radius: 24rpx;
   padding: 0 22rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
-  margin-top: 14rpx;
+}
+
+.item + .item {
+  margin-top: 16rpx;
 }
 
 .left {
@@ -273,9 +275,9 @@ function confirmReassignDelete() {
 }
 
 .name {
-  font-size: 32rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.9);
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
 }
 
 .right {

@@ -155,7 +155,7 @@ function save() {
   height: 260rpx;
   border-radius: 28rpx;
   overflow: hidden;
-  background: #f5f6f7;
+  background: #fafafa;
   position: relative;
 }
 
@@ -208,7 +208,7 @@ function save() {
 
 .block {
   margin-top: 16rpx;
-  background: #f5f6f7;
+  background: #fafafa;
   border-radius: 24rpx;
   padding: 18rpx 22rpx 20rpx;
   box-shadow: none;
@@ -331,7 +331,7 @@ function save() {
 .cat-item {
   height: 92rpx;
   border-radius: 20rpx;
-  background: rgba(17, 17, 17, 0.06);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

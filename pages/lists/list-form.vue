@@ -97,6 +97,8 @@ function save() {
 
 .title-card {
   padding: 28rpx;
+  background: #fafafa;
+  box-shadow: none;
 }
 
 .bl-input-field {
@@ -123,6 +125,8 @@ function save() {
 
 .colors-card {
   margin-top: 18rpx;
+  background: #fafafa;
+  box-shadow: none;
 }
 
 .sec-title {

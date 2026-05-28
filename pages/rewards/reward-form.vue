@@ -388,11 +388,10 @@ function save() {
 }
 
 .block {
-  background: #ffffff;
+  background: #fafafa;
   border-radius: 28rpx;
   padding: 20rpx 22rpx;
   margin-top: 16rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .field-title {
@@ -412,7 +411,7 @@ function save() {
 .input-wrap {
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

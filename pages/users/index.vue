@@ -208,17 +208,17 @@ function confirmPermission() {
 .section-title {
   display: block;
   margin-top: 26rpx;
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 600;
-  color: rgba(17, 17, 17, 0.92);
+  color: #333333;
 }
 
 .method {
   display: block;
   margin-top: 16rpx;
-  font-size: 28rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.6);
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #666666;
 }
 
 .invite-row {
@@ -267,7 +267,7 @@ function confirmPermission() {
 
 .share-row {
   margin-top: 10rpx;
-  height: 98rpx;
+  height: 96rpx;
   border-radius: 22rpx;
   background: rgba(17, 17, 17, 0.03);
   border: 2rpx solid rgba(17, 17, 17, 0.06);

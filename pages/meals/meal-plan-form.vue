@@ -232,7 +232,7 @@ function onBottom() {
 
 .block {
   margin-top: 12rpx;
-  background: #f5f6f7;
+  background: #fafafa;
   border-radius: 28rpx;
   padding: 10rpx 22rpx;
   box-shadow: none;
@@ -311,7 +311,7 @@ function onBottom() {
   width: 100%;
   margin-top: 0;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 12rpx 16rpx;
 }
 
@@ -345,7 +345,7 @@ function onBottom() {
 .recipe-row {
   height: 96rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx 0 14rpx;
   display: flex;
   align-items: center;
@@ -388,7 +388,7 @@ function onBottom() {
   margin-top: 12rpx;
   height: 96rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;
@@ -437,7 +437,7 @@ function onBottom() {
 .cat-item {
   height: 92rpx;
   border-radius: 20rpx;
-  background: rgba(17, 17, 17, 0.06);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

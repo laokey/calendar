@@ -53,7 +53,6 @@
 
     <view class="bottom" @click="confirm">
       <text class="bottom-text">确认</text>
-      <image class="bottom-icon" src="/static/reward/icon_check_circle_blue.png" mode="aspectFit" />
     </view>
   </view>
 </template>
@@ -130,14 +129,16 @@ function confirm() {
 <style scoped lang="scss">
 .give-page {
   padding-bottom: 220rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .card {
   margin-top: 18rpx;
-  background: #ffffff;
-  border-radius: 28rpx;
+  background: #fafafa;
+  border-radius: 22rpx;
   padding: 20rpx 22rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .card-head {
@@ -234,7 +235,7 @@ function confirm() {
   margin-top: 14rpx;
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;
@@ -299,26 +300,19 @@ function confirm() {
   position: fixed;
   left: 28rpx;
   right: 28rpx;
-  bottom: 34rpx;
-  height: 104rpx;
+  bottom: calc(34rpx + env(safe-area-inset-bottom));
+  height: 96rpx;
   background: #3d6afb;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 18rpx 36rpx rgba(61, 106, 251, 0.22);
 }
 
 .bottom-text {
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
-}
-
-.bottom-icon {
-  position: absolute;
-  right: 18rpx;
-  width: 44rpx;
-  height: 44rpx;
-  display: block;
 }
 </style>

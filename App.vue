@@ -244,18 +244,19 @@ button {
 
 .bl-select-check {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 74rpx;
-  height: 64rpx;
+  top: -8rpx;
+  right: -8rpx;
+  width: 104rpx;
+  height: 76rpx;
   border-top-right-radius: 28rpx;
-  border-bottom-left-radius: 22rpx;
-  background: #3d6afb;
+  border-bottom-left-radius: 30rpx;
+  background: linear-gradient(135deg, #2f6bff 0%, #4c8dff 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34rpx;
+  box-shadow: 0 10rpx 22rpx rgba(61, 106, 251, 0.22);
+  font-size: 38rpx;
   font-weight: 900;
 }
 

@@ -47,10 +47,10 @@ function save() {
 }
 
 .input-wrap {
-  margin-top: 18rpx;
+  margin-top: 28rpx;
   height: 98rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.03);
+  background: #fafafa;
   border: 2rpx solid rgba(17, 17, 17, 0.06);
   padding: 0 18rpx;
   display: flex;

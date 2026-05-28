@@ -104,7 +104,7 @@ function save() {
 }
 
 .bl-card {
-  background: #f5f6f7;
+  background: #fafafa;
   box-shadow: none;
 }
 
@@ -145,7 +145,7 @@ function save() {
   margin-top: 14rpx;
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

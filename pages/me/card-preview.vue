@@ -12,7 +12,7 @@
 
     <view v-if="record" class="imgs">
       <view class="img left">
-        <image class="img-real" src="../../ui/芝麻日历-登录注册/logo.png" mode="aspectFill" />
+        <image class="img-real" src="/static/logo.png" mode="aspectFill" />
       </view>
       <view class="img right">
         <view class="face">

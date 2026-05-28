@@ -1,14 +1,14 @@
 <template>
   <view v-if="modelValue" class="mask" @click.self="close">
     <view class="sheet" :style="{ paddingBottom: safeBottom + 'px' }">
-      <view class="head">
+      <view v-if="!headless" class="head">
         <view class="spacer" />
         <text class="title">{{ title }}</text>
         <view class="close" @click="close">
           <text class="close-text">×</text>
         </view>
       </view>
-      <view class="body">
+      <view class="body" :class="{ headless }">
         <slot />
       </view>
       <view v-if="confirmText" class="foot">
@@ -27,6 +27,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: '' },
   confirmText: { type: String, default: '' },
+  headless: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue', 'confirm'])
@@ -100,6 +101,10 @@ function confirm() {
   padding-top: 8rpx;
 }
 
+.body.headless {
+  padding-top: 0;
+}
+
 .foot {
   margin-top: 18rpx;
 }
@@ -119,4 +124,3 @@ function confirm() {
   font-weight: 900;
 }
 </style>
-

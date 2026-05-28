@@ -38,6 +38,28 @@
     <view class="logout" @click="logout">
       <text class="logout-text">退出登录</text>
     </view>
+
+    <view v-if="restoreVisible" class="dialog-mask" @click="restoreVisible = false">
+      <view class="dialog-content" @click.stop>
+        <text class="d-title">恢复订阅？</text>
+        <text class="d-sub">已开通Plus会员？您可尝试恢复订阅服务</text>
+        <view class="d-actions">
+          <view class="d-btn cancel" @click="restoreVisible = false"><text class="d-btn-text cancel-text">取消</text></view>
+          <view class="d-btn confirm" @click="confirmRestore"><text class="d-btn-text confirm-text">恢复订阅</text></view>
+        </view>
+      </view>
+    </view>
+
+    <view v-if="logoutVisible" class="dialog-mask" @click="logoutVisible = false">
+      <view class="dialog-content" @click.stop>
+        <text class="d-title">你确定吗？</text>
+        <text class="d-sub">确定要退出登录吗？</text>
+        <view class="d-actions">
+          <view class="d-btn cancel" @click="logoutVisible = false"><text class="d-btn-text cancel-text">取消</text></view>
+          <view class="d-btn confirm" @click="confirmLogout"><text class="d-btn-text confirm-text">确定</text></view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -48,6 +70,8 @@ import BlHeader from '../../components/BlHeader.vue'
 import { clearCache, ensureMeState } from '../../utils/meStore'
 
 const state = ref(ensureMeState())
+const restoreVisible = ref(false)
+const logoutVisible = ref(false)
 
 onShow(() => {
   state.value = ensureMeState()
@@ -77,20 +101,16 @@ function goAgreement() {
 }
 
 function goNotice() {
-  uni.navigateTo({ url: '/pages/activity/index?tab=notice' })
+  uni.navigateTo({ url: '/pages/me/notice' })
 }
 
 function restore() {
-  uni.showModal({
-    title: '恢复订阅？',
-    content: '已开通Plus会员？您可尝试恢复订阅服务',
-    cancelText: '取消',
-    confirmText: '恢复订阅',
-    success: (res) => {
-      if (!res.confirm) return
-      uni.showToast({ title: '已恢复', icon: 'none' })
-    },
-  })
+  restoreVisible.value = true
+}
+
+function confirmRestore() {
+  restoreVisible.value = false
+  uni.showToast({ title: '已恢复', icon: 'none' })
 }
 
 function clear() {
@@ -110,17 +130,13 @@ function clear() {
 }
 
 function logout() {
-  uni.showModal({
-    title: '你确定吗？',
-    content: '确定要退出登录吗？',
-    cancelText: '取消',
-    confirmText: '确定',
-    success: (res) => {
-      if (!res.confirm) return
-      uni.removeStorageSync('auth_logged_in')
-      uni.reLaunch({ url: '/pages/login/index' })
-    },
-  })
+  logoutVisible.value = true
+}
+
+function confirmLogout() {
+  logoutVisible.value = false
+  uni.removeStorageSync('auth_logged_in')
+  uni.reLaunch({ url: '/pages/login/index' })
 }
 </script>
 
@@ -190,5 +206,78 @@ function logout() {
   font-size: 32rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.75);
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 80rpx;
+}
+
+.dialog-content {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #111111;
+}
+
+.d-sub {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #555555;
+  text-align: center;
+}
+
+.d-actions {
+  margin-top: 24rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.d-btn.cancel {
+  background: #f0f4ff;
+}
+
+.d-btn.confirm {
+  background: #406DFF;
+}
+
+.d-btn-text {
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.cancel-text {
+  color: #406DFF;
+}
+
+.confirm-text {
+  color: #ffffff;
 }
 </style>

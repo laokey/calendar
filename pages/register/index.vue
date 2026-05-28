@@ -123,7 +123,7 @@ function submit() {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eaf2ff 0%, #ffffff 45%);
+  background: #ffffff;
   padding: 0 28rpx;
 }
 
@@ -159,7 +159,7 @@ function submit() {
 .input-wrap {
   height: 98rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.03);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

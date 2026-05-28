@@ -38,6 +38,11 @@ function seedState() {
     settings: {
       language: 'system',
       cacheSizeMb: 57.15,
+      notifications: {
+        email: false,
+        system: true,
+        taskDone: true,
+      },
       permissions: {
         camera: true,
         microphone: true,
@@ -84,6 +89,13 @@ export function loadMeState() {
     if (!state || typeof state !== 'object') return seedState()
     if (!state.profile || !state.settings) return seedState()
     if (!Array.isArray(state.cardRecords)) state.cardRecords = []
+    if (!state.settings.notifications || typeof state.settings.notifications !== 'object') {
+      state.settings.notifications = { email: false, system: true, taskDone: true }
+    } else {
+      if (typeof state.settings.notifications.email !== 'boolean') state.settings.notifications.email = false
+      if (typeof state.settings.notifications.system !== 'boolean') state.settings.notifications.system = true
+      if (typeof state.settings.notifications.taskDone !== 'boolean') state.settings.notifications.taskDone = true
+    }
     return state
   } catch (e) {
     return seedState()

@@ -13,7 +13,6 @@
         </view>
         <view class="meta">
           <view class="row">
-            <view class="new-pill"><text class="new-text">NEW</text></view>
             <text class="name">是的</text>
           </view>
           <text class="desc bl-muted">我们开始</text>
@@ -55,12 +54,22 @@ function confirm() {
 </script>
 
 <style scoped lang="scss">
+.bl-page {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 0 28rpx;
+}
+
+
+
 .title-wrap {
   padding: 28rpx 8rpx 10rpx;
+  text-align: center;
 }
 
 .title {
-  font-size: 44rpx;
+  font-size: 40rpx;
+  color: #333333;
   font-weight: 900;
   line-height: 58rpx;
 }
@@ -75,12 +84,13 @@ function confirm() {
 .opt {
   display: flex;
   align-items: center;
+  background: #fafafa;
   gap: 18rpx;
 }
 
 .thumb {
-  width: 110rpx;
-  height: 82rpx;
+  width: 176rpx;
+  height: 124rpx;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -88,14 +98,15 @@ function confirm() {
 }
 
 .thumb-img {
-  width: 110rpx;
-  height: 82rpx;
+  width: 176rpx;
+  height: 124rpx;
 }
 
 .meta {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #fafafa;
   gap: 6rpx;
 }
 
@@ -122,13 +133,14 @@ function confirm() {
 }
 
 .name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 900;
 }
 
 .desc {
-  font-size: 24rpx;
-  font-weight: 600;
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 500;
 }
 
 .bl-btn-primary {

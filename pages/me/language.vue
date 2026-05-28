@@ -58,7 +58,7 @@ function select(v) {
 }
 
 .list {
-  margin-top: 18rpx;
+  margin-top: 28rpx;
   display: flex;
   flex-direction: column;
   gap: 12rpx;

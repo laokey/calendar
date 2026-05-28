@@ -22,7 +22,7 @@
         @click="openEdit(m.id)"
       >
         <view class="left">
-          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="48" />
           <text class="name">{{ m.name }}</text>
         </view>
         <view
@@ -55,7 +55,7 @@
         @click="openEdit(m.id)"
       >
         <view class="left">
-          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="72" />
+          <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="48" />
           <text class="name">{{ m.name }}</text>
         </view>
         <view
@@ -225,16 +225,16 @@ function onDragEnd() {
 }
 
 .section-title {
-  font-size: 40rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.95);
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #333333;
 }
 
 .section-sub {
   margin-top: 10rpx;
   display: block;
   font-size: 26rpx;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .list {
@@ -242,8 +242,8 @@ function onDragEnd() {
 }
 
 .row {
-  height: 118rpx;
-  background: #f5f6f7;
+  height: 108rpx;
+  background: #fafafa;
   border-radius: 24rpx;
   padding: 0 22rpx;
   display: flex;
@@ -267,9 +267,9 @@ function onDragEnd() {
 }
 
 .name {
-  font-size: 32rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.9);
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #333333;
 }
 
 .drag-handle {
@@ -295,7 +295,7 @@ function onDragEnd() {
   right: 0;
   bottom: 36rpx;
   text-align: center;
-  font-size: 24rpx;
-  font-weight: 700;
+  font-size: 26rpx;
+  font-weight: 400;
 }
 </style>

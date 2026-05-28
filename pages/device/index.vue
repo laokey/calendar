@@ -38,7 +38,7 @@
           </view>
         </view>
         <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(0)}px)` }">
-          <view class="bl-card">
+          <view class="bl-card" @click="openCalendar(0)">
             <view class="bl-row">
               <view class="thumb">
                 <image class="thumb-img" src="/static/device/device_thumb_new.png" mode="aspectFit" />
@@ -48,7 +48,7 @@
                 <text class="email bl-muted">发送事件：601342282@qq.com</text>
               </view>
             </view>
-            <view class="btn-inline is-primary" @click="goActivate">
+            <view class="btn-inline is-primary" @click.stop="goActivate">
               <text class="btn-text">激活设备</text>
               <view class="btn-arrow">
                 <text class="arrow">→</text>
@@ -73,17 +73,17 @@
           </view>
         </view>
         <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(1)}px)` }">
-          <view class="bl-card">
+          <view class="bl-card" @click="openCalendar(1)">
             <view class="bl-row">
               <view class="thumb">
                 <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
               </view>
               <view class="meta">
-                <text class="name">DFSFDGF的日历</text>
+                <text class="name">爸爸的日历</text>
                 <text class="email bl-muted">发送事件：601342282@qq.com</text>
               </view>
             </view>
-            <view class="btn-inline is-soft" @click="goYyoInactive">
+            <view class="btn-inline is-soft" @click.stop="openCalendar(1)">
               <text class="btn-text is-soft-text">查看任务</text>
               <view class="btn-arrow is-soft-arrow">
                 <text class="arrow">→</text>
@@ -108,13 +108,13 @@
           </view>
         </view>
         <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(2)}px)` }">
-          <view class="bl-card">
+          <view class="bl-card" @click="openCalendar(2)">
             <view class="bl-row">
               <view class="thumb">
                 <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
               </view>
               <view class="meta">
-                <text class="name">DFSFDGF的日历</text>
+                <text class="name">妈妈的日历</text>
                 <text class="email bl-muted">发送事件：601342282@qq.com</text>
               </view>
             </view>
@@ -166,13 +166,13 @@
           </view>
         </view>
         <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(3)}px)` }">
-          <view class="bl-card">
+          <view class="bl-card" @click="openCalendar(3)">
             <view class="bl-row">
               <view class="thumb">
                 <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
               </view>
               <view class="meta">
-                <text class="name">DFSFDGF的日历</text>
+                <text class="name">姐姐的日历</text>
                 <text class="email bl-muted">发送事件：601342282@qq.com</text>
               </view>
             </view>
@@ -293,12 +293,40 @@ function goActivate() {
   uni.navigateTo({ url: '/pages/device/activate' })
 }
 
-function goYyoActive() {
-  uni.navigateTo({ url: '/pages/calendar/yyo?active=1' })
-}
-
-function goYyoInactive() {
-  uni.navigateTo({ url: '/pages/calendar/yyo?active=0' })
+function openCalendar(index) {
+  const idx = Number(index)
+  const baseEmail = '601342282@qq.com'
+  const items = [
+    { id: 'yyo', name: 'YYO的日历', email: baseEmail, active: false, tasks: [] },
+    { id: 'dfs_0', name: 'DFSFDGF的日历', email: baseEmail, active: false, tasks: [] },
+    {
+      id: 'dfs_1',
+      name: 'DFSFDGF的日历',
+      email: baseEmail,
+      active: true,
+      tasks: [
+        { style: 'pink', title: '钢琴课', timeText: '17:25–18:24', right: { type: 'single', glyph: '姐', cls: 'is-red' } },
+        {
+          style: 'gray',
+          title: '家庭聚会',
+          timeText: '17:25–18:24',
+          right: {
+            type: 'group',
+            avatars: [
+              { glyph: '弟', cls: 'is-blue' },
+              { glyph: '姐', cls: 'is-red' },
+              { glyph: '妈', cls: 'is-purple' },
+              { glyph: '爸', cls: 'is-green' },
+            ],
+          },
+        },
+      ],
+    },
+    { id: 'dfs_2', name: 'DFSFDGF的日历', email: baseEmail, active: true, tasks: [{ style: 'green', title: '修剪植物', timeText: '17:25–18:24', right: { type: 'single', glyph: '爸', cls: 'is-green' } }] },
+  ]
+  const item = items[idx] || items[0]
+  uni.setStorageSync('calendar_detail_ctx_v1', JSON.stringify(item))
+  uni.navigateTo({ url: `/pages/calendar/yyo?active=${item.active ? 1 : 0}` })
 }
 </script>
 
@@ -490,6 +518,10 @@ function goYyoInactive() {
   position: relative;
   overflow: hidden;
   border-radius: 28rpx;
+}
+
+.bl-card {
+  background: #fafafa;
 }
 
 .swipe-cell + .swipe-cell {

@@ -90,11 +90,11 @@ function toggle(key) {
 
 .hint {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 28rpx;
   font-size: 26rpx;
   font-weight: 700;
   line-height: 40rpx;
-  color: rgba(17, 17, 17, 0.6);
+  color: #333333;
 }
 
 .list {
@@ -125,17 +125,14 @@ function toggle(key) {
 .ico {
   width: 74rpx;
   height: 74rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .ico-img {
-  width: 34rpx;
-  height: 34rpx;
-  opacity: 0.75;
+  width: 42rpx;
+  height: 42rpx;
 }
 
 .meta {

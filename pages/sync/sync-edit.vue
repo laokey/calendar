@@ -100,7 +100,7 @@ function cancelSync() {
 }
 
 .card {
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   border-radius: 22rpx;
   padding: 22rpx;
 }
@@ -195,4 +195,3 @@ function cancelSync() {
   color: #ffffff;
 }
 </style>
-

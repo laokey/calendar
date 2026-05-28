@@ -25,10 +25,22 @@
         <view class="bottom">
           <text class="badge" :class="{ unread: it.status === 'unread' }">{{ it.status === 'unread' ? '未读' : '已读' }}</text>
           <view class="actions">
-            <view class="a-btn" @click="undo(it.id)"><image class="a-img" src="/static/my/icon_refresh.png" mode="aspectFit" /></view>
-            <view class="a-btn" @click="preview(it.id)"><image class="a-img" src="/static/my/icon_preview.png" mode="aspectFit" /></view>
-            <view class="a-btn danger" @click="remove(it.id)"><image class="a-img danger-img" src="/static/my/icon_trash.png" mode="aspectFit" /></view>
+            <view class="a-btn" @click="undo(it.id)"><image class="a-img" src="/static/my/icon_preview.png" mode="aspectFit" /></view>
+            <view class="a-btn" @click="preview(it.id)"><image class="a-img" src="/static/task/icon_edit_square.png" mode="aspectFit" /></view>
+            <view class="a-btn danger" @click="remove(it.id)"><image class="a-img danger-img" src="/static/task/icon_trash_red.png" mode="aspectFit" /></view>
           </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 自定义删除/撤销弹窗 -->
+    <view v-if="dialogVisible" class="dialog-mask" @click="closeDialog">
+      <view class="dialog-content" @click.stop>
+        <text class="d-title">{{ dialogType === 'remove' ? '删除' : '撤销' }}</text>
+        <text class="d-sub">{{ dialogType === 'remove' ? '设备端的卡片也将被删除' : '您确定要撤回卡片吗？' }}</text>
+        <view class="d-actions">
+          <view class="d-btn cancel" @click="closeDialog"><text class="d-btn-text cancel-text">取消</text></view>
+          <view class="d-btn confirm" @click="confirmDialog"><text class="d-btn-text confirm-text">{{ dialogType === 'remove' ? '删除' : '撤销' }}</text></view>
         </view>
       </view>
     </view>
@@ -41,6 +53,9 @@ import { onShow } from '@dcloudio/uni-app'
 import { clearCardRecords, deleteCardRecord, ensureMeState, listCardRecords } from '../../utils/meStore'
 
 const state = ref(ensureMeState())
+const dialogVisible = ref(false)
+const dialogType = ref('') // 'remove' | 'undo'
+const activeId = ref('')
 
 onShow(() => {
   state.value = ensureMeState()
@@ -83,34 +98,31 @@ function preview(id) {
 }
 
 function undo(id) {
-  uni.showModal({
-    title: '撤销',
-    content: '您确定要撤销卡片吗？',
-    cancelText: '取消',
-    confirmText: '撤销',
-    success: (res) => {
-      if (!res.confirm) return
-      const s = ensureMeState()
-      deleteCardRecord(s, id)
-      state.value = ensureMeState()
-      uni.showToast({ title: '已撤销', icon: 'none' })
-    },
-  })
+  activeId.value = id
+  dialogType.value = 'undo'
+  dialogVisible.value = true
 }
 
 function remove(id) {
-  uni.showModal({
-    title: '删除',
-    content: '设备端的卡片也将被删除',
-    cancelText: '取消',
-    confirmText: '删除',
-    success: (res) => {
-      if (!res.confirm) return
-      const s = ensureMeState()
-      deleteCardRecord(s, id)
-      state.value = ensureMeState()
-    },
-  })
+  activeId.value = id
+  dialogType.value = 'remove'
+  dialogVisible.value = true
+}
+
+function closeDialog() {
+  dialogVisible.value = false
+  activeId.value = ''
+}
+
+function confirmDialog() {
+  if (!activeId.value) return
+  const s = ensureMeState()
+  deleteCardRecord(s, activeId.value)
+  state.value = ensureMeState()
+  if (dialogType.value === 'undo') {
+    uni.showToast({ title: '已撤回', icon: 'none' })
+  }
+  closeDialog()
 }
 </script>
 
@@ -125,8 +137,7 @@ function remove(id) {
   position: sticky;
   top: 0;
   z-index: 999;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
   padding: 18rpx 0 12rpx;
   display: flex;
   align-items: center;
@@ -147,14 +158,15 @@ function remove(id) {
 }
 
 .back-img {
-  width: 34rpx;
-  height: 34rpx;
-  opacity: 0.75;
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.9;
 }
 
 .title {
   font-size: 34rpx;
   font-weight: 900;
+  color: #111111;
 }
 
 .head-right {
@@ -166,8 +178,8 @@ function remove(id) {
 
 .clear {
   font-size: 28rpx;
-  font-weight: 900;
-  color: #3d6afb;
+  font-weight: 500;
+  color: #406DFF;
 }
 
 .empty {
@@ -185,118 +197,176 @@ function remove(id) {
 .empty-text {
   margin-top: 18rpx;
   font-size: 26rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.45);
+  font-weight: 500;
+  color: #888888;
 }
 
 .list {
-  margin-top: 10rpx;
+  margin-top: 16rpx;
   display: flex;
   flex-direction: column;
-  gap: 18rpx;
+  gap: 20rpx;
 }
 
 .card {
-  border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
-  padding: 20rpx;
+  border-radius: 24rpx;
+  background: #f8f8f8;
+  box-shadow: none;
+  padding: 32rpx;
 }
 
 .top {
   display: flex;
-  align-items: center;
-  gap: 18rpx;
+  align-items: flex-start;
+  gap: 24rpx;
 }
 
 .env {
-  width: 110rpx;
-  height: 110rpx;
-  border-radius: 28rpx;
-  background: rgba(17, 17, 17, 0.04);
+  width: 120rpx;
+  height: 120rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .env-img {
-  width: 56rpx;
-  height: 56rpx;
+  width: 120rpx;
+  height: 120rpx;
 }
 
 .meta {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 12rpx;
 }
 
 .c-title {
   font-size: 32rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.85);
+  font-weight: 800;
+  color: #111111;
 }
 
 .c-sub {
-  font-size: 24rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.45);
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #888888;
 }
 
 .bottom {
-  margin-top: 16rpx;
-  padding-top: 16rpx;
-  border-top: 2rpx solid rgba(17, 17, 17, 0.06);
+  margin-top: 24rpx;
+  padding: 8px 18rpx;
+  background: #ffffff;
+  border-radius: 16rpx;
+  border: 2rpx solid rgba(17, 17, 17, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .badge {
-  height: 44rpx;
-  padding: 0 16rpx;
-  border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.04);
-  color: rgba(17, 17, 17, 0.45);
-  font-size: 26rpx;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #888888;
 }
 
 .badge.unread {
-  color: #ff4b3f;
-  background: rgba(255, 75, 63, 0.1);
+  color: #ff3b30;
 }
 
 .actions {
   display: flex;
+  background: #ffffff;
   align-items: center;
-  gap: 16rpx;
+  gap: 24rpx;
 }
 
 .a-btn {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 18rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.65);
-}
-
-.a-btn.danger {
-  color: #ff4b3f;
 }
 
 .a-img {
-  width: 34rpx;
-  height: 34rpx;
-  opacity: 0.7;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.8;
 }
 
-.danger-img {
+.a-btn.danger .a-img {
   opacity: 1;
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 80rpx;
+}
+
+.dialog-content {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #111111;
+}
+
+.d-sub {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333333;
+  text-align: center;
+}
+
+.d-actions {
+  margin-top: 24rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.d-btn.cancel {
+  background: #EFF2FF;
+}
+
+.d-btn.confirm {
+  background: #406DFF;
+}
+
+.d-btn-text {
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.cancel-text {
+  color: #406DFF;
+}
+
+.confirm-text {
+  color: #ffffff;
 }
 </style>

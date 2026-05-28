@@ -67,7 +67,7 @@ function submit() {
 }
 
 .stack {
-  margin-top: 18rpx;
+  margin-top: 28rpx;
   display: flex;
   flex-direction: column;
   gap: 16rpx;
@@ -76,7 +76,7 @@ function submit() {
 .input-wrap {
   height: 98rpx;
   border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.03);
+  background: #fafafa;
   border: 2rpx solid rgba(17, 17, 17, 0.06);
   padding: 0 18rpx;
   display: flex;

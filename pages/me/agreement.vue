@@ -42,7 +42,7 @@ function open(title) {
 }
 
 .card {
-  margin: 18rpx 28rpx 0;
+  margin: 28rpx 28rpx 0;
   background: rgba(17, 17, 17, 0.03);
   border-radius: 28rpx;
   overflow: hidden;

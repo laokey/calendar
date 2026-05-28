@@ -45,6 +45,20 @@
     <view class="bottom-save" @click="save">
       <text class="bottom-save-text">保存</text>
     </view>
+
+    <BlSheet v-model="deleteSheetOpen" :headless="true" title="" :confirm-text="''">
+      <view class="action-list">
+        <view class="action-item" @click="reassignAndDelete">
+          <text class="action-text">删除并重新分配</text>
+        </view>
+        <view class="action-item danger" @click="confirmDeleteAll">
+          <text class="action-text">删除全部</text>
+        </view>
+        <view class="action-cancel" @click="deleteSheetOpen = false">
+          <text class="action-cancel-text">取消</text>
+        </view>
+      </view>
+    </BlSheet>
   </view>
 </template>
 
@@ -53,6 +67,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
+import BlSheet from '../../components/BlSheet.vue'
 import { addMember, deleteEventsByMember, deleteMember, ensureCalendarState, findMember, updateMember } from '../../utils/calendarStore'
 import { ensureTaskState } from '../../utils/taskStore'
 import { deleteTasksByMember } from '../../utils/taskStore'
@@ -65,6 +80,7 @@ const memberId = ref('')
 const name = ref('')
 const color = ref('#ffb020')
 const avatarUrl = ref('')
+const deleteSheetOpen = ref(false)
 
 const palette = [
   '#ffb020',
@@ -194,25 +210,23 @@ function deleteAll() {
 
 function onDelete() {
   if (!isEdit.value) return
-  uni.showActionSheet({
-    itemList: ['删除并重新分配', '删除全部'],
-    success: (res) => {
-      const tapIndex = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
-      if (tapIndex === 0) {
-        uni.navigateTo({ url: `/pages/members/members-select?mode=reassign&fromId=${encodeURIComponent(memberId.value)}` })
-        return
-      }
-      if (tapIndex === 1) {
-        uni.showModal({
-          title: '你确定吗？',
-          content: '该成员相关的事件、任务和奖惩将被删除，删除后不可撤销。',
-          confirmText: '是的，我确定',
-          cancelText: '取消',
-          success: (r) => {
-            if (r && r.confirm) deleteAll()
-          },
-        })
-      }
+  deleteSheetOpen.value = true
+}
+
+function reassignAndDelete() {
+  deleteSheetOpen.value = false
+  uni.navigateTo({ url: `/pages/members/members-select?mode=reassign&fromId=${encodeURIComponent(memberId.value)}` })
+}
+
+function confirmDeleteAll() {
+  deleteSheetOpen.value = false
+  uni.showModal({
+    title: '你确定吗？',
+    content: '该成员相关的事件、任务和奖惩将被删除，删除后不可撤销。',
+    confirmText: '是的，我确定',
+    cancelText: '取消',
+    success: (r) => {
+      if (r && r.confirm) deleteAll()
     },
   })
 }
@@ -274,7 +288,7 @@ function onDelete() {
 }
 
 .block {
-  background: #f5f6f7;
+  background: #fafafa;
   border-radius: 28rpx;
   padding: 20rpx 22rpx;
   margin-top: 18rpx;
@@ -290,7 +304,7 @@ function onDelete() {
 .input-wrap {
   height: 96rpx;
   border-radius: 24rpx;
-  background: #f5f6f7;
+  background: #fafafa;
   border: 2rpx solid rgba(17, 17, 17, 0.06);
   padding: 0 18rpx;
   display: flex;
@@ -376,5 +390,42 @@ function onDelete() {
   color: #ffffff;
   font-size: 34rpx;
   font-weight: 900;
+}
+
+.action-list {
+  padding: 6rpx 0 10rpx;
+}
+
+.action-item {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-text {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #111111;
+}
+
+.action-item.danger .action-text {
+  color: #ff3b30;
+}
+
+.action-cancel {
+  margin-top: 18rpx;
+  height: 92rpx;
+  border-radius: 999rpx;
+  background: rgba(17, 17, 17, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-cancel-text {
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.8);
 }
 </style>

@@ -298,8 +298,9 @@ function reject(id) {
 }
 
 .task {
-  font-size: 34rpx;
-  font-weight: 900;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #333333;
 }
 
 .points {

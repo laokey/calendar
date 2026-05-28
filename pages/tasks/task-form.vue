@@ -32,7 +32,7 @@
     <view class="block">
       <view class="row-between">
         <view class="row-left">
-          <image class="field-icon" src="/static/task/icon_calendar.png" mode="aspectFit" />
+          <image class="field-icon" src="/static/common/icon_calendar.png" mode="aspectFit" />
           <text class="label">日期</text>
         </view>
         <switch :checked="dateEnabled" color="#3d6afb" @change="dateEnabled = !!$event.detail.value" />
@@ -55,18 +55,23 @@
       <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
     </view>
 
-    <view class="block row-between">
-      <view class="row-left">
-        <image class="field-icon" src="/static/task/icon_repeat.png" mode="aspectFit" />
-        <text class="label">重复</text>
-      </view>
-      <switch :checked="repeatEnabled" color="#3d6afb" @change="repeatEnabled = !!$event.detail.value" />
-    </view>
+    <BlRepeatSection
+      v-model="repeatEnabled"
+      mode="toggle"
+      theme="task"
+      :repeat-icon-src="'/static/task/icon_repeat.png'"
+    />
 
     <view class="block row-between">
       <view class="row-left">
         <image class="field-icon" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
         <text class="label">心心</text>
+      </view>
+      <view class="row-right">
+        <input v-model="heartsText" class="hearts-input" type="number" placeholder="0" placeholder-class="ph" />
+        <view v-if="Number(heartsText) > 0" class="hearts-clear" @click.stop="heartsText = '0'">
+          <image class="hearts-clear-img" src="/static/task/icon_close.png" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -171,6 +176,7 @@ import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
 import BlDatePickerSheet from '../../components/BlDatePickerSheet.vue'
 import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
+import BlRepeatSection from '../../components/BlRepeatSection.vue'
 import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
 import { addTask, ensureTaskState, findTask, updateTask } from '../../utils/taskStore'
 
@@ -192,6 +198,21 @@ const memberId = ref('me')
 const priority = ref('none')
 
 const tipOpen = ref(true)
+
+const heartsText = computed({
+  get() {
+    const v = Number(hearts.value || 0)
+    if (!Number.isFinite(v) || v <= 0) return '0'
+    return String(Math.floor(v))
+  },
+  set(val) {
+    const raw = String(val ?? '')
+    const digits = raw.replace(/[^\d]/g, '')
+    const n = digits ? Number(digits) : 0
+    const safe = Number.isFinite(n) ? Math.max(0, Math.min(9999, Math.floor(n))) : 0
+    hearts.value = safe
+  },
+})
 
 const emojiSheetOpen = ref(false)
 const dateSheetOpen = ref(false)
@@ -370,11 +391,10 @@ function save() {
 }
 
 .block {
-  background: #ffffff;
+  background: #fafafa;
   border-radius: 28rpx;
   padding: 24rpx 28rpx;
   margin: 20rpx 0 0;
-  box-shadow: 0 4rpx 20rpx rgba(17, 17, 17, 0.04);
 }
 
 .field-title {
@@ -394,7 +414,7 @@ function save() {
 .input-wrap {
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;
@@ -422,7 +442,6 @@ function save() {
   border-radius: 28rpx;
   padding: 24rpx 28rpx;
   margin: 20rpx 28rpx 0;
-  box-shadow: 0 4rpx 20rpx rgba(17, 17, 17, 0.04);
 }
 
 .field-row {
@@ -439,7 +458,7 @@ function save() {
 .input-wrap {
   height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.02);
+  background: #fafafa;
   padding: 0 20rpx;
   display: flex;
   align-items: center;
@@ -478,6 +497,29 @@ function save() {
   font-size: 30rpx;
   font-weight: 800;
   color: rgba(17, 17, 17, 0.85);
+}
+
+.hearts-input {
+  width: 140rpx;
+  text-align: right;
+  font-size: 32rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.hearts-clear {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 9999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hearts-clear-img {
+  width: 24rpx;
+  height: 24rpx;
+  opacity: 0.55;
 }
 
 .row-val-full {

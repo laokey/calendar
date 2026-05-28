@@ -1,10 +1,8 @@
 <template>
   <view class="page">
-    <view class="profile" :style="{ paddingTop: safeTop + 'px' }" @click="goEdit">
+    <view class="profile" :style="{ paddingTop: safeTop + 22 + 'px' }" @click="goEdit">
       <image v-if="profile.avatarUrl" class="avatar" :src="profile.avatarUrl" mode="aspectFill" />
-      <view v-else class="avatar ph-avatar">
-        <image class="ph-logo" src="../../ui/芝麻日历-登录注册/logo.png" mode="aspectFit" />
-      </view>
+      <image v-else class="avatar" src="/static/my/avatar.jpg" mode="aspectFill" />
       <view class="p-meta">
         <text class="p-name">{{ profile.name }}</text>
         <text class="p-email">{{ profile.email }}</text>
@@ -15,11 +13,11 @@
     <view class="quick">
       <view class="q-card blue" @click="goCards">
         <text class="q-title">卡片记录</text>
-        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_cards.png" mode="aspectFit" /></view>
+        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_card_record.png" mode="aspectFit" /></view>
       </view>
       <view class="q-card purple" @click="goDevice">
         <text class="q-title">设备</text>
-        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_device.png" mode="aspectFit" /></view>
+        <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_device_record.png" mode="aspectFit" /></view>
       </view>
     </view>
 
@@ -40,14 +38,14 @@
       </view>
       <view class="m-item" @click="goCalendar">
         <view class="m-left">
-          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_calendar.png" mode="aspectFit" /></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_zhima.png" mode="aspectFit" /></view>
           <text class="m-text">芝麻日历</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goAbout">
         <view class="m-left">
-          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_info.png" mode="aspectFit" /></view>
+          <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_about.png" mode="aspectFit" /></view>
           <text class="m-text">关于我们</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
@@ -113,7 +111,7 @@ function goCards() {
 }
 
 function goDevice() {
-  uni.navigateTo({ url: '/pages/me/device' })
+  uni.navigateTo({ url: '/pages/device/manage' })
 }
 
 function goSettings() {
@@ -146,158 +144,145 @@ function copyWechat() {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eaf2ff 0%, #ffffff 55%);
+  background-color: #ffffff;
+  background-image: url('/static/my/bg_my.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
   padding-bottom: 220rpx;
 }
 
 .profile {
-  padding: 42rpx 28rpx 18rpx;
+  padding: 60rpx 40rpx 20rpx;
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 24rpx;
 }
 
 .avatar {
-  width: 92rpx;
-  height: 92rpx;
+  width: 112rpx;
+  height: 112rpx;
   border-radius: 9999rpx;
   background: rgba(17, 17, 17, 0.06);
   overflow: hidden;
-}
-
-.ph-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ph-logo {
-  width: 64rpx;
-  height: 64rpx;
-  opacity: 0.9;
 }
 
 .p-meta {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
 .p-name {
   font-size: 40rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.9);
+  font-weight: 800;
+  color: #111111;
 }
 
 .p-email {
   font-size: 26rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.55);
+  font-weight: 500;
+  color: #888888;
 }
 
 .chev-img {
-  width: 24rpx;
-  height: 24rpx;
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .quick {
-  padding: 0 28rpx;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18rpx;
+  padding: 24rpx 32rpx 0;
+  display: flex;
+  gap: 20rpx;
 }
 
 .q-card {
+  flex: 1;
   height: 140rpx;
-  border-radius: 28rpx;
-  padding: 22rpx;
+  border-radius: 24rpx;
+  padding: 0 0 0 28rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  box-shadow: 0 8rpx 20rpx rgba(17, 17, 17, 0.04);
 }
 
 .q-card.blue {
-  background: linear-gradient(135deg, #5aa7ff 0%, #3d6afb 100%);
+  background:  linear-gradient( 156deg, #2886FF 0%, #DBEAFE 100%);
 }
 
 .q-card.purple {
-  background: linear-gradient(135deg, #7f7bff 0%, #5c55ff 100%);
+  background: linear-gradient( 156deg, #636BFC 0%, #EEEEFF 100%);
 }
 
 .q-title {
-  font-size: 32rpx;
-  font-weight: 900;
+  font-size: 30rpx;
+  font-weight: 800;
   color: #ffffff;
 }
 
 .q-ico {
-  width: 74rpx;
-  height: 74rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.18);
+  width: 96rpx;
+  height: 96rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 24rpx;
 }
 
 .q-ico-img {
-  width: 44rpx;
-  height: 44rpx;
+  width: 96rpx;
+  height: 96rpx;
 }
 
 .menu {
-  margin: 22rpx 28rpx 0;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 28rpx;
-  overflow: hidden;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  margin: 32rpx 32rpx 0;
+  background: #fafafa;
+  border: 2rpx solid rgba(17, 17, 17, 0.06);
+  border-radius: 32rpx;
+  padding: 16rpx 0;
+  box-shadow: 0 8rpx 24rpx rgba(17, 17, 17, 0.03);
 }
 
 .m-item {
-  height: 96rpx;
-  padding: 0 22rpx;
+  height: 104rpx;
+  padding: 0 32rpx;
+  background: #fafafa;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.m-item + .m-item {
-  border-top: 2rpx solid rgba(17, 17, 17, 0.05);
 }
 
 .m-left {
   display: flex;
   align-items: center;
-  gap: 14rpx;
+  gap: 20rpx;
 }
 
 .m-icon {
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 16rpx;
-  background: rgba(17, 17, 17, 0.04);
+  width: 40rpx;
+  height: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .m-ico-img {
-  width: 30rpx;
-  height: 30rpx;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .m-text {
   font-size: 30rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.85);
+  font-weight: 500;
+  color: #333333;
 }
 
 .m-chev-img {
-  width: 22rpx;
-  height: 22rpx;
-  opacity: 0.55;
+  width: 24rpx;
+  height: 24rpx;
+  opacity: 0.4;
 }
 
 .mask {

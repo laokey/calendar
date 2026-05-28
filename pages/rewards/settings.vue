@@ -14,16 +14,18 @@
         </view>
       </view>
 
-      <view class="divider" />
-
-      <view class="row">
-        <view class="left">
-          <image class="row-icon" src="/static/reward/icon_clock.png" mode="aspectFit" />
-          <text class="label">显示已完成</text>
+      <view class="setting-block">
+        <view class="row row-flat">
+          <view class="left">
+            <image class="row-icon" src="/static/reward/icon_clock.png" mode="aspectFit" />
+            <text class="label">显示已完成</text>
+          </view>
+          <switch :checked="showDone" color="#3d6afb" @change="toggleShowDone" />
         </view>
-        <switch :checked="showDone" color="#3d6afb" @change="toggleShowDone" />
+        <view class="desc-wrap">
+          <text class="desc">若开启则奖励列表显示已完成的奖励/惩罚，关闭则不显示已完成的奖励/惩罚</text>
+        </view>
       </view>
-      <text class="desc">若开启则奖励列表显示已完成的奖励/惩罚，关闭则不显示已完成的奖励/惩罚</text>
     </view>
 
     <BlSheet v-model="sortOpen" title="排序" :confirm-text="''">
@@ -92,21 +94,40 @@ function toggleShowDone(e) {
 <style scoped lang="scss">
 .settings-page {
   padding-bottom: 80rpx;
+  background: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .card {
   margin-top: 18rpx;
-  background: #ffffff;
-  border-radius: 28rpx;
-  padding: 18rpx 22rpx 18rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
 }
 
 .row {
   height: 96rpx;
+  padding: 0 18rpx;
+  border-radius: 20rpx;
+  background: #fafafa;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.row.row-flat {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.setting-block {
+  border-radius: 20rpx;
+  background: #fafafa;
+  padding: 0 18rpx 16rpx;
+  box-sizing: border-box;
 }
 
 .left {
@@ -146,18 +167,17 @@ function toggleShowDone(e) {
   color: rgba(17, 17, 17, 0.35);
 }
 
-.divider {
-  height: 1px;
-  background: rgba(17, 17, 17, 0.06);
-}
-
 .desc {
   display: block;
-  margin-top: 8rpx;
   font-size: 26rpx;
   font-weight: 800;
   color: rgba(17, 17, 17, 0.55);
   line-height: 1.4;
+}
+
+.desc-wrap {
+  margin-top: -6rpx;
+  padding-left: 40rpx;
 }
 
 .sort-list {
@@ -170,7 +190,7 @@ function toggleShowDone(e) {
 .sort-item {
   height: 92rpx;
   border-radius: 20rpx;
-  background: rgba(17, 17, 17, 0.06);
+  background: #fafafa;
   padding: 0 18rpx;
   display: flex;
   align-items: center;

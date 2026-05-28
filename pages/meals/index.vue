@@ -16,7 +16,7 @@
     </view>
 
     <view class="sections">
-      <view v-for="d in days" :key="d.key" class="section">
+      <view v-for="d in days" :key="d.key" class="day">
         <view class="section-head">
           <view v-if="d.key === todayKey" class="sec-today">
             <text class="sec-week">{{ d.weekday }}</text>
@@ -25,34 +25,42 @@
           <text v-else class="sec-title">{{ d.weekday }} {{ d.date }}</text>
         </view>
 
-        <view class="tabs">
-          <view
-            v-for="opt in categoryOptions"
-            :key="opt.value"
-            class="tab"
-            @click="setDayCategory(d.key, opt.value)"
-          >
-            <text class="tab-text" :class="{ on: dayCategoryId(d.key) === opt.value }">{{ opt.label }}</text>
-            <view class="tab-line" :class="{ on: dayCategoryId(d.key) === opt.value }" />
-          </view>
-        </view>
-
-        <view v-if="dayItems(d.key).length" class="meal-items">
-          <view v-for="it in dayItems(d.key)" :key="it.id" class="meal-item" @click="openDetail(it.id)">
-            <view class="thumb">
-              <image v-if="it.photoPath" class="thumb-img" :src="it.photoPath" mode="aspectFill" />
-              <view v-else class="thumb-ph" />
-            </view>
-            <text class="meal-title">{{ it.title }}</text>
-            <view class="meal-del" @click.stop="removePlan(it.id)">
-              <image class="meal-del-icon" src="/static/meals/icon_trash.png" mode="aspectFit" />
+        <view class="section">
+          <view class="tabs">
+            <view
+              v-for="opt in categoryOptions"
+              :key="opt.value"
+              class="tab"
+              @click="setDayCategory(d.key, opt.value)"
+            >
+              <text class="tab-text" :class="{ on: dayCategoryId(d.key) === opt.value }">{{ opt.label }}</text>
+              <view class="tab-line" :class="{ on: dayCategoryId(d.key) === opt.value }" />
             </view>
           </view>
-        </view>
 
-        <view class="add-card" @click="openPlanForm(d.key, dayCategoryId(d.key))">
-          <image class="add-icon" src="/static/common/icon_plus.png" mode="aspectFit" />
-          <text class="add-text">添加</text>
+          <view v-if="dayItems(d.key).length" class="meal-items">
+            <view
+              v-for="it in dayItems(d.key)"
+              :key="it.id"
+              class="meal-item"
+              :style="{ background: mealItemBg(d.key) }"
+              @click="openDetail(it.id)"
+            >
+              <view class="thumb">
+                <image v-if="it.photoPath" class="thumb-img" :src="it.photoPath" mode="aspectFill" />
+                <view v-else class="thumb-ph" />
+              </view>
+              <text class="meal-title">{{ it.title }}</text>
+              <view class="meal-del" @click.stop="removePlan(it.id)">
+                <image class="meal-del-icon" src="/static/meals/icon_trash.png" mode="aspectFit" />
+              </view>
+            </view>
+          </view>
+
+          <view class="add-card" @click="openPlanForm(d.key, dayCategoryId(d.key))">
+            <image class="add-icon" src="/static/common/icon_plus.png" mode="aspectFit" />
+            <text class="add-text">添加</text>
+          </view>
         </view>
       </view>
     </view>
@@ -130,6 +138,31 @@ const categoryOptions = computed(() =>
   listCategories(mealState.value, { enabledOnly: true }).map((c) => ({ label: c.name, value: c.id }))
 )
 
+function hexToRgba(hex, alpha) {
+  const a = Math.max(0, Math.min(1, Number(alpha)))
+  const raw = String(hex || '').trim()
+  if (!raw) return ''
+  if (raw.startsWith('rgba(') || raw.startsWith('rgb(')) return raw
+  if (!raw.startsWith('#')) return ''
+  const h = raw.slice(1)
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  if (full.length !== 6) return ''
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return ''
+  return `rgba(${r}, ${g}, ${b}, ${a})`
+}
+
+const categoryColorMap = computed(() => {
+  const map = {}
+  for (const c of listCategories(mealState.value)) {
+    if (!c || !c.id) continue
+    map[String(c.id)] = String(c.color || '')
+  }
+  return map
+})
+
 const defaultCategoryId = computed(() => {
   const enabled = listCategories(mealState.value, { enabledOnly: true })
   const stateId = String(mealState.value.activeCategoryId || '')
@@ -170,6 +203,12 @@ function itemsFor(dateKeyVal, categoryIdVal) {
 
 function dayItems(dateKeyVal) {
   return itemsFor(dateKeyVal, dayCategoryId(dateKeyVal))
+}
+
+function mealItemBg(dateKeyVal) {
+  const catId = dayCategoryId(dateKeyVal)
+  const color = categoryColorMap.value && categoryColorMap.value[catId] ? categoryColorMap.value[catId] : ''
+  return hexToRgba(color, 0.12) || 'rgba(17, 17, 17, 0.04)'
 }
 
 function openPlanForm(dateKeyVal, categoryIdVal) {
@@ -282,14 +321,16 @@ function formatKey(d) {
   gap: 18rpx;
 }
 
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
 .section {
   background: #f5f6f7;
   border-radius: 28rpx;
-  padding: 18rpx 22rpx 22rpx;
-}
-
-.section-head {
-  margin-bottom: 12rpx;
+  padding: 16rpx 22rpx 22rpx;
 }
 
 .sec-today {
@@ -423,9 +464,9 @@ function formatKey(d) {
 
 .add-card {
   margin-top: 14rpx;
-  height: 106rpx;
+  height: 96rpx;
   border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;

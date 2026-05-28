@@ -3,7 +3,7 @@
     <BlHeader title="关于我们" back />
 
     <view class="hero">
-      <image class="logo" src="../../ui/芝麻日历-登录注册/logo.png" mode="aspectFit" />
+      <image class="logo" src="/static/logo.png" mode="aspectFit" />
       <view class="pill">
         <text class="pill-text">当前版本:V1.7.1</text>
       </view>
@@ -57,7 +57,7 @@ function open(title) {
 }
 
 .hero {
-  margin-top: 18rpx;
+  margin-top: 38rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -82,7 +82,7 @@ function open(title) {
 .pill-text {
   font-size: 28rpx;
   font-weight: 900;
-  color: #3d6afb;
+  color: #406DFF;
 }
 
 .card {
@@ -114,15 +114,14 @@ function open(title) {
   width: 44rpx;
   height: 44rpx;
   border-radius: 14rpx;
-  background: rgba(17, 17, 17, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .ico-img {
-  width: 30rpx;
-  height: 30rpx;
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .label {

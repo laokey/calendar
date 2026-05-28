@@ -33,16 +33,7 @@
       </view>
     </scroll-view>
 
-    <view class="type-toggle">
-      <view class="toggle-pill" :class="{ on: activeType === 'reward' }" @click="setType('reward')">
-        <text class="toggle-text">奖励</text>
-      </view>
-      <view class="toggle-pill punish" :class="{ on: activeType === 'punish' }" @click="setType('punish')">
-        <text class="toggle-text">惩罚</text>
-      </view>
-    </view>
-
-    <view class="panel" :class="{ punish: activeType === 'punish' }">
+    <view class="panel" :style="{ background: panelBackground }">
       <view class="panel-head">
         <view class="head-left">
           <BlAvatar :glyph="activeMember.glyph" :src="activeMember.avatarUrl" :color="activeMemberColor" :size="72" />
@@ -56,42 +47,52 @@
         </view>
       </view>
 
-      <view v-if="filteredItems.length" class="items">
-        <view v-for="it in filteredItems" :key="it.id" class="item" @longpress="openActions(it)" @click="tryRedeem(it)">
-          <view class="item-left">
-            <view class="emoji"><text class="emoji-text">{{ it.emoji || '心' }}</text></view>
-            <view class="item-main">
-              <text class="item-title">{{ it.title }}</text>
-              <text v-if="activeType === 'punish'" class="item-sub bl-muted">{{ it.desc || '惩罚' }}</text>
-            </view>
-          </view>
-          <view class="item-right">
-            <view v-if="buttonMode(it) === 'today'" class="btn disabled">
-              <text class="btn-text">{{ activeType === 'reward' ? '今天兑换' : '今天惩罚' }}</text>
-            </view>
-            <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
-              <view class="progress-fill" :style="{ width: progressWidth(it) }" />
-              <view class="progress-text">
-                <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
-                <text class="progress-label">{{ balance(activeMemberId) }}/{{ it.hearts }}</text>
+      <scroll-view v-if="filteredItems.length" scroll-y class="panel-body" show-scrollbar="false">
+        <view class="items">
+          <view v-for="it in filteredItems" :key="it.id" class="item" @longpress="openActions(it)" @click="tryRedeem(it)">
+            <view class="item-left">
+              <view class="emoji">
+                <image
+                  v-if="!it.emoji"
+                  class="emoji-heart"
+                  :src="it.type === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+                  mode="aspectFit"
+                />
+                <text v-else class="emoji-text">{{ it.emoji }}</text>
+              </view>
+              <view class="item-main">
+                <text class="item-title">{{ it.title }}</text>
+                <text v-if="it.type === 'punish'" class="item-sub bl-muted">{{ it.desc || '惩罚' }}</text>
               </view>
             </view>
-            <view v-else class="btn" :class="{ punish: activeType === 'punish', disabled: activeType === 'reward' && !canAfford(it) }">
-              <template v-if="activeType === 'reward'">
-                <text class="btn-text">兑换</text>
-                <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
-                <text class="btn-text">{{ it.hearts }}</text>
-              </template>
-              <template v-else>
-                <image class="heart-img is-small" src="/static/reward/icon_heart_black.png" mode="aspectFit" />
-                <text class="btn-text">{{ it.hearts }}</text>
-              </template>
+            <view class="item-right">
+              <view v-if="buttonMode(it) === 'today'" class="btn disabled">
+                <text class="btn-text">{{ it.type === 'punish' ? '今天惩罚' : '今天兑换' }}</text>
+              </view>
+              <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
+                <view class="progress-fill" :style="{ width: progressWidth(it) }" />
+                <view class="progress-text">
+                  <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+                  <text class="progress-label">{{ balance(activeMemberId) }}/{{ it.hearts }}</text>
+                </view>
+              </view>
+              <view v-else class="btn" :class="{ punish: it.type === 'punish', disabled: it.type !== 'punish' && !canAfford(it) }">
+                <template v-if="it.type !== 'punish'">
+                  <text class="btn-text">兑换</text>
+                  <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+                  <text class="btn-text">{{ it.hearts }}</text>
+                </template>
+                <template v-else>
+                  <image class="heart-img is-small" src="/static/reward/icon_heart_black.png" mode="aspectFit" />
+                  <text class="btn-text">{{ it.hearts }}</text>
+                </template>
+              </view>
             </view>
           </view>
         </view>
-      </view>
+      </scroll-view>
 
-      <view v-else class="empty">
+      <view v-else class="panel-empty">
         <view class="empty-illus">
           <image class="empty-img" src="/static/reward/illus_empty_rewards.png" mode="aspectFit" />
         </view>
@@ -173,7 +174,6 @@ import {
   redeemItem,
   saveRewardState,
   setRewardActiveMember,
-  setRewardActiveType,
   todayDateKey,
   addHeartTransfer,
   updateRewardItem,
@@ -182,7 +182,6 @@ import {
 const calendarState = ref(ensureCalendarState())
 const rewardState = ref(ensureRewardState())
 
-const activeType = computed(() => rewardState.value.activeType || 'reward')
 const activeMemberId = computed(() => rewardState.value.activeMemberId || 'me')
 const todayKey = computed(() => todayDateKey())
 
@@ -213,6 +212,29 @@ const activeMember = computed(() => memberItems.value.find((m) => m.id === activ
 const activeMemberLabel = computed(() => (activeMemberId.value === 'me' ? '我的' : activeMember.value.name))
 const activeMemberColor = computed(() => (activeMemberId.value === 'me' ? '#4cc38a' : activeMember.value.color))
 
+function hexToRgba(hex, alpha) {
+  const a = Math.max(0, Math.min(1, Number(alpha)))
+  const raw = String(hex || '').trim()
+  if (!raw) return ''
+  if (raw.startsWith('rgba(') || raw.startsWith('rgb(')) return raw
+  if (!raw.startsWith('#')) return ''
+  const h = raw.slice(1)
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  if (full.length !== 6) return ''
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return ''
+  return `rgba(${r}, ${g}, ${b}, ${a})`
+}
+
+const panelBackground = computed(() => {
+  const c = activeMemberColor.value || '#4cc38a'
+  const rgba = hexToRgba(c, 0.12)
+  if (rgba) return rgba
+  return '#eaf7f1'
+})
+
 function balance(memberId) {
   return computeHeartBalance(rewardState.value, memberId)
 }
@@ -221,31 +243,36 @@ function selectMember(id) {
   rewardState.value = setRewardActiveMember(rewardState.value, id)
 }
 
-function setType(t) {
-  rewardState.value = setRewardActiveType(rewardState.value, t)
-}
-
 const filteredItems = computed(() => {
   const settings = rewardState.value.settings || { sort: 'asc', showDone: true }
   const items = listRewardItems(rewardState.value)
-    .filter((x) => x.type === activeType.value)
     .filter((x) => x.memberId === activeMemberId.value)
     .filter((x) => (settings.showDone ? true : !isItemDoneToday(x, todayKey.value)))
 
   const asc = settings.sort === 'asc'
   return items
     .slice()
-    .sort((a, b) => (asc ? (a.hearts || 0) - (b.hearts || 0) : (b.hearts || 0) - (a.hearts || 0)))
+    .sort((a, b) => {
+      const ta = a.type === 'punish' ? 1 : 0
+      const tb = b.type === 'punish' ? 1 : 0
+      if (ta !== tb) return ta - tb
+      const ha = Number(a.hearts || 0) || 0
+      const hb = Number(b.hearts || 0) || 0
+      if (ha !== hb) return asc ? ha - hb : hb - ha
+      const ca = Number(a.createdAtTs || 0) || 0
+      const cb = Number(b.createdAtTs || 0) || 0
+      return cb - ca
+    })
 })
 
 function canAfford(it) {
-  if (activeType.value === 'punish') return true
+  if (it && it.type === 'punish') return true
   return balance(activeMemberId.value) >= (Number(it.hearts || 0) || 0)
 }
 
 function buttonMode(it) {
   if (isItemDoneToday(it, todayKey.value)) return 'today'
-  if (activeType.value === 'reward' && it.resetAfter) return 'progress'
+  if (it && it.type !== 'punish' && it.resetAfter) return 'progress'
   return 'button'
 }
 
@@ -259,7 +286,7 @@ function progressWidth(it) {
 
 function tryRedeem(it) {
   if (buttonMode(it) === 'today') return
-  if (activeType.value === 'reward' && !canAfford(it)) return
+  if (it && it.type !== 'punish' && !canAfford(it)) return
   const res = redeemItem(rewardState.value, it.id, { nowKey: todayKey.value })
   if (!res.ok) return
   celebrateType.value = it.type
@@ -291,7 +318,7 @@ function cancelAction() {
 }
 
 function addItem() {
-  uni.navigateTo({ url: `/pages/rewards/reward-form?type=${activeType.value}&memberId=${activeMemberId.value}` })
+  uni.navigateTo({ url: `/pages/rewards/reward-form?type=reward&memberId=${activeMemberId.value}` })
 }
 
 function openActions(it) {
@@ -329,7 +356,11 @@ function goSettings() {
   background: #ffffff;
 }
 .reward-page {
-  padding-bottom: 0rpx;
+  height: 100vh;
+  padding-bottom: 222rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .right {
@@ -358,6 +389,7 @@ function goSettings() {
 .member-scroll {
   margin-top: 10rpx;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .member-row {
@@ -416,56 +448,38 @@ function goSettings() {
   height: 16rpx;
 }
 
-.type-toggle {
-  margin-top: 6rpx;
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-}
-
-.toggle-pill {
-  flex: 1;
-  height: 74rpx;
-  border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toggle-pill.on {
-  background: #3d6afb;
-}
-
-.toggle-pill.punish.on {
-  background: #ff3b30;
-}
-
-.toggle-text {
-  font-size: 30rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.8);
-}
-
-.toggle-pill.on .toggle-text {
-  color: #ffffff;
-}
-
 .panel {
   margin-top: 16rpx;
   background: #eaf7f1;
   border-radius: 28rpx;
   padding: 22rpx;
-}
-
-.panel.punish {
-  background: #fdecee;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.panel-body {
+  margin-top: 18rpx;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel-empty {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22rpx;
 }
 
 .head-left {
@@ -497,7 +511,6 @@ function goSettings() {
 }
 
 .items {
-  margin-top: 18rpx;
   display: flex;
   flex-direction: column;
   gap: 14rpx;
@@ -532,6 +545,12 @@ function goSettings() {
   font-size: 36rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.7);
+}
+
+.emoji-heart {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
 }
 
 .item-main {
@@ -588,20 +607,12 @@ function goSettings() {
   overflow: hidden;
 }
 
-.panel.punish .progress {
-  background: rgba(255, 75, 63, 0.18);
-}
-
 .progress-fill {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   background: rgba(76, 195, 138, 0.65);
-}
-
-.panel.punish .progress-fill {
-  background: rgba(255, 75, 63, 0.65);
 }
 
 .progress-text {
@@ -625,25 +636,17 @@ function goSettings() {
   color: rgba(17, 17, 17, 0.85);
 }
 
-.empty {
-  margin-top: 90rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18rpx;
-}
-
 .empty-illus {
-  width: 180rpx;
-  height: 180rpx;
+  width: 260rpx;
+  height: 260rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .empty-img {
-  width: 180rpx;
-  height: 180rpx;
+  width: 260rpx;
+  height: 260rpx;
   display: block;
 }
 
@@ -654,19 +657,20 @@ function goSettings() {
 
 .fab {
   position: fixed;
-  right: 34rpx;
+  right: 28rpx;
   bottom: 120rpx;
   width: 160rpx;
   height: 92rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .fab-img {
   width: 160rpx;
   height: 92rpx;
   display: block;
+  transform: translateX(18rpx);
 }
 
 .celebrate {

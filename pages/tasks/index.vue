@@ -22,7 +22,12 @@
       </template>
     </BlHeader>
 
-    <view class="top-calendar">
+    <view
+      class="top-calendar"
+      @touchstart="onCalTouchStart"
+      @touchmove.stop="onCalTouchMove"
+      @touchend="onCalTouchEnd"
+    >
       <view v-if="calendarOpen" class="week-labels">
         <view v-for="w in weekdayLabels" :key="w" class="wlabel">
           <text class="wlabel-text">{{ w }}</text>
@@ -76,10 +81,10 @@
               :class="{ active: f.id === activeFilter }"
               @click="activeFilter = f.id"
             >
-              <view v-if="f.id === 'all'" class="circle all">
+              <view v-if="f.id === 'all'" class="circle all" :style="circleRingStyle(f)">
                 <text class="all-text">全部</text>
               </view>
-              <view v-else class="circle" :style="{ background: f.color }">
+              <view v-else class="circle" :style="circleStyle(f)">
                 <text class="circle-text">{{ f.glyph }}</text>
               </view>
               <view v-if="statsFor(f.id).total > 0" class="stats">
@@ -277,6 +282,12 @@ const swipeActionWidthPxRef = ref(0)
 let swipeRaf = 0
 let swipeNextX = 0
 
+const calTouchStartX = ref(0)
+const calTouchStartY = ref(0)
+const calLocked = ref('')
+const calMoved = ref(false)
+const calSuppressSelectUntil = ref(0)
+
 const weekdayLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
 const cursorKey = computed(() => taskState.value.cursorDate)
@@ -287,6 +298,78 @@ function formatMdText(key) {
   const parts = String(key || '').split('-')
   if (parts.length !== 3) return ''
   return `${String(parts[1]).padStart(2, '0')}月${String(parts[2]).padStart(2, '0')}日`
+}
+
+function parseKey(key) {
+  const parts = String(key || '').split('-')
+  if (parts.length !== 3) return new Date()
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+}
+
+function formatKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function shiftCursorMonth(deltaMonths) {
+  const d = parseKey(cursorKey.value)
+  const day = d.getDate()
+  const target = new Date(d.getFullYear(), d.getMonth() + deltaMonths, 1)
+  const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, last))
+  taskState.value = setTaskCursorDate(taskState.value, formatKey(target))
+}
+
+function shiftCursorWeek(deltaWeeks) {
+  const d = parseKey(cursorKey.value)
+  d.setDate(d.getDate() + 7 * deltaWeeks)
+  taskState.value = setTaskCursorDate(taskState.value, formatKey(d))
+}
+
+function touchPoint(e) {
+  const t = e && e.touches && e.touches[0] ? e.touches[0] : null
+  if (t && typeof t.clientX === 'number') return { x: t.clientX, y: t.clientY }
+  const c = e && e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : null
+  if (c && typeof c.clientX === 'number') return { x: c.clientX, y: c.clientY }
+  return { x: 0, y: 0 }
+}
+
+function onCalTouchStart(e) {
+  const p = touchPoint(e)
+  calTouchStartX.value = p.x
+  calTouchStartY.value = p.y
+  calLocked.value = ''
+  calMoved.value = false
+}
+
+function onCalTouchMove(e) {
+  const p = touchPoint(e)
+  const dx = p.x - calTouchStartX.value
+  const dy = p.y - calTouchStartY.value
+  const ax = Math.abs(dx)
+  const ay = Math.abs(dy)
+  if (!calLocked.value) {
+    if (ax >= 10 || ay >= 10) {
+      calLocked.value = ax >= ay ? 'x' : 'y'
+    }
+  }
+  if (calLocked.value === 'x' && ax >= 10) calMoved.value = true
+}
+
+function onCalTouchEnd(e) {
+  if (calLocked.value !== 'x' || !calMoved.value) return
+  const p = touchPoint(e)
+  const dx = p.x - calTouchStartX.value
+  const adx = Math.abs(dx)
+  const threshold = 56
+  if (adx < threshold) return
+  calSuppressSelectUntil.value = Date.now() + 350
+  if (calendarOpen.value) {
+    if (dx < 0) shiftCursorMonth(1)
+    else shiftCursorMonth(-1)
+    return
+  }
+  if (dx < 0) shiftCursorWeek(1)
+  else shiftCursorWeek(-1)
 }
 
 const mdText = computed(() => formatMdText(cursorKey.value))
@@ -403,13 +486,17 @@ function toggleCalendar() {
 }
 
 function selectDate(key) {
+  if (Date.now() < calSuppressSelectUntil.value) return
+  if (calLocked.value === 'x' && calMoved.value) return
   taskState.value = setTaskCursorDate(taskState.value, key)
   taskState.value = setTaskCalendarOpen(taskState.value, false)
 }
 
 function goToday() {
   const now = new Date()
-  selectDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`)
+  const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  taskState.value = setTaskCursorDate(taskState.value, key)
+  taskState.value = setTaskCalendarOpen(taskState.value, true)
 }
 
 function swipeEdit(t) {
@@ -479,6 +566,16 @@ function rgbaFromColor(color, alpha) {
     }
   }
   return c
+}
+
+function circleRingStyle(f) {
+  const base = f && f.id === 'all' ? '#3d6afb' : (f && f.color) || '#3d6afb'
+  const alpha = f && f.id === activeFilter.value ? 0.5 : 0.26
+  return { '--ring-color': rgbaFromColor(base, alpha) }
+}
+
+function circleStyle(f) {
+  return { background: f && f.color ? f.color : '#3d6afb', ...circleRingStyle(f) }
 }
 
 function taskCardBg(t) {
@@ -879,7 +976,7 @@ function doDelete(scope) {
 }
 
 .filters {
-  padding-top: 14rpx;
+  padding-top: 12rpx;
 }
 
 .filter-scroll {
@@ -909,6 +1006,16 @@ function doDelete(scope) {
   justify-content: center;
   border: 4rpx solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  position: relative;
+}
+
+.circle::after {
+  content: '';
+  position: absolute;
+  inset: -8rpx;
+  border-radius: 999rpx;
+  border: 4rpx solid var(--ring-color, rgba(61, 106, 251, 0.26));
+  pointer-events: none;
 }
 
 .circle.all {

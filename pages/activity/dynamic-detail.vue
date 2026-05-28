@@ -6,8 +6,12 @@
       </view>
       <text class="head-title">动态详情</text>
       <view class="head-right">
-        <view class="icon-btn" @click="editTitle"><text class="icon">✎</text></view>
-        <view class="icon-btn" @click="remove"><text class="icon danger">🗑</text></view>
+        <view class="action" @click="editTitle">
+          <image class="action-icon" src="/static/common/icon_edit.png" mode="aspectFit" />
+        </view>
+        <view class="action del" @click="remove">
+          <image class="action-icon" src="/static/task/icon_trash_red.png" mode="aspectFit" />
+        </view>
       </view>
     </view>
 
@@ -20,24 +24,30 @@
 
     <view v-if="item" class="panel">
       <view class="row">
-        <text class="r-ico">🕒</text>
+        <view class="r-ico">
+          <image class="r-ico-img" src="/static/task/icon_clock_grey.png" mode="aspectFit" />
+        </view>
         <text class="r-text">{{ item.detail.dateText }}</text>
       </view>
       <view class="line" />
       <view class="row">
-        <text class="r-ico">↻</text>
+        <view class="r-ico">
+          <image class="r-ico-img" src="/static/task/icon_repeat.png" mode="aspectFit" />
+        </view>
         <text class="r-text">{{ item.detail.repeatText }}</text>
       </view>
       <view class="line" />
       <view class="row">
         <view class="r-ico">
-          <image class="r-ico-img" src="/static/message/icon_star.png" mode="aspectFit" />
+          <image class="r-ico-img" src="/static/common/icon_star.png" mode="aspectFit" />
         </view>
         <text class="r-text">{{ item.detail.starText }}</text>
       </view>
       <view class="line" />
       <view class="row">
-        <text class="r-ico">👤</text>
+        <view class="r-ico">
+          <image class="r-ico-img" src="/static/message/icon_person.png" mode="aspectFit" />
+        </view>
         <text class="r-text">分配给</text>
         <view class="assignee">
           <view class="a-avatar" :style="{ background: item.detail.assignTo.color }">
@@ -48,12 +58,14 @@
       </view>
       <view class="line" />
       <view class="row">
-        <text class="r-ico">☑</text>
+        <view class="r-ico">
+          <image class="r-ico-img" src="/static/common/icon_complete.png" mode="aspectFit" />
+        </view>
         <text class="r-text">{{ item.detail.doneAtText }}</text>
       </view>
     </view>
 
-    <view class="btn" :class="{ disabled: !item }" @click="toggleDone">
+    <view class="btn" :style="{ bottom: 34 + safeBottom + 'px' }" :class="{ disabled: !item }" @click="toggleDone">
       <text class="btn-text">{{ item && item.action === 'done' ? '标记为未完成' : '标记为已完成' }}</text>
     </view>
   </view>
@@ -84,6 +96,16 @@ const safeTop = computed(() => {
     const info = uni.getSystemInfoSync()
     const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
     return insets && typeof insets.top === 'number' ? insets.top : 0
+  } catch (e) {
+    return 0
+  }
+})
+
+const safeBottom = computed(() => {
+  try {
+    const info = uni.getSystemInfoSync()
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
+    return insets && typeof insets.bottom === 'number' ? insets.bottom : 0
   } catch (e) {
     return 0
   }
@@ -141,7 +163,7 @@ function toggleDone() {
 .page {
   min-height: 100vh;
   background: #ffffff;
-  padding: 0 28rpx 40rpx;
+  padding: 0 28rpx 220rpx;
 }
 
 .head {
@@ -175,31 +197,28 @@ function toggleDone() {
 }
 
 .head-right {
-  width: 160rpx;
+  width: 130rpx;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10rpx;
+  gap: 16rpx;
 }
 
-.icon-btn {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 9999rpx;
+.action {
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.8);
 }
 
-.icon {
-  font-size: 34rpx;
-  font-weight: 900;
+.action-icon {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
 }
 
-.danger {
-  color: #ff4b3f;
-}
+
 
 .hero {
   margin-top: 26rpx;
@@ -230,29 +249,35 @@ function toggleDone() {
 
 .panel {
   margin-top: 30rpx;
-  background: rgba(17, 17, 17, 0.03);
+  background: #ffffff;
   border-radius: 28rpx;
   overflow: hidden;
+  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .row {
-  padding: 22rpx 22rpx;
+  padding: 32rpx 22rpx;
   display: flex;
+  background: #fafafb;
+  border-radius: 18rpx;
+  box-sizing: border-box;
   align-items: center;
   gap: 14rpx;
 }
 
 .r-ico {
-  width: 46rpx;
-  text-align: center;
-  color: rgba(17, 17, 17, 0.45);
-  font-size: 28rpx;
-  font-weight: 900;
+  width: 52rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .r-ico-img {
-  width: 28rpx;
-  height: 28rpx;
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
 }
 
 .r-text {
@@ -294,7 +319,9 @@ function toggleDone() {
 }
 
 .btn {
-  margin-top: 40rpx;
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
   height: 104rpx;
   border-radius: 9999rpx;
   background: rgba(17, 17, 17, 0.18);

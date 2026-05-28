@@ -36,7 +36,7 @@ function submit() {
 
 .input-wrap {
   margin-top: 14rpx;
-  background: rgba(17, 17, 17, 0.04);
+  background: #fafafa;
   border-radius: 22rpx;
   padding: 22rpx;
 }

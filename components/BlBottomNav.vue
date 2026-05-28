@@ -82,14 +82,15 @@ function go(url) {
   uni.reLaunch({ url })
 }
 
-function toast(title) {
-  uni.showToast({ title, icon: 'none' })
-}
+
 </script>
 
 <style scoped lang="scss">
 .bl-bottom-item.is-active {
   background: transparent !important;
+}
+.bl-bottom-nav {
+  background: #fafafa;
 }
 
 .nav-img {
