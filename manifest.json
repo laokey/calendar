@@ -34,10 +34,21 @@
                     "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
                     "<uses-feature android:name=\"android.hardware.camera\"/>",
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
-                ]
+                ],
+                "icons" : {
+                    "hdpi" : "static/favicon.png",
+                    "xhdpi" : "static/favicon.png",
+                    "xxhdpi" : "static/favicon.png",
+                    "xxxhdpi" : "static/favicon.png"
+                }
             },
             "ios" : {
-                "dSYMs" : false
+                "dSYMs" : false,
+                "icons" : {
+                    "iphone" : "static/favicon.png",
+                    "ipad" : "static/favicon.png",
+                    "appstore" : "static/favicon.png"
+                }
             },
             "sdkConfigs" : {}
         }

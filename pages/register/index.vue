@@ -1,6 +1,12 @@
 <template>
   <view class="page">
-    <BlHeader title="注册" back />
+    <view class="head" :style="{ paddingTop: safeTop + 'px' }">
+      <view class="head-left" @click="back">
+        <image class="back-img" src="/static/login/icon_back.png" mode="aspectFit" />
+      </view>
+      <text class="head-title">注册</text>
+      <view class="head-right" />
+    </view>
 
     <text class="hint">请输入您的个人电子邮箱</text>
 
@@ -9,7 +15,7 @@
         <text class="label">邮箱</text>
         <view class="input-wrap">
           <input v-model="email" class="input" placeholder="请输入邮箱" placeholder-class="ph" confirm-type="next" />
-          <view v-if="email" class="icon-btn" @click="email = ''"><text class="icon-text">×</text></view>
+          <view v-if="email" class="icon-btn" @click="email = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
         </view>
       </view>
 
@@ -24,9 +30,9 @@
             placeholder-class="ph"
             confirm-type="next"
           />
-          <view v-if="password" class="icon-btn" @click="password = ''"><text class="icon-text">×</text></view>
+          <view v-if="password" class="icon-btn" @click="password = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
           <view class="icon-btn" @click="showPassword = !showPassword">
-            <text class="icon-text eye">{{ showPassword ? '○' : '◉' }}</text>
+            <image class="icon-img" :src="showPassword ? '/static/login/icon_eye_open.png' : '/static/login/icon_eye_closed.png'" mode="aspectFit" />
           </view>
         </view>
       </view>
@@ -35,21 +41,19 @@
         <text class="label">姓名</text>
         <view class="input-wrap">
           <input v-model="name" class="input" placeholder="请输入姓名" placeholder-class="ph" confirm-type="done" @confirm="submit" />
-          <view v-if="name" class="icon-btn" @click="name = ''"><text class="icon-text">×</text></view>
+          <view v-if="name" class="icon-btn" @click="name = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
         </view>
       </view>
-    </view>
 
-    <text class="tip">请使用您日常使用的邮箱注册，否则可能影响部分功能的使用。</text>
+      <text class="tip">请使用您日常使用的邮箱注册，否则可能影响部分功能的使用。</text>
+    </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
       <text class="btn-text">创建账号</text>
     </view>
 
     <view class="agree-row" @click="agreed = !agreed">
-      <view class="checkbox" :class="{ checked: agreed }">
-        <text v-if="agreed" class="check">✓</text>
-      </view>
+      <image class="checkbox-img" :src="agreed ? '/static/login/icon_checkbox_on.png' : '/static/login/icon_checkbox_off.png'" mode="aspectFit" />
       <view class="agree-text">
         <text class="agree-muted">以阅读并同意</text>
         <text class="agree-link" @click.stop="openAgreement('user')">《用户协议》</text>
@@ -63,13 +67,23 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import BlHeader from '../../components/BlHeader.vue'
+
+const USERS_KEY = 'auth_users_v1'
 
 const email = ref('')
 const password = ref('')
 const name = ref('')
 const agreed = ref(false)
 const showPassword = ref(false)
+const safeTop = computed(() => {
+  try {
+    const info = uni.getSystemInfoSync()
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
+    return insets && typeof insets.top === 'number' ? insets.top : 0
+  } catch (e) {
+    return 0
+  }
+})
 
 onLoad((options) => {
   if (options && options.email) email.value = String(options.email)
@@ -79,13 +93,12 @@ const canSubmit = computed(() => {
   return agreed.value && email.value.trim().length > 0 && password.value.trim().length > 0 && name.value.trim().length > 0
 })
 
-function openAgreement(type) {
-  const title = type === 'privacy' ? '隐私政策' : '用户协议'
-  uni.showModal({
-    title,
-    content: '此处为协议内容占位，后续可替换为真实内容或跳转到协议页面。',
-    showCancel: false,
-  })
+function back() {
+  uni.navigateBack()
+}
+
+function openAgreement() {
+  uni.navigateTo({ url: '/pages/me/agreement' })
 }
 
 function submit() {
@@ -109,22 +122,88 @@ function submit() {
     return
   }
 
+  const v = email.value.trim()
+  const n = name.value.trim()
+  const p = password.value.trim()
+  const users = loadUsers()
+  const exists = users.some((x) => x && String(x.email || '').trim() === v)
+  if (exists) {
+    uni.showToast({ title: '该邮箱已注册', icon: 'none' })
+    return
+  }
+
   uni.showLoading({ title: '创建中' })
   setTimeout(() => {
     uni.hideLoading()
-    uni.setStorageSync('auth_email', email.value.trim())
-    uni.setStorageSync('auth_name', name.value.trim())
+    saveUsers([...users, { email: v, password: p, name: n, createdAtTs: Date.now() }])
+    uni.setStorageSync('auth_policy_agreed', true)
+    uni.setStorageSync('auth_email', v)
+    uni.setStorageSync('auth_name', n)
     uni.setStorageSync('auth_logged_in', true)
     uni.reLaunch({ url: '/pages/device/index' })
   }, 700)
+}
+
+function loadUsers() {
+  try {
+    const raw = uni.getStorageSync(USERS_KEY)
+    const list = raw && typeof raw === 'string' ? JSON.parse(raw) : raw
+    return Array.isArray(list) ? list : []
+  } catch (e) {
+    return []
+  }
+}
+
+function saveUsers(list) {
+  uni.setStorageSync(USERS_KEY, JSON.stringify(list || []))
 }
 </script>
 
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #ffffff;
+  background-color: #ffffff;
+  background-image: url('/static/login/bg_auth_top.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
   padding: 0 28rpx;
+}
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  padding: 18rpx 0 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.head-left,
+.head-right {
+  width: 120rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+}
+
+.head-right {
+  justify-content: flex-end;
+}
+
+.back-img {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
+  opacity: 0.92;
+}
+
+.head-title {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #111111;
 }
 
 .hint {
@@ -186,18 +265,12 @@ function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.5);
 }
 
-.icon-text {
-  font-size: 40rpx;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.eye {
-  font-size: 30rpx;
-  font-weight: 900;
+.icon-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.72;
 }
 
 .tip {
@@ -206,8 +279,8 @@ function submit() {
   padding: 0 6rpx;
   font-size: 26rpx;
   line-height: 40rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.5);
+  font-weight: 500;
+  color: #333333;
 }
 
 .btn {
@@ -242,28 +315,10 @@ function submit() {
   padding: 8rpx 2rpx;
 }
 
-.checkbox {
-  width: 38rpx;
-  height: 38rpx;
-  border-radius: 10rpx;
-  border: 2rpx solid rgba(17, 17, 17, 0.2);
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2rpx;
-}
-
-.checkbox.checked {
-  background: #3d6afb;
-  border-color: #3d6afb;
-}
-
-.check {
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 900;
-  line-height: 1;
+.checkbox-img {
+  width: 44rpx;
+  height: 44rpx;
+  margin-top: -2rpx;
 }
 
 .agree-text {

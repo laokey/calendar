@@ -8,10 +8,6 @@
 import { onLaunch } from '@dcloudio/uni-app'
 
 onLaunch(() => {
-  const logged = !!uni.getStorageSync('auth_logged_in')
-  if (logged) {
-    uni.reLaunch({ url: '/pages/device/index' })
-  }
 })
 </script>
 

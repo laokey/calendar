@@ -1,7 +1,7 @@
 <template>
   <view class="login-page">
-    <view class="hero" :style="{ paddingTop: safeTop + 'px' }">
-      <image class="logo" src="/static/logo.png" mode="aspectFit" />
+    <view class="hero">
+      <image class="hero-img" src="/static/login/hero_login.png" mode="widthFix" />
     </view>
 
     <view class="card">
@@ -18,7 +18,7 @@
             confirm-type="next"
           />
           <view v-if="email" class="icon-btn" @click="email = ''">
-            <text class="icon-text">×</text>
+            <image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" />
           </view>
         </view>
       </view>
@@ -36,23 +36,25 @@
             @confirm="submit"
           />
           <view v-if="password" class="icon-btn" @click="password = ''">
-            <text class="icon-text">×</text>
+            <image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" />
           </view>
           <view class="icon-btn" @click="showPassword = !showPassword">
-            <text class="icon-text eye">{{ showPassword ? '○' : '◉' }}</text>
+            <image
+              class="icon-img"
+              :src="showPassword ? '/static/login/icon_eye_open.png' : '/static/login/icon_eye_closed.png'"
+              mode="aspectFit"
+            />
           </view>
         </view>
       </view>
 
       <view class="agree-row" @click="agreed = !agreed">
-        <view class="checkbox" :class="{ checked: agreed }">
-          <text v-if="agreed" class="check">✓</text>
-        </view>
+        <image class="checkbox-img" :src="agreed ? '/static/login/icon_checkbox_on.png' : '/static/login/icon_checkbox_off.png'" mode="aspectFit" />
         <view class="agree-text">
-          <text class="agree-muted">以阅读并同意</text>
-          <text class="agree-link" @click.stop="openAgreement('user')">《用户协议》</text>
+          <text class="agree-muted">已阅读并同意</text>
+          <text class="agree-link" @click.stop="openAgreement">《用户协议》</text>
           <text class="agree-muted">和</text>
-          <text class="agree-link" @click.stop="openAgreement('privacy')">《隐私政策》</text>
+          <text class="agree-link" @click.stop="openAgreement">《隐私政策》</text>
         </view>
       </view>
 
@@ -65,6 +67,22 @@
         <text class="bottom-link" @click="goReset">忘记密码？</text>
       </view>
     </view>
+
+    <view v-if="policyVisible" class="dialog-mask">
+      <view class="dialog-content" @click.stop>
+        <text class="d-title">服务协议及隐私政策</text>
+        <text class="d-sub">
+          为了更好的保障您的合法权益，请您阅读并同意以下协议
+          <text class="d-link" @click.stop="openAgreement('user')">《用户协议》</text>
+          和
+          <text class="d-link" @click.stop="openAgreement('privacy')">《隐私政策》</text>
+        </text>
+        <view class="d-actions">
+          <view class="d-btn cancel" @click="rejectPolicy"><text class="d-btn-text cancel-text">不同意</text></view>
+          <view class="d-btn confirm" @click="acceptPolicy"><text class="d-btn-text confirm-text">同意</text></view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -72,39 +90,30 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 
+const USERS_KEY = 'auth_users_v1'
+
 const email = ref('')
 const password = ref('')
 const agreed = ref(false)
 const showPassword = ref(false)
+const policyVisible = ref(false)
 
 onLoad(() => {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (logged) {
     uni.reLaunch({ url: '/pages/device/index' })
+    return
   }
-})
-
-const safeTop = computed(() => {
-  try {
-    const info = uni.getSystemInfoSync()
-    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
-    return insets && typeof insets.top === 'number' ? insets.top : 0
-  } catch (e) {
-    return 0
-  }
+  const policy = !!uni.getStorageSync('auth_policy_agreed')
+  if (!policy) policyVisible.value = true
 })
 
 const canSubmit = computed(() => {
   return agreed.value && email.value.trim().length > 0 && password.value.trim().length > 0
 })
 
-function openAgreement(type) {
-  const title = type === 'privacy' ? '隐私政策' : '用户协议'
-  uni.showModal({
-    title,
-    content: '此处为协议内容占位，后续可替换为真实内容或跳转到协议页面。',
-    showCancel: false,
-  })
+function openAgreement() {
+  uni.navigateTo({ url: '/pages/me/agreement' })
 }
 
 function goRegister() {
@@ -120,6 +129,10 @@ function goReset() {
 }
 
 function submit() {
+  if (policyVisible.value) {
+    uni.showToast({ title: '请先同意协议', icon: 'none' })
+    return
+  }
   if (!canSubmit.value) {
     if (!email.value.trim()) {
       uni.showToast({ title: '请输入邮箱', icon: 'none' })
@@ -136,36 +149,82 @@ function submit() {
     return
   }
 
+  const v = email.value.trim()
+  const p = password.value.trim()
+  const users = loadUsers()
+  const u = users.find((x) => x && String(x.email || '').trim() === v) || null
+  if (!u) {
+    uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
+    setTimeout(() => goRegister(), 350)
+    return
+  }
+  if (String(u.password || '') !== p) {
+    uni.showToast({ title: '密码错误', icon: 'none' })
+    return
+  }
+
   uni.showLoading({ title: '登录中' })
   setTimeout(() => {
     uni.hideLoading()
-    uni.setStorageSync('auth_email', email.value.trim())
+    uni.setStorageSync('auth_email', v)
+    uni.setStorageSync('auth_name', String(u.name || ''))
     uni.setStorageSync('auth_logged_in', true)
     uni.reLaunch({ url: '/pages/device/index' })
-  }, 600)
+  }, 450)
+}
+
+function loadUsers() {
+  try {
+    const raw = uni.getStorageSync(USERS_KEY)
+    const list = raw && typeof raw === 'string' ? JSON.parse(raw) : raw
+    return Array.isArray(list) ? list : []
+  } catch (e) {
+    return []
+  }
+}
+
+function acceptPolicy() {
+  uni.setStorageSync('auth_policy_agreed', true)
+  policyVisible.value = false
+}
+
+function rejectPolicy() {
+  uni.showToast({ title: '需要同意协议才可继续使用', icon: 'none' })
 }
 </script>
 
 <style scoped lang="scss">
 .login-page {
   min-height: 100vh;
-  background: #ffffff;
+  position: relative;
+  background-color: #ffffff;
+  background-image: url('/static/login/bg_auth_gradient.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
+  overflow: hidden;
 }
 
 .hero {
-  height: 360rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
 }
 
-.logo {
-  width: 240rpx;
-  height: 240rpx;
+.hero-img {
+  width: 100%;
+  display: block;
 }
 
 .card {
-  margin: -40rpx 28rpx 0;
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  top: 55%;
+  transform: translateY(-50%);
+  z-index: 1;
   background: #ffffff;
   border-radius: 28rpx;
   padding: 34rpx 28rpx 26rpx;
@@ -176,8 +235,8 @@ function submit() {
   display: block;
   text-align: center;
   font-size: 44rpx;
-  font-weight: 900;
-  color: #111111;
+  font-weight: 600;
+  color: #333333;
   margin-bottom: 18rpx;
 }
 
@@ -223,18 +282,12 @@ function submit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.5);
 }
 
-.icon-text {
-  font-size: 40rpx;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.eye {
-  font-size: 30rpx;
-  font-weight: 900;
+.icon-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.72;
 }
 
 .agree-row {
@@ -245,28 +298,10 @@ function submit() {
   padding: 8rpx 2rpx;
 }
 
-.checkbox {
-  width: 38rpx;
-  height: 38rpx;
-  border-radius: 10rpx;
-  border: 2rpx solid rgba(17, 17, 17, 0.2);
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2rpx;
-}
-
-.checkbox.checked {
-  background: #3d6afb;
-  border-color: #3d6afb;
-}
-
-.check {
-  color: #ffffff;
-  font-size: 26rpx;
-  font-weight: 900;
-  line-height: 1;
+.checkbox-img {
+  width: 44rpx;
+  height: 44rpx;
+  margin-top: -2rpx;
 }
 
 .agree-text {
@@ -323,7 +358,87 @@ function submit() {
 
 .bottom-link {
   font-size: 28rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.7);
+  font-weight: 500;
+  color: #666666;
+}
+
+.dialog-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 80rpx;
+}
+
+.dialog-content {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 48rpx 40rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #111111;
+}
+
+.d-sub {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #555555;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.d-link {
+  color: #406dff;
+  font-weight: 600;
+}
+
+.d-actions {
+  margin-top: 24rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.d-btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.d-btn.cancel {
+  background: #f0f4ff;
+}
+
+.d-btn.confirm {
+  background: #406dff;
+}
+
+.d-btn-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #666666;
+}
+
+.cancel-text {
+  color: #406dff;
+}
+
+.confirm-text {
+  color: #ffffff;
 }
 </style>

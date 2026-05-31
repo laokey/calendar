@@ -1,12 +1,18 @@
 <template>
   <view class="page">
-    <BlHeader title="重置密码" back />
+    <view class="head" :style="{ paddingTop: safeTop + 'px' }">
+      <view class="head-left" @click="back">
+        <image class="back-img" src="/static/login/icon_back.png" mode="aspectFit" />
+      </view>
+      <text class="head-title">重置密码</text>
+      <view class="head-right" />
+    </view>
 
     <view class="panel">
       <text class="label">邮箱</text>
       <view class="input-wrap">
         <input v-model="email" class="input" placeholder="请输入邮箱" placeholder-class="ph" confirm-type="done" @confirm="submit" />
-        <view v-if="email" class="icon-btn" @click="email = ''"><text class="icon-text">×</text></view>
+        <view v-if="email" class="icon-btn" @click="email = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
       </view>
     </view>
 
@@ -19,7 +25,6 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import BlHeader from '../../components/BlHeader.vue'
 
 const email = ref('')
 
@@ -27,9 +32,23 @@ onLoad((options) => {
   if (options && options.email) email.value = String(options.email)
 })
 
+const safeTop = computed(() => {
+  try {
+    const info = uni.getSystemInfoSync()
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
+    return insets && typeof insets.top === 'number' ? insets.top : 0
+  } catch (e) {
+    return 0
+  }
+})
+
 const canSubmit = computed(() => {
   return email.value.trim().length > 0
 })
+
+function back() {
+  uni.navigateBack()
+}
 
 function submit() {
   if (!canSubmit.value) {
@@ -51,8 +70,48 @@ function submit() {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #ffffff;
+  background-color: #ffffff;
+  background-image: url('/static/login/bg_auth_top.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
   padding: 0 28rpx;
+}
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  padding: 18rpx 0 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+}
+
+.head-left,
+.head-right {
+  width: 120rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+}
+
+.head-right {
+  justify-content: flex-end;
+}
+
+.back-img {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
+  opacity: 0.92;
+}
+
+.head-title {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #111111;
 }
 
 .panel {
@@ -104,10 +163,10 @@ function submit() {
   color: rgba(17, 17, 17, 0.5);
 }
 
-.icon-text {
-  font-size: 40rpx;
-  font-weight: 800;
-  line-height: 1;
+.icon-img {
+  width: 34rpx;
+  height: 34rpx;
+  opacity: 0.72;
 }
 
 .btn {
