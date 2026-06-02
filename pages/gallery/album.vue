@@ -14,12 +14,7 @@
     </view>
 
     <view class="cover">
-      <image
-        v-if="coverUri"
-        class="cover-img"
-        :src="coverUri"
-        mode="aspectFill"
-      />
+      <image v-if="coverUri" class="cover-img" :src="coverUri" mode="aspectFill" />
       <view v-else class="cover-ph">
         <image
           class="cover-ph-icon"
@@ -80,7 +75,8 @@
         class="cell"
         @click="tapPhoto(p.id)"
       >
-        <image class="cell-img" :src="p.uri" mode="aspectFill" />
+        <image class="cell-img" :src="p.type === 'video' ? (p.thumbUri || '') : p.uri" mode="aspectFill" />
+        <view v-if="p.type === 'video' && !p.thumbUri" class="cell-ph" />
         <view v-if="p.type === 'video'" class="video">
           <view class="video-icon">
             <image
@@ -219,7 +215,10 @@ const photos = computed(() => listPhotos(state.value, albumId.value));
 
 const coverUri = computed(() => {
   const list = photos.value;
-  return list[0] ? list[0].uri : "";
+  if (!list[0]) return "";
+  const p = list[0];
+  if (p.type === "video") return p.thumbUri || "";
+  return p.uri || "";
 });
 
 const headerTitle = computed(() => {
@@ -600,6 +599,12 @@ function submitRename() {
 .cell-img {
   width: 100%;
   height: 100%;
+}
+
+.cell-ph {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.08);
 }
 
 .video {

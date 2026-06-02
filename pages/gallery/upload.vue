@@ -72,39 +72,80 @@ function back() {
   uni.navigateBack()
 }
 
-function toSend(paths) {
+function toSendItems(items) {
+  const list = (items || []).map((x) => ({
+    uri: x && x.uri ? String(x.uri) : '',
+    type: x && x.type ? String(x.type) : 'image',
+    thumbUri: x && x.thumbUri ? String(x.thumbUri) : '',
+    name: x && x.name ? String(x.name) : (x && x.uri ? String(x.uri).split('/').pop() || 'media' : 'media'),
+    note: x && x.note ? String(x.note) : '',
+  }))
+  uni.setStorageSync('gallery_pending_upload', JSON.stringify({ albumId: targetAlbumId.value, items: list.filter((x) => x.uri) }))
+  uni.navigateTo({ url: `/pages/gallery/send?albumId=${encodeURIComponent(targetAlbumId.value)}` })
+}
+
+function toSendImages(paths) {
   const list = (paths || []).map((p) => ({
     uri: p,
     type: 'image',
+    thumbUri: '',
     name: String(p).split('/').pop() || 'photo',
     note: '',
   }))
-  uni.setStorageSync('gallery_pending_upload', JSON.stringify({ albumId: targetAlbumId.value, items: list }))
-  uni.navigateTo({ url: `/pages/gallery/send?albumId=${encodeURIComponent(targetAlbumId.value)}` })
+  toSendItems(list)
+}
+
+function pickImages(source, count) {
+  uni.chooseImage({
+    count,
+    sourceType: [source],
+    success: (res) => {
+      const paths = res && res.tempFilePaths ? res.tempFilePaths : []
+      if (!paths.length) return
+      toSendImages(paths)
+    },
+  })
+}
+
+function pickVideo(source) {
+  uni.chooseVideo({
+    sourceType: [source],
+    compressed: true,
+    maxDuration: 60,
+    success: (res) => {
+      const uri = res && res.tempFilePath ? String(res.tempFilePath) : ''
+      if (!uri) return
+      const thumb = res && res.thumbTempFilePath ? String(res.thumbTempFilePath) : ''
+      const dur = res && typeof res.duration === 'number' ? res.duration : 0
+      uni.navigateTo({
+        url: `/pages/gallery/video-edit?albumId=${encodeURIComponent(targetAlbumId.value)}&uri=${encodeURIComponent(
+          uri,
+        )}&thumbUri=${encodeURIComponent(thumb)}&duration=${encodeURIComponent(String(dur))}`,
+      })
+    },
+  })
 }
 
 function pickFromAlbum() {
   if (!targetAlbumId.value) return
-  uni.chooseImage({
-    count: 9,
-    sourceType: ['album'],
+  uni.showActionSheet({
+    itemList: ['照片', '视频'],
     success: (res) => {
-      const paths = res && res.tempFilePaths ? res.tempFilePaths : []
-      if (!paths.length) return
-      toSend(paths)
+      const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
+      if (idx === 0) pickImages('album', 9)
+      if (idx === 1) pickVideo('album')
     },
   })
 }
 
 function pickFromCamera() {
   if (!targetAlbumId.value) return
-  uni.chooseImage({
-    count: 1,
-    sourceType: ['camera'],
+  uni.showActionSheet({
+    itemList: ['拍照', '录像'],
     success: (res) => {
-      const paths = res && res.tempFilePaths ? res.tempFilePaths : []
-      if (!paths.length) return
-      toSend(paths)
+      const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
+      if (idx === 0) pickImages('camera', 1)
+      if (idx === 1) pickVideo('camera')
     },
   })
 }

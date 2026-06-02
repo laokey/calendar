@@ -12,7 +12,21 @@
 
     <view v-if="photo" class="body">
       <view class="hero">
-        <image class="hero-img" :src="photo.uri" mode="aspectFill" />
+        <video
+          v-if="photo.type === 'video'"
+          id="photoVideo"
+          class="hero-video"
+          :src="photo.uri"
+          :controls="true"
+          :show-center-play-btn="true"
+          :show-fullscreen-btn="true"
+          :show-play-btn="true"
+          :enable-progress-gesture="true"
+          :initial-time="clipStart"
+          object-fit="contain"
+          @timeupdate="onVideoTimeUpdate"
+        />
+        <image v-else class="hero-img" :src="photo.uri" mode="aspectFill" />
       </view>
 
       <view class="ops">
@@ -110,6 +124,16 @@ const deviceName = computed(() => {
   return d ? d.name.replace('的日历', '') : ''
 })
 
+const clipStart = computed(() => {
+  const v = photo.value && typeof photo.value.clipStart === 'number' ? photo.value.clipStart : Number(photo.value?.clipStart || 0) || 0
+  return Math.max(0, v)
+})
+
+const clipEnd = computed(() => {
+  const v = photo.value && typeof photo.value.clipEnd === 'number' ? photo.value.clipEnd : Number(photo.value?.clipEnd || 0) || 0
+  return Math.max(0, v)
+})
+
 function back() {
   uni.navigateBack()
 }
@@ -134,6 +158,16 @@ function saveTitle() {
   const s = ensureGalleryState()
   updatePhoto(s, albumId.value, photoId.value, { title: titleDraft.value.trim() })
   state.value = ensureGalleryState()
+}
+
+function onVideoTimeUpdate(e) {
+  const end = clipEnd.value
+  if (!end) return
+  const cur = e && e.detail && typeof e.detail.currentTime === 'number' ? e.detail.currentTime : 0
+  if (cur >= end) {
+    const ctx = uni.createVideoContext('photoVideo')
+    ctx.pause()
+  }
 }
 
 function send() {
@@ -226,6 +260,11 @@ function confirmDelete() {
 }
 
 .hero-img {
+  width: 100%;
+  height: 820rpx;
+}
+
+.hero-video {
   width: 100%;
   height: 820rpx;
 }

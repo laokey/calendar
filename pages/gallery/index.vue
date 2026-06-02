@@ -99,7 +99,7 @@ const albums = computed(() => {
   const list = listAlbums(state.value, state.value.activeDeviceId)
   return list.map((a) => {
     const photos = state.value.photosByAlbum[a.id] || []
-    const coverUri = photos[0] ? photos[0].uri : ''
+    const coverUri = photos[0] ? (photos[0].type === 'video' ? photos[0].thumbUri || '' : photos[0].uri) : ''
     return { ...a, count: photos.length, coverUri }
   })
 })

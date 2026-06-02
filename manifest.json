@@ -1,5 +1,5 @@
 {
-    "name" : "calendar",
+    "name" : "芝麻日历",
     "appid" : "__UNI__19BA6D3",
     "description" : "",
     "versionName" : "1.0.0",
@@ -15,7 +15,10 @@
             "autoclose" : true,
             "delay" : 0
         },
-        "modules" : {},
+        "modules" : {
+            "Camera" : {},
+            "Geolocation" : {}
+        },
         "distribute" : {
             "android" : {
                 "permissions" : [
@@ -33,6 +36,7 @@
                     "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
                     "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
                     "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
                 ],
                 "icons" : {
@@ -50,7 +54,29 @@
                     "appstore" : "static/favicon.png"
                 }
             },
-            "sdkConfigs" : {}
+            "sdkConfigs" : {
+                "geolocation" : {
+                    "system" : {
+                        "__platform__" : [ "ios", "android" ]
+                    }
+                }
+            },
+            "splashscreen" : {
+                "androidStyle" : "default",
+                "android" : {
+                    "hdpi" : "",
+                    "xhdpi" : "",
+                    "xxhdpi" : ""
+                }
+            },
+            "icons" : {
+                "android" : {
+                    "hdpi" : "static/favicon.png",
+                    "xhdpi" : "static/favicon.png",
+                    "xxhdpi" : "static/favicon.png",
+                    "xxxhdpi" : "static/favicon.png"
+                }
+            }
         }
     },
     "quickapp" : {},

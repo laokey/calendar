@@ -126,6 +126,9 @@ export function addTransferTasks(state, { deviceId, albumId, items }) {
     const uri = String(it.uri || '')
     const name = it.name ? String(it.name) : uri.split('/').pop() || 'media'
     const type = it.type ? String(it.type) : 'image'
+    const thumbUri = it.thumbUri ? String(it.thumbUri) : ''
+    const clipStart = typeof it.clipStart === 'number' ? it.clipStart : Number(it.clipStart || 0) || 0
+    const clipEnd = typeof it.clipEnd === 'number' ? it.clipEnd : Number(it.clipEnd || 0) || 0
     const note = it.note ? String(it.note) : ''
     return {
       id,
@@ -134,6 +137,9 @@ export function addTransferTasks(state, { deviceId, albumId, items }) {
       uri,
       name,
       type,
+      thumbUri,
+      clipStart,
+      clipEnd,
       note,
       createdAt: nowText(),
       createdAtTs: now,
@@ -188,6 +194,9 @@ export function tickTransfers(state) {
         uri: t.uri,
         name: t.name,
         type: t.type,
+        thumbUri: t.thumbUri || '',
+        clipStart: t.clipStart || 0,
+        clipEnd: t.clipEnd || 0,
         title: t.note || '',
         liked: false,
         createdAt: t.createdAt,
@@ -277,4 +286,3 @@ export function addPhotoComment(state, albumId, photoId, { user, text }) {
   saveGalleryState(state)
   return true
 }
-

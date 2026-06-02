@@ -49,6 +49,12 @@
       }
     },
     {
+      "path": "pages/gallery/video-edit",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/gallery/send",
       "style": {
         "navigationStyle": "custom"

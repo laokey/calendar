@@ -15,7 +15,11 @@
     <view class="rows">
       <view v-for="(it, idx) in items" :key="it.uri" class="row">
         <view class="thumb-wrap">
-          <image class="thumb" :src="it.uri" mode="aspectFill" />
+          <image v-if="it.type !== 'video' || it.thumbUri" class="thumb" :src="it.type === 'video' ? it.thumbUri : it.uri" mode="aspectFill" />
+          <view v-else class="thumb ph" />
+          <view v-if="it.type === 'video'" class="play">
+            <image class="play-icon" src="/static/gallery/icon_play.png" mode="aspectFit" />
+          </view>
           <view class="thumb-badge" :class="{ active: !!it.selected }" @click.stop="toggleSelected(idx)">
             <text v-if="it.selected" class="thumb-check">✓</text>
           </view>
@@ -198,6 +202,25 @@ function submit() {
 .thumb {
   width: 100%;
   height: 100%;
+}
+
+.thumb.ph {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.play-icon {
+  width: 54rpx;
+  height: 54rpx;
+  opacity: 0.95;
 }
 
 .thumb-badge {

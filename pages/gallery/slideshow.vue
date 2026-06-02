@@ -11,7 +11,11 @@
     <swiper class="sw" :circular="true" :autoplay="true" :interval="3000" :duration="450">
       <swiper-item v-for="p in photos" :key="p.id">
         <view class="slide">
-          <image class="img" :src="p.uri" mode="aspectFit" />
+          <image v-if="p.type !== 'video' || p.thumbUri" class="img" :src="p.type === 'video' ? p.thumbUri : p.uri" mode="aspectFit" />
+          <view v-else class="img ph" />
+          <view v-if="p.type === 'video'" class="play">
+            <image class="play-icon" src="/static/gallery/icon_play.png" mode="aspectFit" />
+          </view>
         </view>
       </swiper-item>
     </swiper>
@@ -103,10 +107,30 @@ function back() {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .img {
   width: 100%;
   height: 100%;
+}
+
+.img.ph {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.play-icon {
+  width: 64rpx;
+  height: 64rpx;
+  opacity: 0.95;
 }
 </style>

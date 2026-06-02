@@ -19,7 +19,13 @@
 
     <view class="list">
       <view v-for="t in filtered" :key="t.id" class="item">
-        <image class="thumb" :src="t.uri" mode="aspectFill" />
+        <view class="thumb-wrap">
+          <image v-if="t.type !== 'video' || t.thumbUri" class="thumb" :src="t.type === 'video' ? t.thumbUri : t.uri" mode="aspectFill" />
+          <view v-else class="thumb ph" />
+          <view v-if="t.type === 'video'" class="play">
+            <image class="play-icon" src="/static/gallery/icon_play.png" mode="aspectFit" />
+          </view>
+        </view>
         <view class="meta">
           <view class="row">
             <text class="name">{{ t.name }}</text>
@@ -222,11 +228,37 @@ function retry(id) {
   gap: 14rpx;
 }
 
-.thumb {
+.thumb-wrap {
   width: 110rpx;
   height: 110rpx;
   border-radius: 22rpx;
+  overflow: hidden;
+  position: relative;
   background: rgba(17, 17, 17, 0.08);
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+}
+
+.thumb.ph {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.play-icon {
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.95;
 }
 
 .meta {
