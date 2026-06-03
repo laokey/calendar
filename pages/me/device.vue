@@ -92,7 +92,7 @@ function back() {
 }
 
 function goActivate() {
-  uni.navigateTo({ url: "/pages/me/device-activate" });
+  uni.navigateTo({ url: "/pages/device/activate" });
 }
 
 function goManage(d) {
@@ -107,7 +107,7 @@ function goManage(d) {
 
 function getCode(d) {
   uni.navigateTo({
-    url: `/pages/me/device-activate?id=${encodeURIComponent(String(d && d.id ? d.id : ""))}`,
+    url: `/pages/device/activate?id=${encodeURIComponent(String(d && d.id ? d.id : ""))}`,
   });
 }
 </script>

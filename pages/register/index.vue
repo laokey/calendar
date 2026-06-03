@@ -14,7 +14,16 @@
       <view class="field">
         <text class="label">邮箱</text>
         <view class="input-wrap">
-          <input v-model="email" class="input" placeholder="请输入邮箱" placeholder-class="ph" confirm-type="next" />
+          <input
+            v-model="email"
+            type="email"
+            class="input"
+            placeholder="请输入邮箱"
+            placeholder-class="ph"
+            confirm-type="next"
+            @blur="onEmailBlur"
+            @confirm="onEmailConfirm"
+          />
           <view v-if="email" class="icon-btn" @click="email = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
         </view>
       </view>
@@ -67,8 +76,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-
-const USERS_KEY = 'auth_users_v1'
+import { authApi } from '../../utils/api'
 
 const email = ref('')
 const password = ref('')
@@ -93,6 +101,28 @@ const canSubmit = computed(() => {
   return agreed.value && email.value.trim().length > 0 && password.value.trim().length > 0 && name.value.trim().length > 0
 })
 
+function isEmail(value) {
+  const v = String(value || '').trim()
+  if (!v) return false
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)
+}
+
+function validateEmail() {
+  const v = email.value.trim()
+  if (!v) return true
+  if (isEmail(v)) return true
+  uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+  return false
+}
+
+function onEmailBlur() {
+  validateEmail()
+}
+
+function onEmailConfirm() {
+  validateEmail()
+}
+
 function back() {
   uni.navigateBack()
 }
@@ -101,7 +131,7 @@ function openAgreement() {
   uni.navigateTo({ url: '/pages/me/agreement' })
 }
 
-function submit() {
+async function submit() {
   if (!canSubmit.value) {
     if (!email.value.trim()) {
       uni.showToast({ title: '请输入邮箱', icon: 'none' })
@@ -122,40 +152,43 @@ function submit() {
     return
   }
 
+  if (!validateEmail()) return
+
   const v = email.value.trim()
   const n = name.value.trim()
   const p = password.value.trim()
-  const users = loadUsers()
-  const exists = users.some((x) => x && String(x.email || '').trim() === v)
-  if (exists) {
-    uni.showToast({ title: '该邮箱已注册', icon: 'none' })
-    return
-  }
-
   uni.showLoading({ title: '创建中' })
-  setTimeout(() => {
-    uni.hideLoading()
-    saveUsers([...users, { email: v, password: p, name: n, createdAtTs: Date.now() }])
-    uni.setStorageSync('auth_policy_agreed', true)
-    uni.setStorageSync('auth_email', v)
-    uni.setStorageSync('auth_name', n)
-    uni.setStorageSync('auth_logged_in', true)
-    uni.reLaunch({ url: '/pages/device/index' })
-  }, 700)
-}
-
-function loadUsers() {
   try {
-    const raw = uni.getStorageSync(USERS_KEY)
-    const list = raw && typeof raw === 'string' ? JSON.parse(raw) : raw
-    return Array.isArray(list) ? list : []
+    const res = await authApi.register({ account: v, password: p, userName: n })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      if (res.code === 201 || res.code === '201') {
+        uni.showToast({ title: '该邮箱已注册', icon: 'none' })
+        return
+      }
+      uni.showToast({ title: '注册失败', icon: 'none' })
+      return
+    }
+    uni.setStorageSync('auth_policy_agreed', true)
+    uni.showToast({ title: '注册成功，请登录', icon: 'none' })
+    setTimeout(() => {
+      uni.redirectTo({ url: `/pages/login/index?email=${encodeURIComponent(v)}` })
+    }, 350)
   } catch (e) {
-    return []
+    const code = e && e.code !== undefined ? e.code : undefined
+    if (code === 201 || code === '201') {
+      uni.showToast({ title: '该邮箱已注册', icon: 'none' })
+      return
+    }
+    if (code === 202 || code === '202') {
+      uni.showToast({ title: '注册失败', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '注册失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
   }
-}
-
-function saveUsers(list) {
-  uni.setStorageSync(USERS_KEY, JSON.stringify(list || []))
 }
 </script>
 

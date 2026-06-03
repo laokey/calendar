@@ -36,7 +36,7 @@ function back() {
 }
 
 function goActivate() {
-  uni.navigateTo({ url: '/pages/me/device-activate' })
+  uni.navigateTo({ url: '/pages/device/activate' })
 }
 </script>
 

@@ -217,12 +217,6 @@
       }
     },
     {
-      "path": "pages/me/device-activate",
-      "style": {
-        "navigationStyle": "custom"
-      }
-    },
-    {
       "path": "pages/register/index",
       "style": {
         "navigationStyle": "custom"

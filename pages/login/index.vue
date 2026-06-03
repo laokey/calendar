@@ -12,10 +12,13 @@
         <view class="input-wrap">
           <input
             v-model="email"
+            type="email"
             class="input"
             placeholder="请输入电子邮箱"
             placeholder-class="ph"
             confirm-type="next"
+            @blur="onEmailBlur"
+            @confirm="onEmailConfirm"
           />
           <view v-if="email" class="icon-btn" @click="email = ''">
             <image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" />
@@ -89,8 +92,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-
-const USERS_KEY = 'auth_users_v1'
+import { authApi } from '../../utils/api'
 
 const email = ref('')
 const password = ref('')
@@ -98,7 +100,8 @@ const agreed = ref(false)
 const showPassword = ref(false)
 const policyVisible = ref(false)
 
-onLoad(() => {
+onLoad((options) => {
+  if (options && options.email) email.value = String(options.email)
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (logged) {
     uni.reLaunch({ url: '/pages/device/index' })
@@ -111,6 +114,28 @@ onLoad(() => {
 const canSubmit = computed(() => {
   return agreed.value && email.value.trim().length > 0 && password.value.trim().length > 0
 })
+
+function isEmail(value) {
+  const v = String(value || '').trim()
+  if (!v) return false
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)
+}
+
+function validateEmail() {
+  const v = email.value.trim()
+  if (!v) return true
+  if (isEmail(v)) return true
+  uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+  return false
+}
+
+function onEmailBlur() {
+  validateEmail()
+}
+
+function onEmailConfirm() {
+  validateEmail()
+}
 
 function openAgreement() {
   uni.navigateTo({ url: '/pages/me/agreement' })
@@ -128,7 +153,7 @@ function goReset() {
   uni.navigateTo({ url })
 }
 
-function submit() {
+async function submit() {
   if (policyVisible.value) {
     uni.showToast({ title: '请先同意协议', icon: 'none' })
     return
@@ -149,37 +174,37 @@ function submit() {
     return
   }
 
+  if (!validateEmail()) return
+
   const v = email.value.trim()
   const p = password.value.trim()
-  const users = loadUsers()
-  const u = users.find((x) => x && String(x.email || '').trim() === v) || null
-  if (!u) {
-    uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
-    setTimeout(() => goRegister(), 350)
-    return
-  }
-  if (String(u.password || '') !== p) {
-    uni.showToast({ title: '密码错误', icon: 'none' })
-    return
-  }
-
   uni.showLoading({ title: '登录中' })
-  setTimeout(() => {
-    uni.hideLoading()
+  try {
+    const res = await authApi.login({ account: v, password: p })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      if (res.code === 201 || res.code === '201') {
+        uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
+        setTimeout(() => goRegister(), 350)
+        return
+      }
+      uni.showToast({ title: '登录失败', icon: 'none' })
+      return
+    }
     uni.setStorageSync('auth_email', v)
-    uni.setStorageSync('auth_name', String(u.name || ''))
     uni.setStorageSync('auth_logged_in', true)
     uni.reLaunch({ url: '/pages/device/index' })
-  }, 450)
-}
-
-function loadUsers() {
-  try {
-    const raw = uni.getStorageSync(USERS_KEY)
-    const list = raw && typeof raw === 'string' ? JSON.parse(raw) : raw
-    return Array.isArray(list) ? list : []
   } catch (e) {
-    return []
+    const code = e && e.code !== undefined ? e.code : undefined
+    if (code === 201 || code === '201') {
+      uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
+      setTimeout(() => goRegister(), 350)
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '登录失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
   }
 }
 

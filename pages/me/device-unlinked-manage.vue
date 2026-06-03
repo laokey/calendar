@@ -66,7 +66,7 @@ function edit() {
 }
 
 function goActivate(d) {
-  uni.navigateTo({ url: `/pages/me/device-activate?id=${encodeURIComponent(String(d && d.id ? d.id : ''))}` })
+  uni.navigateTo({ url: `/pages/device/activate?id=${encodeURIComponent(String(d && d.id ? d.id : ''))}` })
 }
 </script>
 
