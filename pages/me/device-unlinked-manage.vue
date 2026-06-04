@@ -11,10 +11,10 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.id" class="item">
+      <view v-for="d in devices" :key="d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">未激活</text>
-          <text class="name">{{ d.name }}</text>
+          <text class="name">{{ d.deviceName || '日历' }}</text>
         </view>
         <view class="item-right">
           <view class="mini-btn ghost" @click="edit(d)">
@@ -31,16 +31,15 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { deviceApi } from '../../utils/api'
 
-const devices = ref([
-  { id: 'cal_1', name: '日历' },
-])
+const devices = ref([])
+const deviceEmail = ref('')
 
 onLoad((options) => {
-  const id = options && options.id ? String(options.id) : ''
-  if (!id) return
-  devices.value = [{ id, name: '日历' }]
+  const v = options && (options.deviceEmail || options.id) ? String(options.deviceEmail || options.id) : ''
+  if (v) deviceEmail.value = v
 })
 
 const safeTop = computed(() => {
@@ -65,8 +64,29 @@ function edit() {
   uni.showToast({ title: '编辑', icon: 'none' })
 }
 
+async function refresh() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    devices.value = []
+    return
+  }
+  try {
+    const list = await deviceApi.getCalendarDeviceList()
+    const inactive = (list || []).filter((x) => Number(x && x.status) === 0)
+    devices.value = deviceEmail.value ? inactive.filter((x) => String(x.deviceEmail) === deviceEmail.value) : inactive
+  } catch (e) {
+    devices.value = []
+    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+  }
+}
+
+onShow(() => {
+  refresh()
+})
+
 function goActivate(d) {
-  uni.navigateTo({ url: `/pages/device/activate?id=${encodeURIComponent(String(d && d.id ? d.id : ''))}` })
+  const code = d && d.activationCode ? String(d.activationCode) : ''
+  uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
 }
 </script>
 

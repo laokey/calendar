@@ -11,10 +11,10 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.id" class="item">
+      <view v-for="d in devices" :key="d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">已激活</text>
-          <text class="name">{{ d.name }}</text>
+          <text class="name">{{ d.deviceName || '日历' }}</text>
         </view>
         <view class="item-right">
           <view class="mini-btn danger" @click="askRemove(d)">
@@ -39,20 +39,20 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { deviceApi } from '../../utils/api'
 
-const devices = ref([
-  { id: 'dev_1', name: '日历' },
-  { id: 'dev_2', name: '日历' },
-])
+const devices = ref([])
 
 const dialogVisible = ref(false)
-const activeId = ref('')
+const activeEmail = ref('')
+const removeEmail = ref('')
 
 onLoad((options) => {
-  const id = options && options.id ? String(options.id) : ''
-  if (!id) return
-  activeId.value = id
+  const v =
+    options && (options.deviceEmail || options.id) ? String(options.deviceEmail || options.id) : ''
+  if (!v) return
+  activeEmail.value = v
 })
 
 const safeTop = computed(() => {
@@ -73,21 +73,56 @@ function done() {
   uni.navigateBack()
 }
 
+async function refresh() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    devices.value = []
+    return
+  }
+  try {
+    const list = await deviceApi.getCalendarDeviceList()
+    const active = (list || []).filter((x) => Number(x && x.status) === 1)
+    devices.value = activeEmail.value ? active.filter((x) => String(x.deviceEmail) === activeEmail.value) : active
+  } catch (e) {
+    devices.value = []
+    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+  }
+}
+
+onShow(() => {
+  refresh()
+})
+
 function askRemove(d) {
-  activeId.value = d && d.id ? String(d.id) : ''
+  removeEmail.value = d && d.deviceEmail ? String(d.deviceEmail) : ''
   dialogVisible.value = true
 }
 
 function closeDialog() {
   dialogVisible.value = false
-  activeId.value = ''
+  removeEmail.value = ''
 }
 
-function confirmRemove() {
-  const id = activeId.value
-  if (!id) return
-  devices.value = (devices.value || []).filter((x) => x && String(x.id) !== id)
-  closeDialog()
+async function confirmRemove() {
+  const email = removeEmail.value
+  if (!email) return
+  uni.showLoading({ title: '解绑中' })
+  try {
+    const res = await deviceApi.unbindCalendarDevice(email)
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '解绑失败', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: '已解除关联', icon: 'none' })
+    closeDialog()
+    setTimeout(() => uni.navigateBack(), 250)
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '解绑失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

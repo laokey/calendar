@@ -9,7 +9,7 @@
         />
       </view>
       <text class="head-title">关联设备</text>
-      <view class="head-right" @click="goActivate">
+      <view class="head-right">
         <view class="bl-icon-btn" @click="goAdd">
         <text class="plus">+</text>
         </view>
@@ -34,7 +34,7 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.id" class="item">
+      <view v-for="d in devices" :key="d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">{{ d.active ? "已激活" : "未激活" }}</text>
           <text class="name">{{ d.name }}</text>
@@ -61,11 +61,11 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { onShow } from '@dcloudio/uni-app'
+import { deviceApi } from '../../utils/api'
 
-const devices = ref([
-  { id: "cal_1", name: "日历", active: false },
-  { id: "cal_2", name: "日历", active: false },
-]);
+const devices = ref([])
+const loading = ref(false)
 
 const safeTop = computed(() => {
   try {
@@ -87,6 +87,33 @@ const safeBottom = computed(() => {
   }
 });
 
+async function refresh() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    devices.value = []
+    return
+  }
+  loading.value = true
+  try {
+    const list = await deviceApi.getCalendarDeviceList()
+    devices.value = (list || []).map((d) => ({
+      deviceEmail: d.deviceEmail,
+      activationCode: d.activationCode,
+      name: d.deviceName || '日历',
+      active: Number(d.status) === 1,
+    }))
+  } catch (e) {
+    devices.value = []
+    uni.showToast({ title: String((e && e.message) || '获取设备列表失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+onShow(() => {
+  refresh()
+})
+
 function back() {
   uni.navigateBack();
 }
@@ -95,19 +122,24 @@ function goActivate() {
   uni.navigateTo({ url: "/pages/device/activate" });
 }
 
+function goAdd() {
+  uni.navigateTo({ url: '/pages/add-device/question' })
+}
+
 function goManage(d) {
   const path =
     d && d.active
       ? "/pages/me/device-linked-manage"
       : "/pages/me/device-unlinked-manage";
   uni.navigateTo({
-    url: `${path}?id=${encodeURIComponent(String(d && d.id ? d.id : ""))}`,
+    url: `${path}?deviceEmail=${encodeURIComponent(String(d && d.deviceEmail ? d.deviceEmail : ""))}`,
   });
 }
 
 function getCode(d) {
+  const code = d && d.activationCode ? String(d.activationCode) : ''
   uni.navigateTo({
-    url: `/pages/device/activate?id=${encodeURIComponent(String(d && d.id ? d.id : ""))}`,
+    url: `/pages/device/activate?code=${encodeURIComponent(code)}`,
   });
 }
 </script>

@@ -55,9 +55,15 @@
 
 <script setup>
 import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 
 const code = ref('002482')
+
+onLoad((options) => {
+  const v = options && (options.code || options.activationCode) ? String(options.code || options.activationCode) : ''
+  if (v) code.value = v
+})
 
 function copy() {
   uni.setClipboardData({ data: code.value })

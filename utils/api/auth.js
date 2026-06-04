@@ -36,8 +36,8 @@ export async function login(payload) {
     withAuth: false,
     showErrorToast: false,
     header: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
-  const token = res && typeof res === 'object' ? String(res.token || '') : ''
+  })  
+  const token = res
   if (token) setToken(token)
   return res
 }

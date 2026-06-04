@@ -46,10 +46,10 @@ const selected = ref('no')
 
 function confirm() {
   if (selected.value === 'yes') {
-    uni.navigateTo({ url: '/pages/device/activate' })
+    uni.navigateTo({ url: '/pages/add-device/select?mode=create' })
     return
   }
-  uni.navigateTo({ url: '/pages/add-device/select' })
+  uni.navigateTo({ url: '/pages/add-device/select?mode=bind' })
 }
 </script>
 

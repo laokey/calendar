@@ -24,168 +24,42 @@
 
     <view v-else class="list">
       <view
+        v-for="(d, i) in devices"
+        :key="d.deviceEmail"
         class="swipe-cell"
-        :class="{ 'is-dragging': swipeDragging && swipeActiveIndex === 0 }"
-        data-index="0"
+        :class="{ 'is-dragging': swipeDragging && swipeActiveIndex === i }"
+        :data-index="i"
         @touchstart="onSwipeStart"
         @touchmove="onSwipeMove"
         @touchend="onSwipeEnd"
         @touchcancel="onSwipeEnd"
       >
         <view class="swipe-actions">
-          <view class="swipe-delete" @click.stop="removeCalendar(0)">
+          <view class="swipe-delete" @click.stop="removeCalendar(i)">
             <text class="delete-text">删除</text>
           </view>
         </view>
-        <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(0)}px)` }">
-          <view class="bl-card" @click="openCalendar(0)">
+        <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(i)}px)` }">
+          <view class="bl-card" @click="openCalendar(i)">
             <view class="bl-row">
               <view class="thumb">
-                <image class="thumb-img" src="/static/device/device_thumb_new.png" mode="aspectFit" />
+                <image class="thumb-img" :src="d.status === 1 ? '/static/device/device_thumb.png' : '/static/device/device_thumb_new.png'" mode="aspectFit" />
               </view>
               <view class="meta">
-                <text class="name">YYO的日历</text>
-                <text class="email bl-muted">发送事件：601342282@qq.com</text>
+                <text class="name">{{ d.deviceName || '日历' }}</text>
+                <text class="email bl-muted">发送事件：{{ d.deviceEmail }}</text>
               </view>
             </view>
-            <view class="btn-inline is-primary" @click.stop="goActivate">
+            <view v-if="d.status === 0" class="btn-inline is-primary" @click.stop="goActivate(d)">
               <text class="btn-text">激活设备</text>
               <view class="btn-arrow">
                 <text class="arrow">→</text>
               </view>
             </view>
-          </view>
-        </view>
-      </view>
-
-      <view
-        class="swipe-cell"
-        :class="{ 'is-dragging': swipeDragging && swipeActiveIndex === 1 }"
-        data-index="1"
-        @touchstart="onSwipeStart"
-        @touchmove="onSwipeMove"
-        @touchend="onSwipeEnd"
-        @touchcancel="onSwipeEnd"
-      >
-        <view class="swipe-actions">
-          <view class="swipe-delete" @click.stop="removeCalendar(1)">
-            <text class="delete-text">删除</text>
-          </view>
-        </view>
-        <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(1)}px)` }">
-          <view class="bl-card" @click="openCalendar(1)">
-            <view class="bl-row">
-              <view class="thumb">
-                <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
-              </view>
-              <view class="meta">
-                <text class="name">爸爸的日历</text>
-                <text class="email bl-muted">发送事件：601342282@qq.com</text>
-              </view>
-            </view>
-            <view class="btn-inline is-soft" @click.stop="openCalendar(1)">
+            <view v-else class="btn-inline is-soft" @click.stop="openCalendar(i)">
               <text class="btn-text is-soft-text">查看任务</text>
               <view class="btn-arrow is-soft-arrow">
                 <text class="arrow">→</text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <view
-        class="swipe-cell"
-        :class="{ 'is-dragging': swipeDragging && swipeActiveIndex === 2 }"
-        data-index="2"
-        @touchstart="onSwipeStart"
-        @touchmove="onSwipeMove"
-        @touchend="onSwipeEnd"
-        @touchcancel="onSwipeEnd"
-      >
-        <view class="swipe-actions">
-          <view class="swipe-delete" @click.stop="removeCalendar(2)">
-            <text class="delete-text">删除</text>
-          </view>
-        </view>
-        <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(2)}px)` }">
-          <view class="bl-card" @click="openCalendar(2)">
-            <view class="bl-row">
-              <view class="thumb">
-                <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
-              </view>
-              <view class="meta">
-                <text class="name">妈妈的日历</text>
-                <text class="email bl-muted">发送事件：601342282@qq.com</text>
-              </view>
-            </view>
-
-            <view class="task-card is-pink">
-              <view class="task-left">
-                <text class="task-title">钢琴课</text>
-                <view class="task-time">
-                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
-                  <text class="time-text">17:25–18:24</text>
-                </view>
-              </view>
-              <view class="bl-avatar is-red">
-                <text>姐</text>
-              </view>
-            </view>
-
-            <view class="task-card is-gray">
-              <view class="task-left">
-                <text class="task-title">家庭聚会</text>
-                <view class="task-time">
-                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
-                  <text class="time-text">17:25–18:24</text>
-                </view>
-              </view>
-              <view class="avatars">
-                <view class="bl-avatar is-blue"><text>弟</text></view>
-                <view class="bl-avatar is-red"><text>姐</text></view>
-                <view class="bl-avatar is-purple"><text>妈</text></view>
-                <view class="bl-avatar is-green"><text>爸</text></view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <view
-        class="swipe-cell"
-        :class="{ 'is-dragging': swipeDragging && swipeActiveIndex === 3 }"
-        data-index="3"
-        @touchstart="onSwipeStart"
-        @touchmove="onSwipeMove"
-        @touchend="onSwipeEnd"
-        @touchcancel="onSwipeEnd"
-      >
-        <view class="swipe-actions">
-          <view class="swipe-delete" @click.stop="removeCalendar(3)">
-            <text class="delete-text">删除</text>
-          </view>
-        </view>
-        <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(3)}px)` }">
-          <view class="bl-card" @click="openCalendar(3)">
-            <view class="bl-row">
-              <view class="thumb">
-                <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
-              </view>
-              <view class="meta">
-                <text class="name">姐姐的日历</text>
-                <text class="email bl-muted">发送事件：601342282@qq.com</text>
-              </view>
-            </view>
-            <view class="task-card is-green">
-              <view class="task-left">
-                <text class="task-title">修剪植物</text>
-                <view class="task-time">
-                  <image class="clock" src="/static/device/icon_clock.png" mode="aspectFit" />
-                  <text class="time-text">17:25–18:24</text>
-                </view>
-              </view>
-              <view class="bl-avatar is-green">
-                <text>爸</text>
               </view>
             </view>
           </view>
@@ -198,13 +72,41 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlBottomNav from '../../components/BlBottomNav.vue'
+import { deviceApi } from '../../utils/api'
 
 const mode = ref('list')
+const devices = ref([])
+const loading = ref(false)
 
 onLoad((options) => {
   if (options && options.mode === 'empty') mode.value = 'empty'
+})
+
+async function refresh() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    devices.value = []
+    mode.value = 'empty'
+    return
+  }
+  loading.value = true
+  try {
+    const list = await deviceApi.getCalendarDeviceList()
+    devices.value = list || []
+    mode.value = devices.value.length ? 'list' : 'empty'
+  } catch (e) {
+    devices.value = []
+    mode.value = 'empty'
+    uni.showToast({ title: String((e && e.message) || '获取设备列表失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+onShow(() => {
+  refresh()
 })
 
 const safeTop = computed(() => {
@@ -279,52 +181,55 @@ function getSwipeX(index) {
   return swipeOpenIndex.value === index ? swipeX.value : 0
 }
 
-function removeCalendar(index) {
+async function removeCalendar(index) {
   if (swipeOpenIndex.value === index) swipeOpenIndex.value = -1
   swipeX.value = 0
-  uni.showToast({ title: '已删除', icon: 'none' })
+  const item = devices.value && devices.value[index] ? devices.value[index] : null
+  if (!item || !item.deviceEmail) return
+  uni.showLoading({ title: '删除中' })
+  try {
+    const res = await deviceApi.unbindCalendarDevice(String(item.deviceEmail))
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      if (res.code === 201 || res.code === '201') {
+        uni.showToast({ title: '用户不存在', icon: 'none' })
+        return
+      }
+      if (res.code === 202 || res.code === '202') {
+        uni.showToast({ title: '日历设备不存在', icon: 'none' })
+        return
+      }
+      uni.showToast({ title: '解绑失败', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: '已删除', icon: 'none' })
+    await refresh()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '解绑失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 
 function goAdd() {
   uni.navigateTo({ url: '/pages/add-device/question' })
 }
 
-function goActivate() {
-  uni.navigateTo({ url: '/pages/device/activate' })
+function goActivate(d) {
+  const code = d && d.activationCode ? String(d.activationCode) : ''
+  uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
 }
 
 function openCalendar(index) {
   const idx = Number(index)
-  const baseEmail = '601342282@qq.com'
-  const items = [
-    { id: 'yyo', name: 'YYO的日历', email: baseEmail, active: false, tasks: [] },
-    { id: 'dfs_0', name: 'DFSFDGF的日历', email: baseEmail, active: false, tasks: [] },
-    {
-      id: 'dfs_1',
-      name: 'DFSFDGF的日历',
-      email: baseEmail,
-      active: true,
-      tasks: [
-        { style: 'pink', title: '钢琴课', timeText: '17:25–18:24', right: { type: 'single', glyph: '姐', cls: 'is-red' } },
-        {
-          style: 'gray',
-          title: '家庭聚会',
-          timeText: '17:25–18:24',
-          right: {
-            type: 'group',
-            avatars: [
-              { glyph: '弟', cls: 'is-blue' },
-              { glyph: '姐', cls: 'is-red' },
-              { glyph: '妈', cls: 'is-purple' },
-              { glyph: '爸', cls: 'is-green' },
-            ],
-          },
-        },
-      ],
-    },
-    { id: 'dfs_2', name: 'DFSFDGF的日历', email: baseEmail, active: true, tasks: [{ style: 'green', title: '修剪植物', timeText: '17:25–18:24', right: { type: 'single', glyph: '爸', cls: 'is-green' } }] },
-  ]
-  const item = items[idx] || items[0]
+  const d = devices.value && devices.value[idx] ? devices.value[idx] : null
+  const item = {
+    name: d && d.deviceName ? String(d.deviceName) : '日历',
+    email: d && d.deviceEmail ? String(d.deviceEmail) : '',
+    active: d && Number(d.status) === 1,
+    tasks: [],
+  }
   uni.setStorageSync('calendar_detail_ctx_v1', JSON.stringify(item))
   uni.navigateTo({ url: `/pages/calendar/yyo?active=${item.active ? 1 : 0}` })
 }
