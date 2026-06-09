@@ -72,7 +72,8 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { addRecipe, ensureMealState, findRecipe, listCategories, updateRecipe } from '../../utils/mealStore'
+import { ensureMealState, listCategories } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
 
@@ -97,12 +98,7 @@ onLoad((options) => {
   const id = options && options.id ? String(options.id) : ''
   if (!id) return
   recipeId.value = id
-  const r = findRecipe(mealState.value, id)
-  if (!r) return
-  photoPath.value = r.photoPath || ''
-  title.value = r.title || ''
-  note.value = r.note || ''
-  categoryId.value = r.categoryId || categoryId.value
+  loadRecipe(id)
 })
 
 const categories = computed(() => listCategories(mealState.value, { enabledOnly: true }))
@@ -132,12 +128,66 @@ function pickPhoto() {
   })
 }
 
-function save() {
+function categoryNameById(id) {
+  const list = listCategories(mealState.value, { enabledOnly: true })
+  const c = list.find((x) => x && x.id === id) || null
+  return c ? String(c.name || '') : ''
+}
+
+function mealTypeFromCategoryId(id) {
+  const name = categoryNameById(id)
+  const n = name.replace(/\s+/g, '')
+  if (n.includes('早餐') || n === '早') return 0
+  if (n.includes('午餐') || n === '午') return 1
+  if (n.includes('晚餐') || n === '晚') return 2
+  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const idx = enabled.findIndex((x) => x && x.id === id)
+  return idx >= 0 ? idx : 0
+}
+
+async function loadRecipe(id) {
+  const rid = String(id || '').trim()
+  if (!rid) return
+  try {
+    const list = await mealsApi.getRecipeList()
+    const r = (list || []).find((x) => String(x.recipeId) === rid) || null
+    if (!r) return
+    photoPath.value = String(r.imageUrl || '')
+    title.value = String(r.recipeName || '')
+    note.value = String(r.description || '')
+    const type = r.recipeType
+    const enabled = listCategories(mealState.value, { enabledOnly: true })
+    const matched =
+      enabled.find((c) => mealTypeFromCategoryId(c.id) === Number(type)) || null
+    if (matched) categoryId.value = matched.id
+  } catch (e) {}
+}
+
+async function save() {
   if (!canSave.value) return
-  const payload = { title: title.value, categoryId: categoryId.value, photoPath: photoPath.value, note: note.value }
-  if (recipeId.value) updateRecipe(mealState.value, recipeId.value, payload)
-  else addRecipe(mealState.value, payload)
-  uni.navigateBack()
+  const recipeName = String(title.value || '').trim()
+  const recipeType = mealTypeFromCategoryId(categoryId.value)
+  const description = String(note.value || '')
+  const imageUrl = String(photoPath.value || '')
+  uni.showLoading({ title: '保存中' })
+  try {
+    if (recipeId.value) {
+      await mealsApi.deleteRecipeInfo({ recipeId: recipeId.value })
+    }
+    const res = await mealsApi.addRecipeInfo({ recipeName, recipeType, description, imageUrl })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+      return
+    }
+    uni.navigateBack()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

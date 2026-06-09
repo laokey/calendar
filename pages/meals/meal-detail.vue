@@ -101,22 +101,23 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
+import { onLoad } from "@dcloudio/uni-app";
 import BlHeader from "../../components/BlHeader.vue";
 import BlSheet from "../../components/BlSheet.vue";
 import {
   cnDateText,
-  deletePlan,
   ensureMealState,
   findCategory,
-  findPlan,
-  findRecipe,
   listCategories,
-  updatePlan,
 } from "../../utils/mealStore";
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState());
 const planId = ref("");
+const date = ref('')
+const categoryId = ref('')
+const presetTitle = ref('')
+const presetPhotoPath = ref('')
 
 const catOpen = ref(false);
 const confirmOpen = ref(false);
@@ -127,28 +128,20 @@ function refresh() {
 
 onLoad((options) => {
   planId.value = options && options.id ? String(options.id) : "";
+  date.value = options && options.date ? String(options.date) : ''
+  categoryId.value = options && options.categoryId ? String(options.categoryId) : ''
+  presetTitle.value = options && options.title ? String(options.title) : ''
+  presetPhotoPath.value = options && options.photoPath ? String(options.photoPath) : ''
   refresh();
 });
 
-onShow(() => refresh());
-
-const plan = computed(() =>
-  planId.value ? findPlan(mealState.value, planId.value) : null,
-);
-const recipe = computed(() =>
-  plan.value ? findRecipe(mealState.value, plan.value.recipeId) : null,
-);
-
-const title = computed(() => (recipe.value ? recipe.value.title : ""));
-const photoPath = computed(() => (recipe.value ? recipe.value.photoPath : ""));
-const dateText = computed(() =>
-  plan.value ? cnDateText(plan.value.date) : "",
-);
+const title = computed(() => presetTitle.value)
+const photoPath = computed(() => presetPhotoPath.value)
+const dateText = computed(() => (date.value ? cnDateText(date.value) : ""))
 
 const categories = computed(() =>
   listCategories(mealState.value, { enabledOnly: true }),
 );
-const categoryId = computed(() => (plan.value ? plan.value.categoryId : ""));
 const cat = computed(() =>
   categoryId.value ? findCategory(mealState.value, categoryId.value) : null,
 );
@@ -157,24 +150,36 @@ const catGlyph = computed(() => (cat.value ? cat.value.glyph : ""));
 const catColor = computed(() => (cat.value ? cat.value.color : "#3d6afb"));
 
 function selectCategory(id) {
-  if (!planId.value) return;
-  updatePlan(mealState.value, planId.value, { categoryId: id });
+  categoryId.value = id
   catOpen.value = false;
   refresh();
 }
 
 function goEdit() {
-  if (!plan.value) return;
+  if (!planId.value) return
   uni.navigateTo({
-    url: `/pages/meals/meal-plan-form?planId=${plan.value.id}`,
+    url: `/pages/meals/meal-plan-form?mealId=${encodeURIComponent(planId.value)}&date=${encodeURIComponent(date.value)}&categoryId=${encodeURIComponent(categoryId.value)}`,
   });
 }
 
-function del() {
-  if (!planId.value) return;
-  deletePlan(mealState.value, planId.value);
-  confirmOpen.value = false;
-  uni.navigateBack();
+async function del() {
+  if (!planId.value) return
+  uni.showLoading({ title: '删除中' })
+  try {
+    const res = await mealsApi.deleteMealInfo({ mealId: planId.value })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '删除失败', icon: 'none' })
+      return
+    }
+    confirmOpen.value = false
+    uni.navigateBack()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

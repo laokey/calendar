@@ -92,17 +92,14 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
 import {
-  addPlans,
   clearRecipeSelectTmp,
   cnMonthDayText,
   ensureMealState,
-  findPlan,
-  findRecipe,
   listCategories,
   readRecipeSelectTmp,
-  updatePlan,
   writeRecipeSelectTmp,
 } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
 
@@ -112,6 +109,7 @@ const categoryId = ref('')
 const note = ref('')
 const repeat = ref(false)
 const selectedIds = ref([])
+const recipes = ref([])
 
 const catOpen = ref(false)
 
@@ -132,30 +130,22 @@ function syncFromTmp() {
 onLoad((options) => {
   refresh()
   planId.value = options && options.planId ? String(options.planId) : ''
-  if (planId.value) {
-    const p = findPlan(mealState.value, planId.value)
-    if (!p) {
-      uni.navigateBack()
-      return
-    }
-    date.value = p.date
-    categoryId.value = p.categoryId
-    note.value = p.note || ''
-    repeat.value = !!p.repeat
-    selectedIds.value = p.recipeId ? [p.recipeId] : []
-    clearRecipeSelectTmp()
-    writeRecipeSelectTmp({ date: date.value, categoryId: categoryId.value, note: note.value, repeat: repeat.value, recipeIds: selectedIds.value })
-    return
-  }
   date.value = options && options.date ? String(options.date) : ''
   categoryId.value = options && options.categoryId ? String(options.categoryId) : ''
+  if (options && options.categoryId) categoryId.value = String(options.categoryId)
+  if (options && options.mealId) planId.value = String(options.mealId)
+  if (options && options.selected) {
+    const sid = String(options.selected).trim()
+    if (sid) selectedIds.value = [sid]
+  }
   clearRecipeSelectTmp()
-  writeRecipeSelectTmp({ date: date.value, categoryId: categoryId.value, note: note.value, repeat: repeat.value, recipeIds: [] })
+  writeRecipeSelectTmp({ date: date.value, categoryId: categoryId.value, note: note.value, repeat: repeat.value, recipeIds: selectedIds.value })
 })
 
 onShow(() => {
   refresh()
   syncFromTmp()
+  fetchRecipes()
 })
 
 const categories = computed(() => listCategories(mealState.value, { enabledOnly: true }))
@@ -166,12 +156,16 @@ const categoryName = computed(() => {
 
 const dateText = computed(() => cnMonthDayText(date.value))
 
-const selectedRecipes = computed(() =>
-  selectedIds.value
-    .map((id) => findRecipe(mealState.value, id))
-    .filter(Boolean)
-    .slice(0, 6)
-)
+const recipeMap = computed(() => {
+  const map = {}
+  for (const r of recipes.value || []) {
+    if (!r || !r.id) continue
+    map[String(r.id)] = r
+  }
+  return map
+})
+
+const selectedRecipes = computed(() => selectedIds.value.map((id) => recipeMap.value[String(id)]).filter(Boolean).slice(0, 6))
 
 function selectCategory(id) {
   categoryId.value = id
@@ -199,26 +193,96 @@ const bottomText = computed(() => {
 
 function onBottom() {
   if (bottomDisabled.value) return
+  if (!date.value) {
+    uni.showToast({ title: '日期缺失', icon: 'none' })
+    return
+  }
+  const mealType = mealTypeFromCategoryId(categoryId.value)
   if (isEdit.value) {
     const rid = selectedIds.value[0] || ''
-    updatePlan(mealState.value, planId.value, { categoryId: categoryId.value, note: note.value, repeat: repeat.value, recipeId: rid })
+    if (!rid) return
+    saveEdit({ mealId: planId.value, mealDate: date.value, mealType, recipeId: rid })
+    return
+  }
+  saveAdd({ mealDate: date.value, mealType, recipeIds: selectedIds.value })
+}
+
+function categoryNameById(id) {
+  const list = listCategories(mealState.value, { enabledOnly: true })
+  const c = list.find((x) => x && x.id === id) || null
+  return c ? String(c.name || '') : ''
+}
+
+function mealTypeFromCategoryId(id) {
+  const name = categoryNameById(id)
+  const n = name.replace(/\s+/g, '')
+  if (n.includes('早餐') || n === '早') return 0
+  if (n.includes('午餐') || n === '午') return 1
+  if (n.includes('晚餐') || n === '晚') return 2
+  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const idx = enabled.findIndex((x) => x && x.id === id)
+  return idx >= 0 ? idx : 0
+}
+
+async function fetchRecipes() {
+  try {
+    const list = await mealsApi.getRecipeList()
+    recipes.value = (list || []).map((x) => ({
+      id: String(x.recipeId),
+      title: String(x.recipeName || ''),
+      photoPath: String(x.imageUrl || ''),
+      recipeType: x.recipeType,
+      note: String(x.description || ''),
+    }))
+  } catch (e) {
+    recipes.value = []
+  }
+}
+
+async function saveAdd({ mealDate, mealType, recipeIds }) {
+  const ids = Array.isArray(recipeIds) ? recipeIds.map((x) => String(x || '').trim()).filter(Boolean) : []
+  if (!ids.length) return
+  uni.showLoading({ title: '添加中' })
+  try {
+    for (const rid of ids) {
+      const res = await mealsApi.addMealInfo({ mealType, mealDate, recipeId: rid })
+      if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+        uni.showToast({ title: '添加失败', icon: 'none' })
+        return
+      }
+    }
     clearRecipeSelectTmp()
     uni.navigateBack()
-    return
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '添加失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
   }
-  const added = addPlans(mealState.value, {
-    date: date.value,
-    categoryId: categoryId.value,
-    recipeIds: selectedIds.value,
-    note: note.value,
-    repeat: repeat.value,
-  })
-  if (!added.length) {
-    uni.showToast({ title: '没有新增餐点', icon: 'none' })
-    return
+}
+
+async function saveEdit({ mealId, mealDate, mealType, recipeId }) {
+  const mid = String(mealId || '').trim()
+  if (!mid) return
+  uni.showLoading({ title: '保存中' })
+  try {
+    await mealsApi.deleteMealInfo({ mealId: mid })
+    const res = await mealsApi.addMealInfo({ mealType, mealDate, recipeId })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+      return
+    }
+    clearRecipeSelectTmp()
+    uni.navigateBack()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
   }
-  clearRecipeSelectTmp()
-  uni.navigateBack()
 }
 </script>
 

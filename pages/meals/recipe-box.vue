@@ -74,9 +74,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSegmented from '../../components/BlSegmented.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { ensureMealState, listCategories, listRecipes, readRecipeSelectTmp, writeRecipeSelectTmp, deleteRecipe } from '../../utils/mealStore'
+import { ensureMealState, listCategories, readRecipeSelectTmp, writeRecipeSelectTmp } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
+const recipes = ref([])
 
 const selectMode = ref(true)
 const single = ref(false)
@@ -110,8 +112,6 @@ onLoad((options) => {
   if (categoryId.value) activeTab.value = categoryId.value
 })
 
-onShow(() => refresh())
-
 const categories = computed(() => listCategories(mealState.value, { enabledOnly: true }))
 
 const tabOptions = computed(() => {
@@ -120,12 +120,12 @@ const tabOptions = computed(() => {
   return [...base, ...cats]
 })
 
-const recipes = computed(() => listRecipes(mealState.value))
+const recipesView = computed(() => recipes.value || [])
 
 const filtered = computed(() => {
   const key = String(q.value || '').trim()
   const tab = activeTab.value
-  return recipes.value
+  return recipesView.value
     .filter((r) => (tab === 'all' ? true : r.categoryId === tab))
     .filter((r) => (!key ? true : String(r.title || '').includes(key)))
 })
@@ -181,10 +181,78 @@ function openDelete() {
 function doDelete() {
   const id = activeRecipeId.value
   if (!id) return
-  deleteRecipe(mealState.value, id, deleteScope.value)
   deleteOpen.value = false
-  refresh()
+  removeRecipe(id)
 }
+
+function categoryNameById(id) {
+  const list = listCategories(mealState.value, { enabledOnly: true })
+  const c = list.find((x) => x && x.id === id) || null
+  return c ? String(c.name || '') : ''
+}
+
+function mealTypeFromCategoryId(id) {
+  const name = categoryNameById(id)
+  const n = name.replace(/\s+/g, '')
+  if (n.includes('早餐') || n === '早') return 0
+  if (n.includes('午餐') || n === '午') return 1
+  if (n.includes('晚餐') || n === '晚') return 2
+  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const idx = enabled.findIndex((x) => x && x.id === id)
+  return idx >= 0 ? idx : 0
+}
+
+function categoryIdFromRecipeType(type) {
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const t = Number(type)
+  for (const c of enabled) {
+    const mt = mealTypeFromCategoryId(c.id)
+    if (mt === t) return c.id
+  }
+  return enabled[0] ? enabled[0].id : ''
+}
+
+async function fetchRecipes() {
+  try {
+    const list = await mealsApi.getRecipeList()
+    recipes.value = (list || []).map((x) => ({
+      id: String(x.recipeId),
+      title: String(x.recipeName || ''),
+      photoPath: String(x.imageUrl || ''),
+      categoryId: categoryIdFromRecipeType(x.recipeType),
+    }))
+  } catch (e) {
+    recipes.value = []
+    uni.showToast({ title: String((e && e.message) || '获取食谱失败'), icon: 'none' })
+  }
+}
+
+async function removeRecipe(recipeId) {
+  const id = String(recipeId || '').trim()
+  if (!id) return
+  uni.showLoading({ title: '删除中' })
+  try {
+    const res = await mealsApi.deleteRecipeInfo({ recipeId: id })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '删除失败', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: '已删除', icon: 'none' })
+    await fetchRecipes()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
+
+onShow(() => {
+  refresh()
+  fetchRecipes()
+})
 </script>
 
 <style scoped lang="scss">

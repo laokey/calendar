@@ -1,5 +1,5 @@
 import { post } from '../request'
-import { clearToken, getToken, setToken } from '../authToken'
+import { clearToken, getToken, setToken, setUserId } from '../authToken'
 
 function buildQuery(params) {
   const obj = params && typeof params === 'object' ? params : {}
@@ -36,9 +36,42 @@ export async function login(payload) {
     withAuth: false,
     showErrorToast: false,
     header: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })  
-  const token = res
+  })
+
+  const token =
+    typeof res === 'string'
+      ? String(res).trim()
+      : res && typeof res === 'object'
+        ? String(
+            res.token ||
+              (res.data && typeof res.data === 'object' ? res.data.token : '') ||
+              res.accessToken ||
+              res.access_token ||
+              (res.data && typeof res.data === 'object' ? (res.data.accessToken || res.data.access_token) : '') ||
+              '',
+          ).trim()
+        : ''
   if (token) setToken(token)
+
+  const userId =
+    res && typeof res === 'object'
+      ? res.userId !== undefined
+        ? res.userId
+        : res.id !== undefined
+          ? res.id
+          : res.user_id !== undefined
+            ? res.user_id
+            : res.data && typeof res.data === 'object'
+              ? res.data.userId !== undefined
+                ? res.data.userId
+                : res.data.id !== undefined
+                  ? res.data.id
+                  : res.data.user_id !== undefined
+                    ? res.data.user_id
+                    : undefined
+              : undefined
+      : undefined
+  if (userId !== undefined && userId !== null && String(userId).trim()) setUserId(userId)
   return res
 }
 

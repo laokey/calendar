@@ -44,14 +44,14 @@
               :key="it.id"
               class="meal-item"
               :style="{ background: mealItemBg(d.key) }"
-              @click="openDetail(it.id)"
+              @click="openDetail(d.key, it)"
             >
               <view class="thumb">
                 <image v-if="it.photoPath" class="thumb-img" :src="it.photoPath" mode="aspectFill" />
                 <view v-else class="thumb-ph" />
               </view>
               <text class="meal-title">{{ it.title }}</text>
-              <view class="meal-del" @click.stop="removePlan(it.id)">
+              <view class="meal-del" @click.stop="removePlan(d.key, it)">
                 <image class="meal-del-icon" src="/static/meals/icon_trash.png" mode="aspectFit" />
               </view>
             </view>
@@ -78,19 +78,19 @@ import BlHeader from '../../components/BlHeader.vue'
 import {
   clearRecipeSelectTmp,
   ensureMealState,
-  findRecipe,
   listCategories,
-  plansForDateCategory,
   setActiveDateKey,
   setWeekStartKey,
   weekDaysForKey,
   weekRangeText,
-  deletePlan,
 } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
 const todayKey = ref('')
 const dayCategoryMap = ref({})
+const weekMealsMap = ref({})
+const loading = ref(false)
 
 function refresh() {
   mealState.value = ensureMealState()
@@ -126,6 +126,7 @@ onShow(() => {
   mealState.value = ensureMealState()
   initToday()
   refresh()
+  fetchWeekMeals()
 })
 
 const weekStartKey = computed(() => mealState.value.weekStartKey)
@@ -189,16 +190,57 @@ function shiftWeek(deltaDays) {
   d.setDate(d.getDate() + deltaDays)
   mealState.value = setWeekStartKey(mealState.value, formatKey(d))
   refresh()
+  fetchWeekMeals()
+}
+
+function categoryNameById(id) {
+  const list = listCategories(mealState.value, { enabledOnly: true })
+  const c = list.find((x) => x && x.id === id) || null
+  return c ? String(c.name || '') : ''
+}
+
+function mealTypeFromCategoryId(id) {
+  const name = categoryNameById(id)
+  const n = name.replace(/\s+/g, '')
+  if (n.includes('早餐') || n === '早') return 0
+  if (n.includes('午餐') || n === '午') return 1
+  if (n.includes('晚餐') || n === '晚') return 2
+  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const idx = enabled.findIndex((x) => x && x.id === id)
+  return idx >= 0 ? idx : 0
+}
+
+function categoryIdFromMealType(type) {
+  const enabled = listCategories(mealState.value, { enabledOnly: true })
+  const t = Number(type)
+  for (const c of enabled) {
+    if (mealTypeFromCategoryId(c.id) === t) return c.id
+  }
+  return enabled[0] ? enabled[0].id : ''
+}
+
+function mealsForDate(dateKeyVal) {
+  const key = String(dateKeyVal || '')
+  return (weekMealsMap.value && weekMealsMap.value[key] ? weekMealsMap.value[key] : []).slice()
 }
 
 function itemsFor(dateKeyVal, categoryIdVal) {
-  const plans = plansForDateCategory(mealState.value, dateKeyVal, categoryIdVal)
-  return plans
-    .map((p) => {
-      const r = findRecipe(mealState.value, p.recipeId)
-      return { id: p.id, title: r ? r.title : '未命名', photoPath: r ? r.photoPath : '' }
-    })
-    .filter(Boolean)
+  const type = mealTypeFromCategoryId(categoryIdVal)
+  const list = mealsForDate(dateKeyVal)
+  const filtered = list.filter((x) => {
+    if (x && x.mealType !== undefined && x.mealType !== null && Number.isFinite(Number(x.mealType))) {
+      return Number(x.mealType) === Number(type)
+    }
+    return true
+  })
+  return filtered.map((x, i) => ({
+    id: x && x.uid ? String(x.uid) : `${String(dateKeyVal || 'day')}_${String(type)}_${i}`,
+    mealId: x && x.mealId ? String(x.mealId) : '',
+    title: x && x.recipeName ? String(x.recipeName) : '',
+    photoPath: x && x.imageUrl ? String(x.imageUrl) : '',
+    mealType: x && x.mealType !== undefined ? x.mealType : undefined,
+  }))
 }
 
 function dayItems(dateKeyVal) {
@@ -217,13 +259,44 @@ function openPlanForm(dateKeyVal, categoryIdVal) {
   uni.navigateTo({ url: `/pages/meals/meal-plan-form?date=${dateKeyVal}&categoryId=${catId}` })
 }
 
-function openDetail(planId) {
-  uni.navigateTo({ url: `/pages/meals/meal-detail?id=${planId}` })
+function openDetail(dateKeyVal, it) {
+  const mealId = it && it.mealId ? String(it.mealId) : ''
+  if (!mealId) {
+    uni.showToast({ title: '该餐点缺少 mealId', icon: 'none' })
+    return
+  }
+  const title = it ? String(it.title || '') : ''
+  const photoPath = it ? String(it.photoPath || '') : ''
+  const catId = it && it.mealType !== undefined && it.mealType !== null ? categoryIdFromMealType(it.mealType) : dayCategoryId(dateKeyVal)
+  uni.navigateTo({
+    url: `/pages/meals/meal-detail?id=${encodeURIComponent(mealId)}&date=${encodeURIComponent(dateKeyVal)}&categoryId=${encodeURIComponent(
+      catId,
+    )}&title=${encodeURIComponent(title)}&photoPath=${encodeURIComponent(photoPath)}`,
+  })
 }
 
-function removePlan(planId) {
-  deletePlan(mealState.value, planId)
-  refresh()
+async function removePlan(dateKeyVal, it) {
+  const id = it && it.mealId ? String(it.mealId) : ''
+  if (!id) {
+    uni.showToast({ title: '该餐点暂无 mealId，无法删除', icon: 'none' })
+    return
+  }
+  uni.showLoading({ title: '删除中' })
+  try {
+    const res = await mealsApi.deleteMealInfo({ mealId: id })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '删除失败', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: '已删除', icon: 'none' })
+    await fetchWeekMeals()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 
 function goCategories() {
@@ -241,6 +314,27 @@ function formatKey(d) {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+async function fetchWeekMeals() {
+  const ds = days.value.map((x) => x.key)
+  if (!ds.length) return
+  loading.value = true
+  try {
+    const list = await mealsApi.getWeekMealInfo({ dates: ds })
+    const map = {}
+    for (const d of list) {
+      const k = String(d.mealDate || '').trim()
+      if (!k) continue
+      map[k] = Array.isArray(d.meals) ? d.meals : []
+    }
+    weekMealsMap.value = map
+  } catch (e) {
+    weekMealsMap.value = {}
+    uni.showToast({ title: String((e && e.message) || '获取餐食失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

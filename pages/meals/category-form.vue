@@ -41,9 +41,11 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMealState, findCategory, updateCategory } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
 const catId = ref('')
+const typeIndex = ref(0)
 
 const name = ref('')
 const color = ref('#f0ad4e')
@@ -72,6 +74,7 @@ function refresh() {
 onLoad((options) => {
   refresh()
   catId.value = options && options.id ? String(options.id) : ''
+  typeIndex.value = options && options.typeIndex !== undefined ? Number(options.typeIndex) : 0
   if (!catId.value) {
     uni.navigateBack()
     return
@@ -85,13 +88,33 @@ onLoad((options) => {
   color.value = c.color || color.value
 })
 
-function save() {
+function colorIndexOf(hex) {
+  const idx = colors.findIndex((x) => String(x).toLowerCase() === String(hex || '').toLowerCase())
+  return idx >= 0 ? idx : 0
+}
+
+async function save() {
   if (!String(name.value || '').trim()) {
     uni.showToast({ title: '请输入名称', icon: 'none' })
     return
   }
-  updateCategory(mealState.value, catId.value, { name: name.value, color: color.value })
-  uni.navigateBack()
+  const typeColor = colorIndexOf(color.value)
+  uni.showLoading({ title: '保存中' })
+  try {
+    const res = await mealsApi.updateRecipeTypeInfo({ typeIndex: typeIndex.value, typeName: name.value, typeColor })
+    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+      return
+    }
+    updateCategory(mealState.value, catId.value, { name: name.value, color: color.value })
+    uni.navigateBack()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

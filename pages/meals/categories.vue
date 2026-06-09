@@ -23,7 +23,8 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
-import { ensureMealState, listCategories, setCategoryEnabled } from '../../utils/mealStore'
+import { ensureMealState, listCategories, setCategoryEnabled, updateCategory } from '../../utils/mealStore'
+import { mealsApi } from '../../utils/api'
 
 const mealState = ref(ensureMealState())
 
@@ -31,7 +32,53 @@ function refresh() {
   mealState.value = ensureMealState()
 }
 
-onShow(() => refresh())
+const colors = [
+  '#f7c84f',
+  '#f0ad4e',
+  '#ff7a7f',
+  '#ff4b3f',
+  '#8ae36b',
+  '#4cc38a',
+  '#0ebf5c',
+  '#25c6da',
+  '#7cc7ff',
+  '#4c8dff',
+  '#b08cff',
+  '#9b59ff',
+  '#ff76e8',
+  '#c218d4',
+]
+
+function pickColorByIndex(idx) {
+  const n = Number(idx)
+  if (!Number.isFinite(n)) return ''
+  return colors[n] ? String(colors[n]) : ''
+}
+
+async function syncTypes() {
+  try {
+    const remote = await mealsApi.getRecipeTypeInfo()
+    const local = listCategories(mealState.value).slice(0, 4)
+    for (const r of remote || []) {
+      const i = Number(r.typeIndex)
+      if (!Number.isFinite(i)) continue
+      const c = local[i]
+      if (!c) continue
+      const name = String(r.typeName || '').trim()
+      const color = pickColorByIndex(r.typeColor)
+      const patch = {}
+      if (name) patch.name = name
+      if (color) patch.color = color
+      if (Object.keys(patch).length) updateCategory(mealState.value, c.id, patch)
+    }
+    refresh()
+  } catch (e) {}
+}
+
+onShow(async () => {
+  refresh()
+  await syncTypes()
+})
 
 const categories = computed(() => listCategories(mealState.value))
 
@@ -41,7 +88,9 @@ function toggle(id, v) {
 }
 
 function goEdit(id) {
-  uni.navigateTo({ url: `/pages/meals/category-form?id=${id}` })
+  const idx = categories.value.findIndex((x) => x && x.id === id)
+  const typeIndex = idx >= 0 ? idx : 0
+  uni.navigateTo({ url: `/pages/meals/category-form?id=${encodeURIComponent(id)}&typeIndex=${encodeURIComponent(String(typeIndex))}` })
 }
 </script>
 
