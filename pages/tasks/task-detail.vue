@@ -80,8 +80,9 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { deleteTask, ensureTaskState, findTask, markTaskDone, markTaskUndone, taskDetailDateText } from '../../utils/taskStore'
+import { membersApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -122,7 +123,16 @@ onLoad((options) => {
 })
 
 onShow(() => {
-  if (task.value && task.value.id) refresh(task.value.id)
+  ;(async () => {
+    const logged = !!uni.getStorageSync('auth_logged_in')
+    if (logged) {
+      try {
+        const list = await membersApi.getMemberList()
+        setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+      } catch (e) {}
+    }
+    if (task.value && task.value.id) refresh(task.value.id)
+  })()
 })
 
 const dateText = computed(() => taskDetailDateText(task.value))

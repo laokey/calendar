@@ -37,7 +37,8 @@ import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { clearCardDraft, ensureCardDraft } from '../../utils/cardStore'
 import { addCardRecord, ensureMeState } from '../../utils/meStore'
-import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
+import { membersApi } from '../../utils/api'
 
 const draft = ref(ensureCardDraft())
 const selectedId = ref('')
@@ -51,8 +52,18 @@ const devices = computed(() => {
 })
 
 onShow(() => {
-  draft.value = ensureCardDraft()
-  if (!selectedId.value && devices.value.length) selectedId.value = String(devices.value[0].id)
+  ;(async () => {
+    const logged = !!uni.getStorageSync('auth_logged_in')
+    if (logged) {
+      try {
+        const list = await membersApi.getMemberList()
+        const state = ensureCalendarState()
+        setMembers(state, membersApi.mapRemoteMembersToLocalMembers(list))
+      } catch (e) {}
+    }
+    draft.value = ensureCardDraft()
+    if (!selectedId.value && devices.value.length) selectedId.value = String(devices.value[0].id)
+  })()
 })
 
 function confirmSend() {
@@ -164,4 +175,3 @@ function confirmSend() {
   font-weight: 900;
 }
 </style>
-

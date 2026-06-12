@@ -164,7 +164,7 @@ import { onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import {
   computeHeartBalance,
   deleteRewardItem,
@@ -178,6 +178,7 @@ import {
   addHeartTransfer,
   updateRewardItem,
 } from '../../utils/rewardStore'
+import { membersApi } from '../../utils/api'
 
 const calendarState = ref(ensureCalendarState())
 const rewardState = ref(ensureRewardState())
@@ -199,8 +200,25 @@ function refresh() {
   rewardState.value = ensureRewardState()
 }
 
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const list = await membersApi.getMemberList()
+    setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 onMounted(() => refresh())
-onShow(() => refresh())
+onShow(() => {
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
+})
 
 const memberItems = computed(() => {
   const base = [{ id: 'me', name: '我', glyph: '我', color: '#4cc38a' }]

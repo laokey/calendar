@@ -110,6 +110,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import BlSegmented from '../../components/BlSegmented.vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import {
@@ -117,12 +118,14 @@ import {
   eventsForDate,
   listMembers,
   monthMatrix,
+  setMembers,
   setCalendarCursorDate,
   setCalendarViewMode,
   weekDays,
   weekRangeText,
   dayLabel,
 } from '../../utils/calendarStore'
+import { membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref(listMembers(state.value))
@@ -177,9 +180,29 @@ function refreshMembers() {
   members.value = listMembers(state.value)
 }
 
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const list = await membersApi.getMemberList()
+    setMembers(state.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    state.value = ensureCalendarState()
+    refreshMembers()
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 onMounted(() => {
   cursorDateKey.value = todayKey()
   refreshMembers()
+})
+
+onShow(() => {
+  ;(async () => {
+    await syncRemoteMembers()
+  })()
 })
 
 const monthRows = computed(() => {
@@ -355,6 +378,9 @@ uni.$on && uni.$on('calendar:refresh', () => {
   viewMode.value = state.value.viewMode || 'month'
   cursorDateKey.value = state.value.cursorDate
   refreshMembers()
+  ;(async () => {
+    await syncRemoteMembers()
+  })()
 })
 </script>
 

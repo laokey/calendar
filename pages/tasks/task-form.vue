@@ -177,8 +177,9 @@ import BlSheet from '../../components/BlSheet.vue'
 import BlDatePickerSheet from '../../components/BlDatePickerSheet.vue'
 import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
 import BlRepeatSection from '../../components/BlRepeatSection.vue'
-import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { addTask, ensureTaskState, findTask, updateTask } from '../../utils/taskStore'
+import { membersApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -281,7 +282,16 @@ onLoad((options) => {
 })
 
 onShow(() => {
-  calendarState.value = ensureCalendarState()
+  ;(async () => {
+    const logged = !!uni.getStorageSync('auth_logged_in')
+    if (logged) {
+      try {
+        const list = await membersApi.getMemberList()
+        setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+      } catch (e) {}
+    }
+    calendarState.value = ensureCalendarState()
+  })()
 })
 
 function selectEmoji(e) {

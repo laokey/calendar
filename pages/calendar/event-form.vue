@@ -296,8 +296,10 @@ import {
   findEvent,
   listMembers,
   saveCalendarState,
+  setMembers,
   updateEvent,
 } from "../../utils/calendarStore";
+import { membersApi } from "../../utils/api";
 
 const state = ref(ensureCalendarState());
 const members = ref(listMembers(state.value));
@@ -429,23 +431,38 @@ onLoad((options) => {
   endDate.value = startDate.value;
 });
 
-onShow(() => {
-  state.value = ensureCalendarState();
-  members.value = listMembers(state.value);
-  if (eventId.value) {
-    const ev = findEvent(state.value, eventId.value);
-    if (ev && Array.isArray(ev.memberIds))
-      selectedMemberIds.value = ev.memberIds.slice();
-  } else {
-    try {
-      const raw = uni.getStorageSync("calendar_member_select_tmp");
-      if (raw) {
-        const ids = typeof raw === "string" ? JSON.parse(raw) : raw;
-        if (Array.isArray(ids)) selectedMemberIds.value = ids.slice();
-        uni.removeStorageSync("calendar_member_select_tmp");
-      }
-    } catch (e) {}
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (!logged) return false;
+  try {
+    const list = await membersApi.getMemberList();
+    setMembers(state.value, membersApi.mapRemoteMembersToLocalMembers(list));
+    return true;
+  } catch (e) {
+    return false;
   }
+}
+
+onShow(() => {
+  (async () => {
+    await syncRemoteMembers();
+    state.value = ensureCalendarState();
+    members.value = listMembers(state.value);
+    if (eventId.value) {
+      const ev = findEvent(state.value, eventId.value);
+      if (ev && Array.isArray(ev.memberIds))
+        selectedMemberIds.value = ev.memberIds.slice();
+    } else {
+      try {
+        const raw = uni.getStorageSync("calendar_member_select_tmp");
+        if (raw) {
+          const ids = typeof raw === "string" ? JSON.parse(raw) : raw;
+          if (Array.isArray(ids)) selectedMemberIds.value = ids.slice();
+          uni.removeStorageSync("calendar_member_select_tmp");
+        }
+      } catch (e) {}
+    }
+  })();
 });
 
 function openDate(kind) {

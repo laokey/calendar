@@ -61,9 +61,10 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
-import { deleteMember, ensureCalendarState, findMember, listMembers, reassignEventsByMember, updateEvent } from '../../utils/calendarStore'
+import { deleteMember, ensureCalendarState, findMember, listMembers, reassignEventsByMember, setMembers, updateEvent } from '../../utils/calendarStore'
 import { ensureTaskState, reassignTasksByMember } from '../../utils/taskStore'
 import { ensureRewardState, reassignRewardsByMember } from '../../utils/rewardStore'
+import { membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref([])
@@ -78,6 +79,41 @@ const fromName = computed(() => {
   const m = fromId.value ? findMember(state.value, fromId.value) : null
   return m && m.name ? m.name : '该成员'
 })
+
+function glyphFromName(name) {
+  const n = String(name || '').trim()
+  if (!n) return ''
+  return n.length >= 2 ? n.slice(-2, -1) : n.slice(0, 1)
+}
+
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  uni.showLoading({ title: '加载中' })
+  try {
+    const list = await membersApi.getMemberList()
+    const mapped = (list || []).map((m) => {
+      const type = Number(m && m.memberType)
+      return {
+        id: String(m && m.memberId ? m.memberId : ''),
+        name: m && m.memberName ? String(m.memberName) : '',
+        glyph: glyphFromName(m && m.memberName),
+        color: membersApi.memberHexFromColorIndex(m && m.memberColor),
+        enabled: true,
+        group: type === 1 ? 'calendarColor' : 'member',
+        avatarUrl: m && m.avatarUrl ? String(m.avatarUrl) : '',
+      }
+    })
+    setMembers(state.value, mapped.filter((x) => x && x.id))
+    return true
+  } catch (e) {
+    return false
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
 
 function refresh() {
   state.value = ensureCalendarState()
@@ -100,11 +136,17 @@ onLoad((options) => {
   } catch (e) {
     selectedIds.value = []
   }
-  refresh()
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
 })
 
 onShow(() => {
-  refresh()
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
 })
 
 function onPick(id) {
@@ -140,9 +182,28 @@ function goAddEvent() {
   uni.navigateTo({ url: '/pages/calendar/event-form' })
 }
 
-function doReassignDelete() {
+async function doReassignDelete() {
   const toId = pickedId.value
   if (!fromId.value || !toId) return
+
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (logged) {
+    uni.showLoading({ title: '删除中' })
+    try {
+      const res = await membersApi.deleteMemberInfo({ memberId: fromId.value })
+      if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+        uni.showToast({ title: '删除失败', icon: 'none' })
+        return
+      }
+    } catch (e) {
+      uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+      return
+    } finally {
+      try {
+        uni.hideLoading()
+      } catch (e) {}
+    }
+  }
 
   state.value = ensureCalendarState()
   reassignEventsByMember(state.value, fromId.value, toId)

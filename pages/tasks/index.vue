@@ -247,7 +247,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { ensureCalendarState, listMembers, monthMatrix, weekDays } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, monthMatrix, setMembers, weekDays } from '../../utils/calendarStore'
 import {
   deleteTask,
   ensureTaskState,
@@ -261,6 +261,7 @@ import {
   taskStatsForDate,
   tasksForDate,
 } from '../../utils/taskStore'
+import { membersApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -422,12 +423,29 @@ function refresh() {
   }
 }
 
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const list = await membersApi.getMemberList()
+    setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 onLoad(() => {
   refresh()
   taskState.value = setTaskCursorDate(taskState.value, todayKey())
   taskState.value = setTaskCalendarOpen(taskState.value, false)
 })
-onShow(() => refresh())
+onShow(() => {
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
+})
 
 function updateSwipeActionWidth() {
   const sys = uni.getSystemInfoSync()

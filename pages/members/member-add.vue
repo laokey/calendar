@@ -68,11 +68,12 @@ import { computed, ref } from 'vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { addMember, deleteEventsByMember, deleteMember, ensureCalendarState, findMember, updateMember } from '../../utils/calendarStore'
+import { addMember, deleteEventsByMember, deleteMember, ensureCalendarState, findMember, setMembers, updateMember } from '../../utils/calendarStore'
 import { ensureTaskState } from '../../utils/taskStore'
 import { deleteTasksByMember } from '../../utils/taskStore'
 import { ensureRewardState } from '../../utils/rewardStore'
 import { deleteRewardsByMember } from '../../utils/rewardStore'
+import { membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const isEdit = ref(false)
@@ -81,28 +82,42 @@ const name = ref('')
 const color = ref('#ffb020')
 const avatarUrl = ref('')
 const deleteSheetOpen = ref(false)
+const memberGroup = ref('member')
 
-const palette = [
-  '#ffb020',
-  '#ff5a5f',
-  '#ff4b3f',
-  '#7ddc5a',
-  '#4cc38a',
-  '#00b060',
-  '#00a3ff',
-  '#4c8dff',
-  '#3d6afb',
-  '#9b59ff',
-  '#6b2cff',
-  '#ff4bd8',
-  '#a600a6',
-]
+const palette = membersApi.MEMBER_COLOR_PALETTE
 
 const glyphPreview = computed(() => {
   const n = String(name.value || '').trim()
   if (!n) return ''
   return n.length >= 2 ? n.slice(-2, -1) : n.slice(0, 1)
 })
+
+function glyphFromName(n) {
+  const s = String(n || '').trim()
+  if (!s) return ''
+  return s.length >= 2 ? s.slice(-2, -1) : s.slice(0, 1)
+}
+
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  const list = await membersApi.getMemberList()
+  const mapped = (list || []).map((m) => {
+    const type = Number(m && m.memberType)
+    return {
+      id: String(m && m.memberId ? m.memberId : ''),
+      name: m && m.memberName ? String(m.memberName) : '',
+      glyph: glyphFromName(m && m.memberName),
+      color: membersApi.memberHexFromColorIndex(m && m.memberColor),
+      enabled: true,
+      group: type === 1 ? 'calendarColor' : 'member',
+      avatarUrl: m && m.avatarUrl ? String(m.avatarUrl) : '',
+    }
+  })
+  setMembers(state.value, mapped.filter((x) => x && x.id))
+  state.value = ensureCalendarState()
+  return true
+}
 
 onLoad((options) => {
   const id = options && options.id ? String(options.id) : ''
@@ -119,6 +134,7 @@ onLoad((options) => {
   name.value = m.name || ''
   color.value = m.color || color.value
   avatarUrl.value = m.avatarUrl || ''
+  memberGroup.value = m.group === 'calendarColor' ? 'calendarColor' : 'member'
 })
 
 function chooseAvatar() {
@@ -166,14 +182,44 @@ function pickAvatar() {
   })
 }
 
-function save() {
+async function save() {
+  const n = String(name.value || '').trim()
+  if (!n) {
+    uni.showToast({ title: '请输入名称', icon: 'none' })
+    return
+  }
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  const memberType = memberGroup.value === 'calendarColor' ? 1 : 0
+  const memberColor = membersApi.memberColorIndexOf(color.value)
+
   if (isEdit.value) {
-    const n = String(name.value || '').trim()
-    if (!n) {
-      uni.showToast({ title: '请输入名称', icon: 'none' })
-      return
+    if (logged) {
+      uni.showLoading({ title: '保存中' })
+      try {
+        const res = await membersApi.updateMemberInfo({
+          memberId: memberId.value,
+          memberName: n,
+          memberType,
+          memberColor,
+        })
+        if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+          uni.showToast({ title: '保存失败', icon: 'none' })
+          return
+        }
+        try {
+          await syncRemoteMembers()
+        } catch (e) {}
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+        return
+      } finally {
+        try {
+          uni.hideLoading()
+        } catch (e) {}
+      }
+    } else {
+      updateMember(state.value, memberId.value, { name: n, color: color.value, avatarUrl: avatarUrl.value })
     }
-    updateMember(state.value, memberId.value, { name: n, color: color.value, avatarUrl: avatarUrl.value })
     uni.$emit && uni.$emit('calendar:refresh')
     uni.$emit && uni.$emit('task:refresh')
     uni.$emit && uni.$emit('reward:refresh')
@@ -181,10 +227,35 @@ function save() {
     return
   }
 
-  const m = addMember(state.value, { name: name.value, color: color.value, avatarUrl: avatarUrl.value })
-  if (!m) {
-    uni.showToast({ title: '请输入名称', icon: 'none' })
-    return
+  if (logged) {
+    uni.showLoading({ title: '保存中' })
+    try {
+      const res = await membersApi.addMemberInfo({
+        memberName: n,
+        memberType,
+        memberColor,
+      })
+      if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+        uni.showToast({ title: '保存失败', icon: 'none' })
+        return
+      }
+      try {
+        await syncRemoteMembers()
+      } catch (e) {}
+    } catch (e) {
+      uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+      return
+    } finally {
+      try {
+        uni.hideLoading()
+      } catch (e) {}
+    }
+  } else {
+    const m = addMember(state.value, { name: n, color: color.value, avatarUrl: avatarUrl.value })
+    if (!m) {
+      uni.showToast({ title: '请输入名称', icon: 'none' })
+      return
+    }
   }
   uni.$emit && uni.$emit('calendar:refresh')
   uni.$emit && uni.$emit('task:refresh')
@@ -192,7 +263,29 @@ function save() {
   uni.navigateBack()
 }
 
-function deleteAll() {
+async function deleteAll() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (logged) {
+    uni.showLoading({ title: '删除中' })
+    try {
+      const res = await membersApi.deleteMemberInfo({ memberId: memberId.value })
+      if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+        uni.showToast({ title: '删除失败', icon: 'none' })
+        return
+      }
+      try {
+        await syncRemoteMembers()
+      } catch (e) {}
+    } catch (e) {
+      uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+      return
+    } finally {
+      try {
+        uni.hideLoading()
+      } catch (e) {}
+    }
+  }
+
   deleteEventsByMember(state.value, memberId.value)
   deleteMember(state.value, memberId.value)
 

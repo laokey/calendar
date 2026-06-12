@@ -58,10 +58,11 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
-import { deleteEvent, ensureCalendarState, eventDateText, findEvent, listMembers } from '../../utils/calendarStore'
+import { deleteEvent, ensureCalendarState, eventDateText, findEvent, listMembers, setMembers } from '../../utils/calendarStore'
+import { membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref(listMembers(state.value))
@@ -79,6 +80,18 @@ const event = ref({
   repeat: null,
 })
 
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const list = await membersApi.getMemberList()
+    setMembers(state.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 onLoad((options) => {
   state.value = ensureCalendarState()
   members.value = listMembers(state.value)
@@ -90,6 +103,14 @@ onLoad((options) => {
     return
   }
   event.value = ev
+})
+
+onShow(() => {
+  ;(async () => {
+    await syncRemoteMembers()
+    state.value = ensureCalendarState()
+    members.value = listMembers(state.value)
+  })()
 })
 
 const dateText = computed(() => eventDateText(event.value))

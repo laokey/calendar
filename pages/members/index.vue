@@ -84,9 +84,46 @@ import { computed, ref } from 'vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
+import { membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref([])
+
+function glyphFromName(name) {
+  const n = String(name || '').trim()
+  if (!n) return ''
+  return n.length >= 2 ? n.slice(-2, -1) : n.slice(0, 1)
+}
+
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  uni.showLoading({ title: '加载中' })
+  try {
+    const list = await membersApi.getMemberList()
+    const mapped = (list || []).map((m) => {
+      const type = Number(m && m.memberType)
+      return {
+        id: String(m && m.memberId ? m.memberId : ''),
+        name: m && m.memberName ? String(m.memberName) : '',
+        glyph: glyphFromName(m && m.memberName),
+        color: membersApi.memberHexFromColorIndex(m && m.memberColor),
+        enabled: true,
+        group: type === 1 ? 'calendarColor' : 'member',
+        avatarUrl: m && m.avatarUrl ? String(m.avatarUrl) : '',
+      }
+    })
+    setMembers(state.value, mapped.filter((x) => x && x.id))
+    return true
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '获取成员失败'), icon: 'none' })
+    return false
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
 
 function refresh() {
   state.value = ensureCalendarState()
@@ -94,7 +131,10 @@ function refresh() {
 }
 
 onShow(() => {
-  refresh()
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
 })
 
 const memberList = computed(() => (members.value || []).filter((m) => (m && m.group) !== 'calendarColor'))

@@ -62,14 +62,27 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
-import { ensureCalendarState, listMembers } from '../../utils/calendarStore'
+import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { addHeartTransfer, computeHeartBalance, ensureRewardState } from '../../utils/rewardStore'
+import { membersApi } from '../../utils/api'
 
 const calendarState = ref(ensureCalendarState())
 const rewardState = ref(ensureRewardState())
 
 const memberId = ref('')
 const hearts = ref('10')
+
+async function syncRemoteMembers() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const list = await membersApi.getMemberList()
+    setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    return true
+  } catch (e) {
+    return false
+  }
+}
 
 function refresh() {
   calendarState.value = ensureCalendarState()
@@ -82,7 +95,12 @@ function refresh() {
 }
 
 onLoad(() => refresh())
-onShow(() => refresh())
+onShow(() => {
+  ;(async () => {
+    await syncRemoteMembers()
+    refresh()
+  })()
+})
 
 const memberItems = computed(() => listMembers(calendarState.value).filter((m) => m.enabled !== false))
 const selectedMemberName = computed(() => {
