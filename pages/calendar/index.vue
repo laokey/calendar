@@ -118,6 +118,7 @@ import {
   eventsForDate,
   listMembers,
   monthMatrix,
+  saveCalendarState,
   setMembers,
   setCalendarCursorDate,
   setCalendarViewMode,
@@ -126,6 +127,7 @@ import {
   dayLabel,
 } from '../../utils/calendarStore'
 import { membersApi } from '../../utils/api'
+import { calendarApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref(listMembers(state.value))
@@ -170,10 +172,20 @@ function todayKey() {
 
 watch(viewMode, (v) => {
   state.value = setCalendarViewMode(state.value, v)
+  ;(async () => {
+    await syncRemoteMatters()
+    state.value = ensureCalendarState()
+    refreshMembers()
+  })()
 })
 
 watch(cursorDateKey, (v) => {
   state.value = setCalendarCursorDate(state.value, v)
+  ;(async () => {
+    await syncRemoteMatters()
+    state.value = ensureCalendarState()
+    refreshMembers()
+  })()
 })
 
 function refreshMembers() {
@@ -194,6 +206,43 @@ async function syncRemoteMembers() {
   }
 }
 
+function rangeForRemoteFetch() {
+  if (viewMode.value === 'week') {
+    const days = weekDays(cursorDateKey.value)
+    const start = days && days[0] ? formatKey(days[0]) : cursorDateKey.value
+    const end = days && days[6] ? formatKey(days[6]) : cursorDateKey.value
+    return { start, end }
+  }
+  const rows = monthMatrix(cursorDateKey.value)
+  const flat = []
+  for (const r of rows || []) {
+    for (const d of r || []) flat.push(d)
+  }
+  const start = flat[0] ? formatKey(flat[0]) : cursorDateKey.value
+  const end = flat.length ? formatKey(flat[flat.length - 1]) : cursorDateKey.value
+  return { start, end }
+}
+
+async function syncRemoteMatters() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return false
+  try {
+    const { start, end } = rangeForRemoteFetch()
+    const list = await calendarApi.getMatterInfoList({ startDate: start, endDate: end })
+    const remoteEvents = calendarApi.mapRemoteMattersToLocalEvents(list)
+    const localEvents = (state.value.events || []).filter((e) => !/^\d+$/.test(String(e && e.id ? e.id : '')))
+    const remoteKeys = new Set(
+      remoteEvents.map((e) => `${e.startDate}|${e.startTime}|${e.endTime}|${e.title}`),
+    )
+    const keptLocal = localEvents.filter((e) => !remoteKeys.has(`${e.startDate}|${e.startTime}|${e.endTime}|${e.title}`))
+    state.value.events = [...keptLocal, ...remoteEvents]
+    saveCalendarState(state.value)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 onMounted(() => {
   cursorDateKey.value = todayKey()
   refreshMembers()
@@ -202,6 +251,9 @@ onMounted(() => {
 onShow(() => {
   ;(async () => {
     await syncRemoteMembers()
+    await syncRemoteMatters()
+    state.value = ensureCalendarState()
+    refreshMembers()
   })()
 })
 
@@ -380,6 +432,9 @@ uni.$on && uni.$on('calendar:refresh', () => {
   refreshMembers()
   ;(async () => {
     await syncRemoteMembers()
+    await syncRemoteMatters()
+    state.value = ensureCalendarState()
+    refreshMembers()
   })()
 })
 </script>

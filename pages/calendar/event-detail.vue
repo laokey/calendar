@@ -62,7 +62,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import { deleteEvent, ensureCalendarState, eventDateText, findEvent, listMembers, setMembers } from '../../utils/calendarStore'
-import { membersApi } from '../../utils/api'
+import { calendarApi, membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref(listMembers(state.value))
@@ -147,9 +147,30 @@ function confirmDelete() {
     confirmColor: '#3d6afb',
     success(res) {
       if (!res.confirm) return
-      deleteEvent(state.value, event.value.id)
-      uni.$emit && uni.$emit('calendar:refresh')
-      uni.navigateBack()
+      ;(async () => {
+        const logged = !!uni.getStorageSync('auth_logged_in')
+        const isRemoteId = /^\d+$/.test(String(event.value.id || ''))
+        if (logged && isRemoteId) {
+          uni.showLoading({ title: '删除中' })
+          try {
+            const r = await calendarApi.deleteMatterInfo({ matterId: event.value.id })
+            if (r && typeof r === 'object' && r.code !== undefined && r.code !== 200 && r.code !== '200') {
+              uni.showToast({ title: '删除失败', icon: 'none' })
+              return
+            }
+          } catch (e) {
+            uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+            return
+          } finally {
+            try {
+              uni.hideLoading()
+            } catch (e) {}
+          }
+        }
+        deleteEvent(state.value, event.value.id)
+        uni.$emit && uni.$emit('calendar:refresh')
+        uni.navigateBack()
+      })()
     },
   })
 }

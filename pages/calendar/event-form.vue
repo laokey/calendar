@@ -300,6 +300,7 @@ import {
   updateEvent,
 } from "../../utils/calendarStore";
 import { membersApi } from "../../utils/api";
+import { calendarApi } from "../../utils/api";
 
 const state = ref(ensureCalendarState());
 const members = ref(listMembers(state.value));
@@ -571,7 +572,7 @@ function validate() {
   return true;
 }
 
-function save() {
+async function save() {
   if (!validate()) return;
   const payload = buildPayload();
   if (isEdit.value) {
@@ -585,6 +586,72 @@ function save() {
     uni.navigateBack();
     return;
   }
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (logged) {
+    uni.showLoading({ title: "保存中" });
+    try {
+      const repeatType =
+        payload.repeat && payload.repeat.unit === "year"
+          ? 4
+          : payload.repeat && payload.repeat.unit === "month"
+            ? 3
+            : payload.repeat && payload.repeat.unit === "week"
+              ? 2
+              : payload.repeat
+                ? 1
+                : 0;
+      const isAllDay = payload.allDay ? 1 : 0;
+      const isRepeat = payload.repeat ? 1 : 0;
+      const weeks =
+        payload.repeat && payload.repeat.unit === "week" && payload.repeat.weekdays
+          ? JSON.stringify(payload.repeat.weekdays)
+          : "";
+      const members = JSON.stringify(payload.memberIds || []);
+      const res = await calendarApi.addMatterInfo({
+        matterTitle: payload.title,
+        isAllDay,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        startTime: payload.allDay ? "" : payload.startTime,
+        endTime: payload.allDay ? "" : payload.endTime,
+        isRepeat,
+        repeatType,
+        isDeadline: 0,
+        deadlineDate: "",
+        description: payload.desc || "",
+        weather: "",
+        weeks,
+        days: "",
+        members,
+      });
+      if (
+        res &&
+        typeof res === "object" &&
+        res.code !== undefined &&
+        res.code !== 200 &&
+        res.code !== "200"
+      ) {
+        uni.showToast({ title: "保存失败", icon: "none" });
+        return;
+      }
+    } catch (e) {
+      uni.showToast({
+        title: String((e && e.message) || "保存失败"),
+        icon: "none",
+      });
+      return;
+    } finally {
+      try {
+        uni.hideLoading();
+      } catch (e) {}
+    }
+    addEvent(state.value, payload);
+    saveCalendarState(state.value);
+    uni.$emit && uni.$emit("calendar:refresh");
+    uni.navigateBack();
+    return;
+  }
+
   addEvent(state.value, payload);
   saveCalendarState(state.value);
   uni.$emit && uni.$emit("calendar:refresh");
