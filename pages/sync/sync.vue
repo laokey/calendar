@@ -121,6 +121,9 @@ function goNext(title) {
 </script>
 
 <style scoped lang="scss">
+.bl-page {
+  background: #fff;
+}
 .skip {
   font-size: 28rpx;
   font-weight: 800;

@@ -4,8 +4,9 @@
 
     <view class="steps">
       <view v-for="(s, idx) in steps" :key="idx" class="step">
-        <text class="step-text">{{ idx + 1 }}.{{ s }}</text>
-        <view class="shot" />
+        <text class="step-text">{{ idx + 1 }}.{{ s.text }}</text>
+        <image v-if="s.image" class="shot-img" :src="s.image" mode="widthFix" />
+        <view v-else class="shot" />
       </view>
     </view>
 
@@ -36,6 +37,10 @@ const type = ref('icloud')
 const pasted = ref('')
 const myEmail = ref('a1234567890@myecalendar.cn')
 
+function asset(path) {
+  return encodeURI(path)
+}
+
 onLoad((options) => {
   type.value = String(options && options.type ? options.type : 'icloud')
 })
@@ -48,16 +53,54 @@ const title = computed(() => {
 })
 
 const steps = computed(() => {
+  if (type.value === 'icloud') {
+    return [
+      { text: '打开日历应用程序', image: asset('/static/sync/icloud/Slice 77.png') },
+      { text: '点击底部日历', image: asset('/static/sync/icloud/Slice 77(1).png') },
+      { text: '点击已同步的 iCloud 日历右侧信息按钮', image: asset('/static/sync/icloud/Slice 77(2).png') },
+      { text: '选择公开日历', image: asset('/static/sync/icloud/Slice 77(3).png') },
+      { text: '点击共享链接', image: asset('/static/sync/icloud/Slice 77(4).png') },
+      { text: '复制或发送日历 URL', image: asset('/static/sync/icloud/Slice 77(5).png') },
+      { text: '将 URL 粘贴到下方输入框', image: asset('/static/sync/icloud/Slice 77(6).png') },
+      { text: '确认同步完成', image: asset('/static/sync/icloud/Slice 78.png') },
+    ]
+  }
   if (type.value === 'teamsnap') {
-    return ['在电脑上登录go.teamsnap.com 网站。', '进入“日程安排”标签页', '在设置中选择“同步日历/导出”', '复制“完整日历”或“仅赛事”链接']
+    return [
+      { text: '在电脑上登录 TeamSnap 网站', image: asset('/static/sync/teamsnap/Slice 77.png') },
+      { text: '进入团队页面', image: asset('/static/sync/teamsnap/Slice 77(1).png') },
+      { text: '打开赛程或设置入口', image: asset('/static/sync/teamsnap/Slice 77(2).png') },
+      { text: '选择同步日历或导出', image: asset('/static/sync/teamsnap/Slice 77(3).png') },
+      { text: '复制完整日历或仅赛事链接', image: asset('/static/sync/teamsnap/Slice 77(4).png') },
+    ]
   }
   if (type.value === 'cozi') {
-    return ['打开Cozi应用程序', '点击家庭座图标', '选择设置', '点击共享Cozi日历', '复制日历共享链接']
+    return [
+      { text: '打开 Cozi 应用程序', image: asset('/static/sync/cozi/Slice 77.png') },
+      { text: '点击家庭图标', image: asset('/static/sync/cozi/Slice 77(1).png') },
+      { text: '选择设置', image: asset('/static/sync/cozi/Slice 77(2).png') },
+      { text: '点击共享 Cozi 日历', image: asset('/static/sync/cozi/Slice 77(3).png') },
+      { text: '共享所有事件或特定日历并点击按钮', image: asset('/static/sync/cozi/Slice 77(4).png') },
+      { text: '点击 Cozi 网址', image: asset('/static/sync/cozi/Slice 77(5).png') },
+      { text: '将 URL 粘贴到应用程序或邮件中', image: asset('/static/sync/cozi/Slice 77(6).png') },
+    ]
   }
   if (type.value === 'subscribed') {
-    return ['打开日历应用', '选择日历/订阅详情', '复制订阅网址', '将链接粘贴到邮件或输入框中']
+    return [
+      { text: '打开订阅日历来源页面', image: asset('/static/sync/subscribed/Slice 77.png') },
+      { text: '找到对应订阅日历', image: asset('/static/sync/subscribed/Slice 77(1).png') },
+      { text: '打开订阅详情', image: asset('/static/sync/subscribed/Slice 77(2).png') },
+      { text: '复制订阅网址', image: asset('/static/sync/subscribed/Slice 77(3).png') },
+      { text: '发送或保存订阅链接', image: asset('/static/sync/subscribed/Slice 77(4).png') },
+      { text: '将链接粘贴到下方输入框', image: asset('/static/sync/subscribed/Slice 77(5).png') },
+    ]
   }
-  return ['打开日历应用', '选择日历/订阅详情', '复制订阅网址', '将链接粘贴到邮件或输入框中']
+  return [
+    { text: '打开日历应用', image: asset('/static/sync/icloud/Slice 77.png') },
+    { text: '选择日历/订阅详情', image: asset('/static/sync/icloud/Slice 77(1).png') },
+    { text: '复制订阅网址', image: asset('/static/sync/icloud/Slice 77(2).png') },
+    { text: '将链接粘贴到邮件或输入框中', image: asset('/static/sync/icloud/Slice 77(3).png') },
+  ]
 })
 
 function copyEmail() {
@@ -104,6 +147,13 @@ function done() {
   height: 260rpx;
   border-radius: 22rpx;
   background: rgba(17, 17, 17, 0.04);
+}
+
+.shot-img {
+  width: 100%;
+  display: block;
+  border-radius: 22rpx;
+  overflow: hidden;
 }
 
 .share-card {
@@ -184,4 +234,3 @@ function done() {
   background: #ffffff;
 }
 </style>
-
