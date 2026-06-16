@@ -113,18 +113,6 @@
         >{{ selectedCount }}/{{ photos.length }}项已选择</text
       >
       <view class="bar-actions">
-        <view class="bar-btn" @click="openMove"
-          ><image
-            class="bar-icon"
-            src="/static/gallery/icon_move.png"
-            mode="aspectFit"
-        /></view>
-        <view class="bar-btn" @click="openCopy"
-          ><image
-            class="bar-icon"
-            src="/static/gallery/icon_copy.png"
-            mode="aspectFit"
-        /></view>
         <view class="bar-btn" @click="confirmDeleteSelected"
           ><image
             class="bar-icon"
@@ -169,16 +157,15 @@
 import { computed, ref } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import {
-  deleteAlbum,
-  deletePhotos,
-  ensureGalleryState,
-  listAlbums,
-  listPhotos,
-  renameAlbum,
-} from "../../utils/galleryStore";
+  deleteAlbumInfo,
+  deleteAlbumPhoto,
+  getAlbumList,
+  updateAlbumInfo,
+} from "../../utils/api/gallery";
 
 const albumId = ref("");
-const state = ref(ensureGalleryState());
+const rawAlbums = ref([]);
+const deviceEmail = ref("");
 const selectMode = ref(false);
 const selectedIds = ref([]);
 const renameVisible = ref(false);
@@ -189,11 +176,7 @@ onLoad((options) => {
 });
 
 onShow(() => {
-  state.value = ensureGalleryState();
-  if (albumId.value && !album.value) {
-    uni.showToast({ title: "相册不存在", icon: "none" });
-    setTimeout(() => uni.navigateBack(), 300);
-  }
+  refresh();
 });
 
 const safeTop = computed(() => {
@@ -207,11 +190,10 @@ const safeTop = computed(() => {
 });
 
 const album = computed(() => {
-  const all = listAlbums(state.value, state.value.activeDeviceId);
-  return all.find((a) => a.id === albumId.value) || null;
+  return rawAlbums.value.find((a) => a.albumId === albumId.value) || null;
 });
 
-const photos = computed(() => listPhotos(state.value, albumId.value));
+const photos = computed(() => (album.value && Array.isArray(album.value.photos) ? album.value.photos : []));
 
 const coverUri = computed(() => {
   const list = photos.value;
@@ -231,6 +213,21 @@ const selectedCount = computed(() => selectedIds.value.length);
 
 function back() {
   uni.navigateBack();
+}
+
+async function refresh() {
+  try {
+    const active = String(uni.getStorageSync("active_device_email_v1") || "").trim();
+    deviceEmail.value = active;
+    rawAlbums.value = active ? await getAlbumList({ deviceEmail: active }) : [];
+    if (albumId.value && !album.value) {
+      uni.showToast({ title: "相册不存在", icon: "none" });
+      setTimeout(() => uni.navigateBack(), 300);
+    }
+  } catch (e) {
+    rawAlbums.value = [];
+    uni.showToast({ title: String((e && e.message) || "获取相册失败"), icon: "none" });
+  }
 }
 
 function enterSelect() {
@@ -289,11 +286,30 @@ function confirmDeleteAlbum() {
     content: "相册一旦删除将无法恢复",
     cancelText: "取消",
     confirmText: "确定",
-    success: (res) => {
+    success: async (res) => {
       if (!res.confirm) return;
-      const s = ensureGalleryState();
-      deleteAlbum(s, albumId.value);
-      uni.navigateBack();
+      try {
+        uni.showLoading({ title: "删除中" });
+        await deleteAlbumInfo({ albumId: albumId.value });
+        try {
+          const pages = typeof getCurrentPages === "function" ? getCurrentPages() : [];
+          const prev = pages && pages.length >= 2 ? pages[pages.length - 2] : null;
+          const route = prev && prev.route ? String(prev.route) : "";
+          if (route === "pages/gallery/index") {
+            uni.navigateBack();
+          } else {
+            uni.redirectTo({ url: "/pages/gallery/index" });
+          }
+        } catch (e) {
+          uni.redirectTo({ url: "/pages/gallery/index" });
+        }
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || "删除相册失败"), icon: "none" });
+      } finally {
+        try {
+          uni.hideLoading();
+        } catch (e) {}
+      }
     },
   });
 }
@@ -305,31 +321,23 @@ function confirmDeleteSelected() {
     content: `将删除${selectedIds.value.length}张照片，删除后无法恢复`,
     cancelText: "取消",
     confirmText: "确定",
-    success: (res) => {
+    success: async (res) => {
       if (!res.confirm) return;
-      const s = ensureGalleryState();
-      deletePhotos(s, albumId.value, selectedIds.value);
-      state.value = ensureGalleryState();
-      exitSelect();
+      try {
+        uni.showLoading({ title: "删除中" });
+        for (const id of selectedIds.value) {
+          await deleteAlbumPhoto({ photoId: id });
+        }
+        await refresh();
+        exitSelect();
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || "删除照片失败"), icon: "none" });
+      } finally {
+        try {
+          uni.hideLoading();
+        } catch (e) {}
+      }
     },
-  });
-}
-
-function openMove() {
-  if (selectedIds.value.length === 0) return;
-  uni.navigateTo({
-    url: `/pages/gallery/choose-album?mode=move&fromAlbumId=${encodeURIComponent(albumId.value)}&ids=${encodeURIComponent(
-      selectedIds.value.join(","),
-    )}`,
-  });
-}
-
-function openCopy() {
-  if (selectedIds.value.length === 0) return;
-  uni.navigateTo({
-    url: `/pages/gallery/choose-album?mode=copy&fromAlbumId=${encodeURIComponent(albumId.value)}&ids=${encodeURIComponent(
-      selectedIds.value.join(","),
-    )}`,
   });
 }
 
@@ -343,13 +351,21 @@ function closeRename() {
   renameVisible.value = false;
 }
 
-function submitRename() {
+async function submitRename() {
   const v = renameValue.value.trim();
   if (!v) return;
-  const s = ensureGalleryState();
-  renameAlbum(s, albumId.value, v);
-  state.value = ensureGalleryState();
-  renameVisible.value = false;
+  try {
+    uni.showLoading({ title: "保存中" });
+    await updateAlbumInfo({ deviceEmail: deviceEmail.value, albumId: albumId.value, albumName: v });
+    renameVisible.value = false;
+    await refresh();
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || "更新相册失败"), icon: "none" });
+  } finally {
+    try {
+      uni.hideLoading();
+    } catch (e) {}
+  }
 }
 </script>
 

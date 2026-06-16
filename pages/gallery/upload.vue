@@ -44,15 +44,22 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { ensureGalleryState, getActiveDevice, listAlbums } from '../../utils/galleryStore'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { getCalendarDeviceList } from '../../utils/api/device'
+import { getAlbumList } from '../../utils/api/gallery'
 
-const state = ref(ensureGalleryState())
 const targetAlbumId = ref('')
+const devices = ref([])
+const activeDeviceId = ref('')
+const rawAlbums = ref([])
 
 onLoad((options) => {
   const id = options && options.albumId ? String(options.albumId) : ''
   targetAlbumId.value = id
+})
+
+onShow(() => {
+  refresh()
 })
 
 const safeTop = computed(() => {
@@ -65,8 +72,43 @@ const safeTop = computed(() => {
   }
 })
 
-const activeDevice = computed(() => getActiveDevice(state.value))
-const albums = computed(() => listAlbums(state.value, state.value.activeDeviceId))
+const activeDevice = computed(() => {
+  const found = devices.value.find((it) => it.id === activeDeviceId.value)
+  return found || devices.value[0] || { id: '', name: '我的设备', email: '' }
+})
+
+const albums = computed(() =>
+  (rawAlbums.value || []).map((it) => ({
+    id: it.albumId,
+    name: it.albumName,
+  })),
+)
+
+async function refresh() {
+  try {
+    const list = await getCalendarDeviceList()
+    devices.value = (list || []).map((it) => ({
+      id: String(it.deviceEmail || ''),
+      email: String(it.deviceEmail || ''),
+      name: String(it.deviceName || it.deviceEmail || '日历设备'),
+    }))
+    const stored = String(uni.getStorageSync('active_device_email_v1') || '').trim()
+    const nextActive = devices.value.find((it) => it.id === stored) ? stored : devices.value[0]?.id || ''
+    activeDeviceId.value = nextActive
+    if (nextActive) {
+      const current = devices.value.find((it) => it.id === nextActive)
+      if (current && current.name) uni.setStorageSync('active_device_name_v1', String(current.name))
+    }
+    rawAlbums.value = nextActive ? await getAlbumList({ deviceEmail: nextActive }) : []
+    if (!targetAlbumId.value && rawAlbums.value[0] && rawAlbums.value[0].albumId) {
+      targetAlbumId.value = String(rawAlbums.value[0].albumId)
+    }
+  } catch (e) {
+    devices.value = []
+    rawAlbums.value = []
+    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+  }
+}
 
 function back() {
   uni.navigateBack()

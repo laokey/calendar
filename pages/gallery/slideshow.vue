@@ -25,17 +25,17 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ensureGalleryState, listPhotos } from '../../utils/galleryStore'
+import { getAlbumList } from '../../utils/api/gallery'
 
 const albumId = ref('')
-const state = ref(ensureGalleryState())
+const rawAlbums = ref([])
 
 onLoad((options) => {
   albumId.value = options && options.albumId ? String(options.albumId) : ''
 })
 
 onShow(() => {
-  state.value = ensureGalleryState()
+  refresh()
 })
 
 const safeTop = computed(() => {
@@ -48,10 +48,23 @@ const safeTop = computed(() => {
   }
 })
 
-const photos = computed(() => listPhotos(state.value, albumId.value))
+const photos = computed(() => {
+  const album = rawAlbums.value.find((it) => it.albumId === albumId.value)
+  return album && Array.isArray(album.photos) ? album.photos : []
+})
 
 function back() {
   uni.navigateBack()
+}
+
+async function refresh() {
+  try {
+    const active = String(uni.getStorageSync('active_device_email_v1') || '').trim()
+    rawAlbums.value = active ? await getAlbumList({ deviceEmail: active }) : []
+  } catch (e) {
+    rawAlbums.value = []
+    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+  }
 }
 </script>
 

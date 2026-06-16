@@ -5,8 +5,8 @@
         <text class="back">‹</text>
       </view>
       <text class="head-title">相片详情</text>
-      <view class="head-right">
-        <image class="danger" src="/static/gallery/icon_trash.png" mode="aspectFit" @click="confirmDelete" />
+      <view class="head-right" @click="confirmDelete">
+        <text class="danger-text">删除</text>
       </view>
     </view>
 
@@ -30,18 +30,22 @@
       </view>
 
       <view class="ops">
-        <view class="op" @click="toggleLike">
-          <image
-            class="op-icon"
-            :src="photo.liked ? '/static/gallery/icon_heart_filled.png' : '/static/gallery/icon_heart_outline.png'"
-            mode="aspectFit"
-          />
+        <view class="ops-left">
+          <view class="op" @click="toggleLike">
+            <image
+              class="op-icon"
+              :src="isLiked ? '/static/gallery/icon_heart_filled.png' : '/static/gallery/icon_heart_outline.png'"
+              mode="aspectFit"
+            />
+          </view>
         </view>
-        <view class="op" @click="refresh">
-          <image class="op-icon" src="/static/gallery/icon_refresh_outline.png" mode="aspectFit" />
-        </view>
-        <view class="op" @click="share">
-          <image class="op-icon" src="/static/gallery/icon_move.png" mode="aspectFit" />
+        <view class="ops-right">
+          <view class="op" @click="refresh">
+            <image class="op-icon" src="/static/gallery/icon_refresh_outline.png" mode="aspectFit" />
+          </view>
+          <view class="op" @click="noopAction">
+            <image class="op-icon" src="/static/gallery/icon_move.png" mode="aspectFit" />
+          </view>
         </view>
       </view>
 
@@ -52,24 +56,32 @@
           class="title-input"
           placeholder="添加标题..."
           placeholder-class="ph"
+          confirm-type="done"
+          @confirm="saveTitle"
           @blur="saveTitle"
         />
       </view>
 
       <view class="info">
-        <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
-        <text class="info-text">{{ deviceName }}</text>
-        <view class="dot" />
-        <text class="info-text">{{ photo.createdAt }}</text>
+        <view class="info-left">
+          <text class="info-text device-text">{{ deviceName }}</text>
+        </view>
+        <view class="info-right">
+          <view class="clock-dot" />
+          <text class="info-text">{{ uploadTime }}</text>
+        </view>
       </view>
 
       <view class="comments">
-        <text class="c-title">评论({{ photo.comments ? photo.comments.length : 0 }})</text>
-        <view v-for="c in photo.comments || []" :key="c.id" class="c-item">
-          <text class="c-user">{{ c.user }}</text>
-          <text class="c-body">{{ c.text }}</text>
-          <text class="c-time">{{ c.createdAt }}</text>
+        <text class="c-title">评论({{ comments.length }})</text>
+        <view v-for="c in comments" :key="c.id" class="c-item">
+          <view class="c-line">
+            <text class="c-user">{{ c.user }}</text>
+            <text class="c-body">{{ c.text }}</text>
+          </view>
+          <text class="c-time">{{ formatRelativeTime(c.createdAt) }}</text>
         </view>
+        <text v-if="!comments.length" class="c-empty">暂无评论</text>
       </view>
     </view>
 
@@ -85,14 +97,21 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { addPhotoComment, deletePhotos, ensureGalleryState, getActiveDevice, updatePhoto } from '../../utils/galleryStore'
+import { getCalendarDeviceList } from '../../utils/api/device'
+import { addAlbumComment, deleteAlbumPhoto, getAlbumCommentList, getAlbumList, likeAlbum, unlikeAlbum, updateAlbumPhotoTitle } from '../../utils/api/gallery'
 
 const albumId = ref('')
 const photoId = ref('')
-const state = ref(ensureGalleryState())
+const rawAlbums = ref([])
+const comments = ref([])
 
 const titleDraft = ref('')
 const commentDraft = ref('')
+const savingTitle = ref(false)
+const titleOverrides = ref({})
+const likeOverrides = ref({})
+const liking = ref(false)
+const currentDeviceName = ref('')
 
 onLoad((options) => {
   albumId.value = options && options.albumId ? String(options.albumId) : ''
@@ -100,8 +119,7 @@ onLoad((options) => {
 })
 
 onShow(() => {
-  state.value = ensureGalleryState()
-  if (photo.value) titleDraft.value = photo.value.title || ''
+  refresh()
 })
 
 const safeTop = computed(() => {
@@ -115,13 +133,40 @@ const safeTop = computed(() => {
 })
 
 const photo = computed(() => {
-  const list = state.value.photosByAlbum[albumId.value] || []
-  return list.find((p) => p.id === photoId.value) || null
+  const album = rawAlbums.value.find((it) => it.albumId === albumId.value)
+  const list = album && Array.isArray(album.photos) ? album.photos : []
+  const found = list.find((p) => p.id === photoId.value) || null
+  if (!found) return null
+  const override = titleOverrides.value && titleOverrides.value[photoId.value] ? String(titleOverrides.value[photoId.value]) : ''
+  if (!override) return found
+  return { ...found, title: override }
+})
+
+const currentAlbum = computed(() => rawAlbums.value.find((it) => it.albumId === albumId.value) || null)
+
+const isLiked = computed(() => {
+  const override = likeOverrides.value && likeOverrides.value[albumId.value] !== undefined ? likeOverrides.value[albumId.value] : undefined
+  if (override !== undefined) return !!override
+  const v = currentAlbum.value && currentAlbum.value.isLike !== undefined ? Number(currentAlbum.value.isLike) : 0
+  return v === 1
 })
 
 const deviceName = computed(() => {
-  const d = getActiveDevice(state.value)
-  return d ? d.name.replace('的日历', '') : ''
+  if (String(currentDeviceName.value || '').trim()) return String(currentDeviceName.value).trim()
+  const storedName = String(uni.getStorageSync('active_device_name_v1') || '').trim()
+  if (storedName) return storedName
+  const active = String(uni.getStorageSync('active_device_email_v1') || '').trim()
+  const raw = uni.getStorageSync('calendar_detail_ctx_v1')
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    if (parsed && parsed.email && String(parsed.email).trim() === active) return String(parsed.name || active)
+  } catch (e) {}
+  return '当前设备'
+})
+
+const uploadTime = computed(() => {
+  if (!photo.value) return ''
+  return String(photo.value.uploadTime || photo.value.createdAt || '').trim() || '--'
 })
 
 const clipStart = computed(() => {
@@ -138,26 +183,86 @@ function back() {
   uni.navigateBack()
 }
 
-function refresh() {
-  state.value = ensureGalleryState()
+async function refresh() {
+  try {
+    const active = String(uni.getStorageSync('active_device_email_v1') || '').trim()
+    currentDeviceName.value = ''
+    if (active) {
+      try {
+        const devices = await getCalendarDeviceList()
+        const current = Array.isArray(devices) ? devices.find((it) => String(it.deviceEmail || '').trim() === active) : null
+        if (current && current.deviceName) currentDeviceName.value = String(current.deviceName)
+      } catch (e) {}
+    }
+    rawAlbums.value = active ? await getAlbumList({ deviceEmail: active }) : []
+    comments.value = albumId.value ? await getAlbumCommentList({ albumId: albumId.value }) : []
+    titleDraft.value = photo.value ? photo.value.title || photo.value.name || '' : ''
+  } catch (e) {
+    rawAlbums.value = []
+    comments.value = []
+    uni.showToast({ title: String((e && e.message) || '获取相片失败'), icon: 'none' })
+  }
 }
 
-function share() {
-  uni.showToast({ title: '未实现', icon: 'none' })
+function noopAction() {
+  uni.showToast({ title: '当前接口暂不支持', icon: 'none' })
 }
 
-function toggleLike() {
-  if (!photo.value) return
-  const s = ensureGalleryState()
-  updatePhoto(s, albumId.value, photoId.value, { liked: !photo.value.liked })
-  state.value = ensureGalleryState()
+async function toggleLike() {
+  if (!albumId.value || liking.value) return
+  liking.value = true
+  const next = !isLiked.value
+  likeOverrides.value = { ...(likeOverrides.value || {}), [albumId.value]: next }
+  try {
+    if (next) await likeAlbum({ albumId: albumId.value })
+    else await unlikeAlbum({ albumId: albumId.value })
+    await refresh()
+  } catch (e) {
+    likeOverrides.value = { ...(likeOverrides.value || {}), [albumId.value]: !next }
+    uni.showToast({ title: String((e && e.message) || '点赞失败'), icon: 'none' })
+  } finally {
+    liking.value = false
+  }
 }
 
-function saveTitle() {
-  if (!photo.value) return
-  const s = ensureGalleryState()
-  updatePhoto(s, albumId.value, photoId.value, { title: titleDraft.value.trim() })
-  state.value = ensureGalleryState()
+function formatRelativeTime(input) {
+  const raw = String(input || '').trim()
+  if (!raw) return ''
+  const normalized = raw.replace(/\./g, '/').replace('T', ' ')
+  const ts = new Date(normalized).getTime()
+  if (!Number.isFinite(ts)) return raw
+  const diff = Date.now() - ts
+  if (diff <= 0) return '刚刚'
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))}分钟前`
+  if (diff < day) return `${Math.max(1, Math.floor(diff / hour))}小时前`
+  if (diff < 7 * day) return `${Math.max(1, Math.floor(diff / day))}天前`
+  return raw
+}
+
+async function saveTitle() {
+  if (!photo.value || savingTitle.value) return
+  const nextTitle = String(titleDraft.value || '').trim()
+  const currentTitle = String(photo.value.title || '').trim()
+  if (nextTitle === currentTitle) return
+  savingTitle.value = true
+  try {
+    await updateAlbumPhotoTitle({
+      photoId: photoId.value,
+      photoTitle: nextTitle,
+    })
+    titleOverrides.value = { ...(titleOverrides.value || {}), [photoId.value]: nextTitle }
+    titleDraft.value = nextTitle
+    await refresh()
+    uni.showToast({ title: '标题已更新', icon: 'none' })
+  } catch (e) {
+    titleDraft.value = currentTitle
+    uni.showToast({ title: String((e && e.message) || '更新标题失败'), icon: 'none' })
+  } finally {
+    savingTitle.value = false
+  }
 }
 
 function onVideoTimeUpdate(e) {
@@ -170,14 +275,16 @@ function onVideoTimeUpdate(e) {
   }
 }
 
-function send() {
+async function send() {
   const text = commentDraft.value.trim()
   if (!text || !photo.value) return
-  const user = uni.getStorageSync('auth_name') || 'REERT'
-  const s = ensureGalleryState()
-  addPhotoComment(s, albumId.value, photoId.value, { user, text })
-  commentDraft.value = ''
-  state.value = ensureGalleryState()
+  try {
+    await addAlbumComment({ albumId: albumId.value, comment: text })
+    commentDraft.value = ''
+    comments.value = await getAlbumCommentList({ albumId: albumId.value })
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '发表评论失败'), icon: 'none' })
+  }
 }
 
 function confirmDelete() {
@@ -187,11 +294,19 @@ function confirmDelete() {
     content: '确认删除该照片？',
     cancelText: '取消',
     confirmText: '确定',
-    success: (res) => {
+    success: async (res) => {
       if (!res.confirm) return
-      const s = ensureGalleryState()
-      deletePhotos(s, albumId.value, [photoId.value])
-      uni.navigateBack()
+      try {
+        uni.showLoading({ title: '删除中' })
+        await deleteAlbumPhoto({ photoId: photoId.value })
+        uni.navigateBack()
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || '删除照片失败'), icon: 'none' })
+      } finally {
+        try {
+          uni.hideLoading()
+        } catch (e) {}
+      }
     },
   })
 }
@@ -200,17 +315,17 @@ function confirmDelete() {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #ffffff;
-  padding-bottom: 140rpx;
+  background: #f5f6fb;
+  padding-bottom: calc(156rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(156rpx + env(safe-area-inset-bottom));
 }
 
 .head {
   position: sticky;
   top: 0;
   z-index: 999;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  padding: 18rpx 18rpx 12rpx;
+  background: #f5f6fb;
+  padding: 18rpx 24rpx 16rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -233,6 +348,7 @@ function confirmDelete() {
 .head-title {
   font-size: 34rpx;
   font-weight: 900;
+  color: #111111;
 }
 
 .head-right {
@@ -241,138 +357,191 @@ function confirmDelete() {
   align-items: center;
   justify-content: flex-end;
   padding-right: 12rpx;
+  cursor: pointer;
 }
 
-.danger {
-  width: 34rpx;
-  height: 34rpx;
-  opacity: 0.65;
+.danger-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.34);
 }
 
 .body {
-  padding: 0 28rpx;
+  padding: 0 22rpx;
 }
 
 .hero {
-  border-radius: 28rpx;
+  border-radius: 24rpx;
   overflow: hidden;
-  background: rgba(17, 17, 17, 0.06);
+  background: #ffffff;
+  box-shadow: 0 6rpx 20rpx rgba(17, 17, 17, 0.03);
 }
 
 .hero-img {
   width: 100%;
-  height: 820rpx;
+  height: 700rpx;
+  display: block;
 }
 
 .hero-video {
   width: 100%;
-  height: 820rpx;
+  height: 700rpx;
 }
 
 .ops {
-  height: 92rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8rpx;
+  padding: 18rpx 4rpx 10rpx;
+}
+
+.ops-left,
+.ops-right {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
 }
 
 .op {
-  width: 84rpx;
-  height: 84rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 9999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(17, 17, 17, 0.65);
+  background: transparent;
 }
 
 .op-icon {
-  width: 40rpx;
-  height: 40rpx;
-  opacity: 0.75;
+  width: 38rpx;
+  height: 38rpx;
+  opacity: 0.82;
 }
 
 .title-wrap {
-  height: 94rpx;
-  border-radius: 22rpx;
-  background: rgba(17, 17, 17, 0.03);
-  border: 2rpx solid rgba(17, 17, 17, 0.06);
-  padding: 0 18rpx;
+  height: 90rpx;
+  border-radius: 18rpx;
+  background: #ffffff;
+  border: 2rpx solid #edf0f6;
+  padding: 0 20rpx;
   display: flex;
   align-items: center;
   gap: 12rpx;
 }
 
 .pencil {
-  width: 44rpx;
-  height: 44rpx;
-  border-radius: 14rpx;
-  background: rgba(17, 17, 17, 0.08);
+  width: 34rpx;
+  height: 34rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .pencil-icon {
-  width: 22rpx;
-  height: 22rpx;
-  opacity: 0.6;
+  width: 26rpx;
+  height: 26rpx;
+  opacity: 0.66;
 }
 
 .title-input {
   flex: 1;
   font-size: 28rpx;
-  font-weight: 800;
+  font-weight: 700;
   color: rgba(17, 17, 17, 0.85);
+  background: transparent;
 }
 
 .ph {
-  color: rgba(17, 17, 17, 0.35);
-  font-weight: 650;
+  color: #a3abbd;
+  font-weight: 600;
 }
 
 .info {
   margin-top: 16rpx;
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  color: rgba(17, 17, 17, 0.55);
+  justify-content: space-between;
+  padding: 0 4rpx;
+  color: #6e7483;
+}
+
+.info-left,
+.info-right {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .mini-icon {
-  width: 34rpx;
-  height: 24rpx;
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.8;
 }
 
 .info-text {
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.dot {
-  width: 8rpx;
-  height: 8rpx;
+.device-text {
+  color: #70778a;
+}
+
+.clock-dot {
+  width: 22rpx;
+  height: 22rpx;
   border-radius: 9999rpx;
-  background: rgba(17, 17, 17, 0.22);
+  border: 3rpx solid #b7bcc9;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.clock-dot::before {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  top: 2rpx;
+  width: 2rpx;
+  height: 7rpx;
+  background: #b7bcc9;
+  border-radius: 2rpx;
+}
+
+.clock-dot::after {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  top: 8rpx;
+  width: 6rpx;
+  height: 2rpx;
+  background: #b7bcc9;
+  border-radius: 2rpx;
 }
 
 .comments {
   margin-top: 18rpx;
-  border-radius: 28rpx;
-  background: rgba(17, 17, 17, 0.02);
-  padding: 18rpx 18rpx 10rpx;
+  min-height: 240rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  padding: 20rpx 22rpx 18rpx;
 }
 
 .c-title {
   display: block;
   font-size: 28rpx;
   font-weight: 900;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
 }
 
 .c-item {
-  padding: 12rpx 0;
+  padding: 8rpx 0 14rpx;
+}
+
+.c-line {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8rpx;
 }
 
 .c-user {
@@ -382,10 +551,8 @@ function confirmDelete() {
 }
 
 .c-body {
-  display: block;
-  margin-top: 8rpx;
   font-size: 26rpx;
-  font-weight: 750;
+  font-weight: 700;
   color: rgba(17, 17, 17, 0.85);
 }
 
@@ -393,52 +560,57 @@ function confirmDelete() {
   display: block;
   margin-top: 6rpx;
   font-size: 22rpx;
-  font-weight: 650;
-  color: rgba(17, 17, 17, 0.45);
+  font-weight: 600;
+  color: #9aa1b1;
+}
+
+.c-empty {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 24rpx;
+  color: #9aa1b1;
 }
 
 .composer {
   position: fixed;
-  left: 18rpx;
-  right: 18rpx;
-  bottom: 22rpx;
-  height: 110rpx;
-  border-radius: 26rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10rpx 30rpx rgba(17, 17, 17, 0.12);
+  left: 22rpx;
+  right: 22rpx;
+  bottom: calc(18rpx + constant(safe-area-inset-bottom));
+  bottom: calc(18rpx + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 14rpx;
-  padding: 0 18rpx;
+  padding: 0;
 }
 
 .composer-input {
   flex: 1;
-  height: 76rpx;
-  border-radius: 20rpx;
-  background: rgba(17, 17, 17, 0.03);
-  border: 2rpx solid rgba(17, 17, 17, 0.06);
-  padding: 0 16rpx;
+  height: 82rpx;
+  border-radius: 18rpx;
+  background: #eef1ff;
+  padding: 0 22rpx;
   font-size: 28rpx;
-  font-weight: 750;
+  font-weight: 700;
+  color: #111111;
 }
 
 .send {
-  width: 86rpx;
-  height: 86rpx;
-  border-radius: 26rpx;
-  background: transparent;
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 18rpx;
+  background: #4a6fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 10rpx 20rpx rgba(74, 111, 255, 0.24);
 }
 
 .send.disabled {
-  opacity: 0.35;
+  opacity: 0.45;
 }
 
 .send-icon {
-  width: 64rpx;
-  height: 64rpx;
+  width: 48rpx;
+  height: 48rpx;
 }
 </style>

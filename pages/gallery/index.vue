@@ -18,17 +18,17 @@
     <view v-if="showDeviceMenu" class="mask" @click="showDeviceMenu = false">
       <view class="device-menu" @click.stop>
         <view
-          v-for="d in state.devices"
+          v-for="d in devices"
           :key="d.id"
           class="device-item"
-          :class="{ active: d.id === state.activeDeviceId }"
+          :class="{ active: d.id === activeDeviceId }"
           @click="selectDevice(d.id)"
         >
           <view class="device-row">
             <image class="device-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
             <text class="device-name">{{ d.name }}</text>
           </view>
-          <image v-if="d.id === state.activeDeviceId" class="device-check" src="/static/gallery/icon_check.png" mode="aspectFit" />
+          <image v-if="d.id === activeDeviceId" class="device-check" src="/static/gallery/icon_check.png" mode="aspectFit" />
         </view>
       </view>
     </view>
@@ -81,28 +81,36 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlBottomNav from '../../components/BlBottomNav.vue'
-import { addAlbum, ensureGalleryState, getActiveDevice, listAlbums, setActiveDeviceId } from '../../utils/galleryStore'
+import { getCalendarDeviceList } from '../../utils/api/device'
+import { createAlbumInfo, getAlbumList } from '../../utils/api/gallery'
 
 const showDeviceMenu = ref(false)
 const showAdd = ref(false)
 const newAlbumName = ref('')
+const devices = ref([])
+const activeDeviceId = ref('')
+const rawAlbums = ref([])
+const loading = ref(false)
 
-const state = ref(ensureGalleryState())
-
-onShow(() => {
-  state.value = ensureGalleryState()
+const activeDevice = computed(() => {
+  const found = devices.value.find((it) => it.id === activeDeviceId.value)
+  return found || devices.value[0] || { id: '', name: '我的设备', email: '' }
 })
 
-const activeDevice = computed(() => getActiveDevice(state.value))
-
-const albums = computed(() => {
-  const list = listAlbums(state.value, state.value.activeDeviceId)
-  return list.map((a) => {
-    const photos = state.value.photosByAlbum[a.id] || []
-    const coverUri = photos[0] ? (photos[0].type === 'video' ? photos[0].thumbUri || '' : photos[0].uri) : ''
-    return { ...a, count: photos.length, coverUri }
-  })
-})
+const albums = computed(() =>
+  (rawAlbums.value || []).map((a) => {
+    const photos = Array.isArray(a.photos) ? a.photos : []
+    const cover = photos[0] || null
+    const coverUri = cover ? (cover.type === 'video' ? cover.thumbUri || '' : cover.uri || '') : ''
+    return {
+      ...a,
+      id: a.albumId,
+      name: a.albumName,
+      count: Number(a.total || photos.length || 0),
+      coverUri,
+    }
+  }),
+)
 
 const safeTop = computed(() => {
   try {
@@ -118,10 +126,54 @@ function toggleDeviceMenu() {
   showDeviceMenu.value = !showDeviceMenu.value
 }
 
-function selectDevice(id) {
-  const s = ensureGalleryState()
-  state.value = setActiveDeviceId(s, id)
+async function refresh() {
+  loading.value = true
+  try {
+    const list = await getCalendarDeviceList()
+    devices.value = (list || []).map((it) => ({
+      id: String(it.deviceEmail || ''),
+      email: String(it.deviceEmail || ''),
+      name: String(it.deviceName || it.deviceEmail || '日历设备'),
+    }))
+    const stored = String(uni.getStorageSync('active_device_email_v1') || '').trim()
+    const nextActive = devices.value.find((it) => it.id === stored) ? stored : devices.value[0]?.id || ''
+    activeDeviceId.value = nextActive
+    if (nextActive) {
+      uni.setStorageSync('active_device_email_v1', nextActive)
+      const current = devices.value.find((it) => it.id === nextActive)
+      if (current && current.name) uni.setStorageSync('active_device_name_v1', String(current.name))
+    }
+    rawAlbums.value = nextActive ? await getAlbumList({ deviceEmail: nextActive }) : []
+  } catch (e) {
+    devices.value = []
+    rawAlbums.value = []
+    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+onShow(() => {
+  refresh()
+})
+
+async function selectDevice(id) {
+  activeDeviceId.value = id
+  if (id) {
+    uni.setStorageSync('active_device_email_v1', id)
+    const current = devices.value.find((it) => it.id === id)
+    if (current && current.name) uni.setStorageSync('active_device_name_v1', String(current.name))
+  }
   showDeviceMenu.value = false
+  loading.value = true
+  try {
+    rawAlbums.value = id ? await getAlbumList({ deviceEmail: id }) : []
+  } catch (e) {
+    rawAlbums.value = []
+    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
 
 function openAlbum(albumId) {
@@ -138,14 +190,31 @@ function closeAddAlbum() {
   showAdd.value = false
 }
 
-function createAlbum() {
+async function createAlbum() {
   const name = newAlbumName.value.trim()
   if (!name) return
-  const s = ensureGalleryState()
-  const album = addAlbum(s, s.activeDeviceId, name)
-  state.value = ensureGalleryState()
-  showAdd.value = false
-  uni.navigateTo({ url: `/pages/gallery/album?albumId=${encodeURIComponent(album.id)}` })
+  if (!activeDevice.value.email) {
+    uni.showToast({ title: '请先选择设备', icon: 'none' })
+    return
+  }
+  try {
+    uni.showLoading({ title: '创建中' })
+    await createAlbumInfo({ deviceEmail: activeDevice.value.email, albumName: name })
+    showAdd.value = false
+    await refresh()
+    const created = albums.value.find((it) => it.name === name)
+    if (created && created.id) {
+      uni.navigateTo({ url: `/pages/gallery/album?albumId=${encodeURIComponent(created.id)}` })
+    } else {
+      uni.showToast({ title: '创建成功', icon: 'none' })
+    }
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '创建相册失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 
