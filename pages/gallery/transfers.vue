@@ -54,53 +54,102 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { onHide, onLoad, onShow } from '@dcloudio/uni-app'
-import { ensureGalleryState, removeTransfer, retryTransfer, tickTransfers } from '../../utils/galleryStore'
+import { uploadPhotoFile } from '../../utils/api/gallery'
+import { clearCompletedUploadJobs, loadUploadJobs, patchUploadJob, removeUploadJob } from '../../utils/galleryUploadQueue'
 
 const tab = ref('uploading')
-const state = ref(ensureGalleryState())
-const timer = ref(null)
+const state = ref({ transfers: [] })
 const albumId = ref('')
 const autoBack = ref(false)
 const redirected = ref(false)
+const stopped = ref(false)
+const processing = ref(false)
 
 onLoad((options) => {
   albumId.value = options && options.albumId ? String(options.albumId) : ''
   autoBack.value = !!(options && String(options.autoBack || '') === '1')
 })
 
+function refreshState() {
+  state.value = { transfers: loadUploadJobs() }
+  return state.value
+}
+
+function mapErrorCode(err) {
+  if (!err) return 'unknown'
+  if (err.statusCode === 0) return 'network'
+  return err.code !== undefined && err.code !== null ? String(err.code) : 'unknown'
+}
+
+function mapErrorText(err) {
+  const message = String((err && err.message) || '').trim()
+  if (message) return message
+  return '上传失败'
+}
+
 function maybeAutoBack(nextState) {
   if (!autoBack.value || redirected.value || !albumId.value) return
   const list = nextState && nextState.transfers ? nextState.transfers : []
-  const hasUploading = list.some((t) => t.status === 'uploading')
-  const hasFailed = list.some((t) => t.status === 'failed')
+  const hasUploading = list.some((t) => t && (t.status === 'pending' || t.status === 'uploading'))
+  const hasFailed = list.some((t) => t && t.status === 'failed')
   if (hasUploading || hasFailed) return
+  clearCompletedUploadJobs()
   redirected.value = true
-  if (timer.value) clearInterval(timer.value)
-  timer.value = null
   uni.redirectTo({ url: `/pages/gallery/album?albumId=${encodeURIComponent(albumId.value)}` })
 }
 
-onShow(() => {
-  state.value = ensureGalleryState()
-  redirected.value = false
-  if (timer.value) clearInterval(timer.value)
-  timer.value = setInterval(() => {
-    const s = ensureGalleryState()
-    const next = tickTransfers(s)
-    state.value = next
+async function processNext() {
+  if (processing.value || stopped.value) return
+  const list = loadUploadJobs()
+  const job = list.find((it) => it && it.status === 'pending')
+  if (!job) {
+    maybeAutoBack({ transfers: list })
+    refreshState()
+    return
+  }
+  processing.value = true
+  patchUploadJob(job.id, { status: 'uploading', progress: 0, errorCode: '', errorText: '' })
+  refreshState()
+  try {
+    await uploadPhotoFile({
+      albumId: job.albumId,
+      filePath: job.uri,
+      photoTitle: String(job.note || '').trim(),
+      onProgress: (res) => {
+        const progress = res && typeof res.progress === 'number' ? Math.max(0, Math.min(100, Math.floor(res.progress))) : 0
+        patchUploadJob(job.id, { status: 'uploading', progress })
+        refreshState()
+      },
+    })
+    patchUploadJob(job.id, { status: 'success', progress: 100, errorCode: '', errorText: '' })
+  } catch (e) {
+    patchUploadJob(job.id, {
+      status: 'failed',
+      progress: 0,
+      errorCode: mapErrorCode(e),
+      errorText: mapErrorText(e),
+    })
+  } finally {
+    processing.value = false
+    const next = refreshState()
     maybeAutoBack(next)
-  }, 650)
-  maybeAutoBack(state.value)
+    if (!stopped.value) processNext()
+  }
+}
+
+onShow(() => {
+  stopped.value = false
+  redirected.value = false
+  refreshState()
+  processNext()
 })
 
 onHide(() => {
-  if (timer.value) clearInterval(timer.value)
-  timer.value = null
+  stopped.value = true
 })
 
 onBeforeUnmount(() => {
-  if (timer.value) clearInterval(timer.value)
-  timer.value = null
+  stopped.value = true
 })
 
 const safeTop = computed(() => {
@@ -115,7 +164,8 @@ const safeTop = computed(() => {
 
 const filtered = computed(() => {
   const list = state.value.transfers || []
-  return list.filter((t) => t.status === tab.value)
+  if (tab.value === 'uploading') return list.filter((t) => t && (t.status === 'pending' || t.status === 'uploading'))
+  return list.filter((t) => t && t.status === 'failed')
 })
 
 function back() {
@@ -123,17 +173,14 @@ function back() {
 }
 
 function remove(id) {
-  const s = ensureGalleryState()
-  removeTransfer(s, id)
-  state.value = ensureGalleryState()
+  state.value = { transfers: removeUploadJob(id) }
   maybeAutoBack(state.value)
 }
 
 function retry(id) {
-  const s = ensureGalleryState()
-  retryTransfer(s, id)
-  state.value = ensureGalleryState()
+  state.value = { transfers: patchUploadJob(id, { status: 'pending', progress: 0, errorCode: '', errorText: '' }) }
   tab.value = 'uploading'
+  processNext()
 }
 </script>
 

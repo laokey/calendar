@@ -45,7 +45,7 @@
 <script setup>
 import { computed, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { addTransferTasks, ensureGalleryState } from '../../utils/galleryStore'
+import { createUploadJobs } from '../../utils/galleryUploadQueue'
 
 const payload = reactive({ albumId: '', items: [] })
 
@@ -110,9 +110,7 @@ function toggleSelected(index) {
 function submit() {
   const selected = (items.value || []).filter((x) => x && x.selected)
   if (!selected.length || !payload.albumId) return
-  const s = ensureGalleryState()
-  const deviceId = s.activeDeviceId
-  addTransferTasks(s, { deviceId, albumId: payload.albumId, items: selected })
+  createUploadJobs({ albumId: payload.albumId, items: selected })
   uni.removeStorageSync('gallery_pending_upload')
   uni.navigateTo({ url: `/pages/gallery/transfers?albumId=${encodeURIComponent(payload.albumId)}&autoBack=1` })
 }
