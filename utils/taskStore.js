@@ -166,6 +166,12 @@ export function listTasks(state) {
   return (state.tasks || []).slice()
 }
 
+export function replaceTaskList(state, tasks) {
+  state.tasks = Array.isArray(tasks) ? tasks.slice() : []
+  saveTaskState(state)
+  return state
+}
+
 export function findTask(state, id) {
   return (state.tasks || []).find((t) => t.id === id) || null
 }

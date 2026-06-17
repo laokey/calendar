@@ -179,7 +179,7 @@ import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
 import BlRepeatSection from '../../components/BlRepeatSection.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { addTask, ensureTaskState, findTask, updateTask } from '../../utils/taskStore'
-import { membersApi } from '../../utils/api'
+import { membersApi, tasksApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -221,6 +221,10 @@ const timeSheetOpen = ref(false)
 const prioritySheetOpen = ref(false)
 
 const emojiOptions = ['笑', '酷', '赞', '爱', '星', '书', '钢', '跑', '洗', '吃', '球', '家']
+
+function isRemoteTaskMode() {
+  return !!uni.getStorageSync('auth_logged_in')
+}
 
 function toCnDateText(key) {
   const parts = String(key || '').split('-')
@@ -283,8 +287,7 @@ onLoad((options) => {
 
 onShow(() => {
   ;(async () => {
-    const logged = !!uni.getStorageSync('auth_logged_in')
-    if (logged) {
+    if (isRemoteTaskMode()) {
       try {
         const list = await membersApi.getMemberList()
         setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
@@ -345,7 +348,7 @@ function validate() {
   return true
 }
 
-function save() {
+async function save() {
   if (!validate()) return
   const payload = {
     title: title.value,
@@ -358,6 +361,28 @@ function save() {
     hearts: hearts.value,
     priority: priority.value,
     memberId: memberId.value,
+  }
+  if (isRemoteTaskMode()) {
+    if (isEdit.value && taskId.value) {
+      uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
+      return
+    }
+    try {
+      await tasksApi.addTaskInfo({
+        taskTitle: title.value,
+        emoji: emoji.value,
+        dateEnabled: dateEnabled.value,
+        date: date.value,
+        timeEnabled: timeEnabled.value,
+        time: time.value,
+        repeat: repeatEnabled.value ? { unit: 'day', every: 1 } : null,
+        priority: priority.value,
+        memberId: memberId.value,
+      })
+      uni.$emit && uni.$emit('task:refresh')
+      uni.navigateBack()
+    } catch (e) {}
+    return
   }
   if (isEdit.value && taskId.value) {
     updateTask(taskState.value, taskId.value, payload)

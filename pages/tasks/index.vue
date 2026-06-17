@@ -255,13 +255,14 @@ import {
   isTaskDone,
   markTaskDone,
   markTaskUndone,
+  replaceTaskList,
   setTaskCalendarOpen,
   setTaskCursorDate,
   taskOverdueText,
   taskStatsForDate,
   tasksForDate,
 } from '../../utils/taskStore'
-import { membersApi } from '../../utils/api'
+import { membersApi, tasksApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -415,6 +416,27 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function isRemoteTaskMode() {
+  return !!uni.getStorageSync('auth_logged_in')
+}
+
+function monthRangeForKey(key) {
+  const rows = monthMatrix(key)
+  const flat = []
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = Array.isArray(rows[i]) ? rows[i] : []
+    for (let j = 0; j < row.length; j += 1) {
+      flat.push(row[j])
+    }
+  }
+  const first = flat[0]
+  const last = flat[flat.length - 1]
+  return {
+    startDate: first ? formatKey(first) : key,
+    endDate: last ? formatKey(last) : key,
+  }
+}
+
 function refresh() {
   taskState.value = ensureTaskState()
   calendarState.value = ensureCalendarState()
@@ -424,11 +446,23 @@ function refresh() {
 }
 
 async function syncRemoteMembers() {
-  const logged = !!uni.getStorageSync('auth_logged_in')
-  if (!logged) return false
+  if (!isRemoteTaskMode()) return false
   try {
     const list = await membersApi.getMemberList()
     setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+async function syncRemoteTasks(targetKey = cursorKey.value) {
+  if (!isRemoteTaskMode()) return false
+  try {
+    const baseKey = String(targetKey || taskState.value.cursorDate || todayKey())
+    const { startDate, endDate } = monthRangeForKey(baseKey)
+    const list = await tasksApi.getTaskInfoList({ startDate, endDate })
+    taskState.value = replaceTaskList(taskState.value, list)
     return true
   } catch (e) {
     return false
@@ -439,10 +473,12 @@ onLoad(() => {
   refresh()
   taskState.value = setTaskCursorDate(taskState.value, todayKey())
   taskState.value = setTaskCalendarOpen(taskState.value, false)
+  syncRemoteTasks(todayKey())
 })
 onShow(() => {
   ;(async () => {
     await syncRemoteMembers()
+    await syncRemoteTasks(cursorKey.value)
     refresh()
   })()
 })
@@ -499,6 +535,14 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => cursorKey.value,
+  (key, prev) => {
+    if (!key || key === prev) return
+    syncRemoteTasks(key)
+  },
+)
+
 function toggleCalendar() {
   taskState.value = setTaskCalendarOpen(taskState.value, !calendarOpen.value)
 }
@@ -521,6 +565,10 @@ function swipeEdit(t) {
   openSwipeId.value = ''
   swipeActiveId.value = ''
   if (!t || !t.id) return
+  if (isRemoteTaskMode() && t.remote) {
+    uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
+    return
+  }
   uni.navigateTo({ url: `/pages/tasks/task-form?id=${t.id}` })
 }
 
@@ -716,8 +764,27 @@ function onCardTap(id) {
   openDetail(id)
 }
 
-function toggleDone(t) {
+function isRemoteTaskItem(task) {
+  return !!(task && task.remote && isRemoteTaskMode())
+}
+
+async function toggleDone(t) {
   const beforePending = pendingTasks.value.length
+  if (isRemoteTaskItem(t)) {
+    if (isTaskDone(t)) {
+      uni.showToast({ title: '接口文档暂未提供撤销完成接口', icon: 'none' })
+      return
+    }
+    try {
+      await tasksApi.completeTask({ taskId: t.id })
+      markTaskDone(taskState.value, t.id)
+      refresh()
+      await syncRemoteTasks(cursorKey.value)
+      const afterPending = tasksForDate(taskState.value, cursorKey.value, { memberId: activeFilter.value }).filter((x) => !isTaskDone(x)).length
+      if (beforePending > 0 && afterPending === 0) donePopupOpen.value = true
+    } catch (e) {}
+    return
+  }
   if (isTaskDone(t)) {
     markTaskUndone(taskState.value, t.id)
     refresh()
@@ -739,6 +806,20 @@ function editTask() {
 function askDelete() {
   actionSheetOpen.value = false
   const t = activeTaskId.value ? taskState.value.tasks.find((x) => x.id === activeTaskId.value) : null
+  if (isRemoteTaskItem(t)) {
+    uni.showModal({
+      title: '',
+      content: '您确定要删除吗？',
+      confirmText: '删除',
+      cancelText: '取消',
+      confirmColor: '#3d6afb',
+      success(res) {
+        if (!res.confirm) return
+        doDelete('one')
+      },
+    })
+    return
+  }
   if (t && t.repeat && t.repeat.id) {
     deleteSheetOpen.value = true
     return
@@ -756,10 +837,20 @@ function askDelete() {
   })
 }
 
-function doDelete(scope) {
+async function doDelete(scope) {
   const id = activeTaskId.value
   deleteSheetOpen.value = false
   if (!id) return
+  const task = taskState.value.tasks.find((x) => x.id === id)
+  if (isRemoteTaskItem(task)) {
+    try {
+      await tasksApi.deleteTaskInfo({ taskId: id })
+      deleteTask(taskState.value, id, 'one')
+      refresh()
+      await syncRemoteTasks(cursorKey.value)
+    } catch (e) {}
+    return
+  }
   deleteTask(taskState.value, id, scope)
   refresh()
 }

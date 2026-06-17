@@ -49,7 +49,7 @@
 
     <view v-if="isDone" class="block done-time">
       <image class="row-icon" src="/static/task/icon_clock_blue.png" mode="aspectFit" />
-      <text class="done-text">完成于 {{ doneAtTextVal }}</text>
+      <text class="done-text">{{ doneStatusText }}</text>
     </view>
 
     <view class="bottom" :class="{ grey: isDone }" @click="toggleDone">
@@ -82,7 +82,7 @@ import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { deleteTask, ensureTaskState, findTask, markTaskDone, markTaskUndone, taskDetailDateText } from '../../utils/taskStore'
-import { membersApi } from '../../utils/api'
+import { membersApi, tasksApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -104,6 +104,14 @@ const task = ref({
 
 const deleteSheetOpen = ref(false)
 
+function isRemoteTaskMode() {
+  return !!uni.getStorageSync('auth_logged_in')
+}
+
+function isRemoteTaskItem() {
+  return !!(task.value && task.value.remote && isRemoteTaskMode())
+}
+
 function refresh(id) {
   taskState.value = ensureTaskState()
   calendarState.value = ensureCalendarState()
@@ -124,8 +132,7 @@ onLoad((options) => {
 
 onShow(() => {
   ;(async () => {
-    const logged = !!uni.getStorageSync('auth_logged_in')
-    if (logged) {
+    if (isRemoteTaskMode()) {
       try {
         const list = await membersApi.getMemberList()
         setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
@@ -139,6 +146,8 @@ const dateText = computed(() => taskDetailDateText(task.value))
 const isDone = computed(() => !!task.value.completedAtTs)
 
 function doneAtText() {
+  const ts = Number(task.value.completedAtTs || 0)
+  if (!Number.isFinite(ts) || ts < 100000000000) return ''
   const d = new Date(task.value.completedAtTs)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -149,6 +158,7 @@ function doneAtText() {
 }
 
 const doneAtTextVal = computed(() => doneAtText())
+const doneStatusText = computed(() => (doneAtTextVal.value ? `完成于 ${doneAtTextVal.value}` : '已完成'))
 
 function memberList() {
   return [{ id: 'me', name: '我的', glyph: '我', color: '#4cc38a' }, ...listMembers(calendarState.value).filter((m) => m.enabled !== false)]
@@ -182,10 +192,28 @@ function prioColor(p) {
 }
 
 function goEdit() {
+  if (isRemoteTaskItem()) {
+    uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
+    return
+  }
   uni.navigateTo({ url: `/pages/tasks/task-form?id=${task.value.id}` })
 }
 
 function askDelete() {
+  if (isRemoteTaskItem()) {
+    uni.showModal({
+      title: '',
+      content: '您确定要删除吗？',
+      confirmText: '删除',
+      cancelText: '取消',
+      confirmColor: '#3d6afb',
+      success(res) {
+        if (!res.confirm) return
+        doDelete('one')
+      },
+    })
+    return
+  }
   if (task.value.repeat && task.value.repeat.id) {
     deleteSheetOpen.value = true
     return
@@ -203,14 +231,36 @@ function askDelete() {
   })
 }
 
-function doDelete(scope) {
+async function doDelete(scope) {
   deleteSheetOpen.value = false
+  if (isRemoteTaskItem()) {
+    try {
+      await tasksApi.deleteTaskInfo({ taskId: task.value.id })
+      deleteTask(taskState.value, task.value.id, 'one')
+      uni.$emit && uni.$emit('task:refresh')
+      uni.navigateBack()
+    } catch (e) {}
+    return
+  }
   deleteTask(taskState.value, task.value.id, scope)
   uni.$emit && uni.$emit('task:refresh')
   uni.navigateBack()
 }
 
-function toggleDone() {
+async function toggleDone() {
+  if (isRemoteTaskItem()) {
+    if (isDone.value) {
+      uni.showToast({ title: '接口文档暂未提供撤销完成接口', icon: 'none' })
+      return
+    }
+    try {
+      await tasksApi.completeTask({ taskId: task.value.id })
+      markTaskDone(taskState.value, task.value.id)
+      refresh(task.value.id)
+      uni.$emit && uni.$emit('task:refresh')
+    } catch (e) {}
+    return
+  }
   if (isDone.value) {
     markTaskUndone(taskState.value, task.value.id)
   } else {
