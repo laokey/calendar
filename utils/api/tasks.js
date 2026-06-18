@@ -229,6 +229,119 @@ function finishTimeFromPayload(payload) {
   return String(p.date)
 }
 
+function normalizeText(input) {
+  return input === undefined || input === null ? '' : String(input).trim()
+}
+
+function normalizeHexColor6(input) {
+  const raw = normalizeText(input)
+  if (!raw) return ''
+  const stripped = raw.startsWith('#') ? raw.slice(1) : raw
+  const expanded =
+    stripped.length === 3 ? stripped.split('').map((c) => `${c}${c}`).join('') : stripped.length === 6 ? stripped : ''
+  if (!expanded) return ''
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return ''
+  return expanded.toLowerCase()
+}
+
+function extractList(res, keys) {
+  if (Array.isArray(res)) return res
+  if (!res || typeof res !== 'object') return []
+  for (const key of keys || []) {
+    if (Array.isArray(res[key])) return res[key]
+  }
+  if (Array.isArray(res.list)) return res.list
+  if (Array.isArray(res.data)) return res.data
+  return []
+}
+
+function normalizeListType(it) {
+  const x = it && typeof it === 'object' ? it : {}
+  const idRaw = x.typeId !== undefined ? x.typeId : x.typeid !== undefined ? x.typeid : x.id !== undefined ? x.id : ''
+  const titleRaw =
+    x.typeName !== undefined
+      ? x.typeName
+      : x.typename !== undefined
+        ? x.typename
+        : x.name !== undefined
+          ? x.name
+          : ''
+  const colorRaw =
+    x.typeColor !== undefined
+      ? x.typeColor
+      : x.typecolor !== undefined
+        ? x.typecolor
+        : x.color !== undefined
+          ? x.color
+          : '#3d6afb'
+  const createdAtRaw =
+    x.createTime !== undefined
+      ? x.createTime
+      : x.createtime !== undefined
+        ? x.createtime
+        : x.createdAt !== undefined
+          ? x.createdAt
+          : x.createdAtTs !== undefined
+            ? x.createdAtTs
+            : 0
+  const createdAtTs = Number(createdAtRaw)
+  return {
+    id: normalizeText(idRaw),
+    title: titleRaw === undefined || titleRaw === null ? '' : String(titleRaw),
+    color: normalizeText(colorRaw) || '#3d6afb',
+    createdAtTs: Number.isFinite(createdAtTs) && createdAtTs > 0 ? createdAtTs : Date.now(),
+    remote: true,
+  }
+}
+
+function normalizeListItem(it) {
+  const x = it && typeof it === 'object' ? it : {}
+  const idRaw = x.itemId !== undefined ? x.itemId : x.itemid !== undefined ? x.itemid : x.id !== undefined ? x.id : ''
+  const textRaw =
+    x.itemName !== undefined
+      ? x.itemName
+      : x.itemname !== undefined
+        ? x.itemname
+        : x.name !== undefined
+          ? x.name
+          : x.text !== undefined
+            ? x.text
+            : ''
+  const statusRaw = x.status !== undefined ? x.status : x.itemStatus !== undefined ? x.itemStatus : 0
+  const createdAtRaw =
+    x.createTime !== undefined
+      ? x.createTime
+      : x.createtime !== undefined
+        ? x.createtime
+        : x.createdAt !== undefined
+          ? x.createdAt
+          : x.createdAtTs !== undefined
+            ? x.createdAtTs
+            : 0
+  const doneAtRaw =
+    x.doneAt !== undefined
+      ? x.doneAt
+      : x.doneAtTs !== undefined
+        ? x.doneAtTs
+        : x.updateTime !== undefined
+          ? x.updateTime
+          : x.updatetime !== undefined
+            ? x.updatetime
+            : 0
+  const createdAtTs = Number(createdAtRaw)
+  const doneAtTs = Number(doneAtRaw)
+  const done = Number(statusRaw) === 1 || String(statusRaw) === '1'
+  return {
+    id: normalizeText(idRaw),
+    text: textRaw === undefined || textRaw === null ? '' : String(textRaw),
+    done,
+    status: done ? 1 : 0,
+    createdAtTs: Number.isFinite(createdAtTs) && createdAtTs > 0 ? createdAtTs : Date.now(),
+    doneAtTs: done && Number.isFinite(doneAtTs) && doneAtTs > 0 ? doneAtTs : 0,
+    remote: true,
+  }
+}
+
 export async function getTaskInfoList({ deviceEmail, startDate, endDate } = {}) {
   const token = getToken()
   const email = await resolveDeviceEmail(deviceEmail)
@@ -283,5 +396,100 @@ export async function deleteTaskInfo({ taskId } = {}) {
     taskid: id,
     recipeId: id,
     recipeid: id,
+  })
+}
+
+export async function getItemTypeList({ deviceEmail } = {}) {
+  const token = getToken()
+  const email = await resolveDeviceEmail(deviceEmail)
+  const res = await postForm('/calendar/app/getItemTypeList', {
+    token,
+    deviceEmail: email,
+    deviceemail: email,
+  })
+  return extractList(res, ['itemTypeList', 'typeList', 'itemtypeList']).map(normalizeListType).filter((x) => x && x.id)
+}
+
+export async function addItemTypeInfo({ deviceEmail, typeName, typeColor } = {}) {
+  const token = getToken()
+  const email = await resolveDeviceEmail(deviceEmail)
+  const name = normalizeText(typeName)
+  const color = normalizeHexColor6(typeColor)
+  return postForm('/calendar/app/addItemTypeInfo', {
+    token,
+    deviceEmail: email,
+    typeName: name,
+    typeColor: color || undefined,
+  })
+}
+
+export async function updateItemTypeInfo({ typeId, typeName, typeColor } = {}) {
+  const token = getToken()
+  const id = normalizeText(typeId)
+  const name = normalizeText(typeName)
+  const color = normalizeHexColor6(typeColor)
+  return postForm('/calendar/app/updateItemTypeInfo', {
+    token,
+    typeId: id,
+    typeName: name,
+    typeColor: color || undefined,
+  })
+}
+
+export async function deleteItemTypeInfo({ typeId } = {}) {
+  const token = getToken()
+  const id = normalizeText(typeId)
+  return postForm('/calendar/app/deleteItemTypeInfo', {
+    token,
+    typeId: id,
+    typeid: id,
+  })
+}
+
+export async function getItemListByType({ typeId } = {}) {
+  const token = getToken()
+  const id = normalizeText(typeId)
+  const res = await postForm('/calendar/app/getTypeItemlist', {
+    token,
+    typeId: id,
+  })
+  return extractList(res, ['itemList', 'iteminfoList', 'itemInfoList']).map(normalizeListItem).filter((x) => x && x.id)
+}
+
+export async function addItemInfo({ typeId, itemName } = {}) {
+  const token = getToken()
+  const id = normalizeText(typeId)
+  const name = normalizeText(itemName)
+  return postForm('/calendar/app/addItemInfo', {
+    token,
+    typeId: id,
+    typeid: id,
+    itemName: name,
+    itemname: name,
+  })
+}
+
+export async function updateItemInfo({ itemId, itemName, status } = {}) {
+  const token = getToken()
+  const id = normalizeText(itemId)
+  const name = normalizeText(itemName)
+  const nextStatus = Number(status) === 1 ? 1 : 0
+  return postForm('/calendar/app/updateItemInfo', {
+    token,
+    itemId: id,
+    itemid: id,
+    itemName: name,
+    itemname: name,
+    status: nextStatus,
+  })
+}
+
+export async function deleteItemInfo({ itemId } = {}) {
+  const token = getToken()
+  const id = normalizeText(itemId)
+  return postForm('/calendar/app/deleteItemInfo', {
+    token,
+    itemId: id,
+    itemid: id,
   })
 }

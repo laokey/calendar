@@ -10,7 +10,7 @@
     </BlHeader>
 
     <view class="grid">
-      <view v-for="l in lists" :key="l.id" class="tile" :style="{ background: tileBg(l.color) }" @click="openList(l.id)">
+      <view v-for="l in lists" :key="l.id" class="tile" :style="{ background: tileBg(l.color) }" @click="openList(l)">
         <view class="tile-icon" :style="{ background: l.color }">
           <view class="glyph" />
         </view>
@@ -25,24 +25,50 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
-import { ensureListState, listLists, listStats } from '../../utils/listStore'
+import { getItemListByType, getItemTypeList } from '../../utils/api/tasks'
 
-const listState = ref(ensureListState())
+const listItems = ref([])
+const statsMap = ref({})
 
-function refresh() {
-  listState.value = ensureListState()
+const lists = computed(() =>
+  listItems.value.slice().sort((a, b) => (b.createdAtTs || 0) - (a.createdAtTs || 0)),
+)
+
+async function refresh() {
+  try {
+    const nextLists = await getItemTypeList()
+    listItems.value = nextLists
+    const entries = await Promise.all(
+      nextLists.map(async (list) => {
+        const items = await getItemListByType({ typeId: list.id })
+        const total = items.length
+        const done = items.filter((x) => x.done).length
+        return [list.id, { total, done, undone: total - done }]
+      }),
+    )
+    statsMap.value = entries.reduce((acc, entry) => {
+      acc[entry[0]] = entry[1]
+      return acc
+    }, {})
+  } catch (e) {
+    listItems.value = []
+    statsMap.value = {}
+  }
 }
 
-onShow(() => refresh())
-
-const lists = computed(() => listLists(listState.value))
+onShow(() => {
+  refresh()
+})
 
 function stats(listId) {
-  return listStats(listState.value, listId)
+  return statsMap.value[listId] || { total: 0, done: 0, undone: 0 }
 }
 
-function openList(id) {
-  uni.navigateTo({ url: `/pages/lists/list-detail?id=${id}` })
+function openList(list) {
+  const id = list && list.id ? String(list.id) : ''
+  if (!id) return
+  const title = encodeURIComponent(String((list && list.title) || ''))
+  uni.navigateTo({ url: `/pages/lists/list-detail?id=${id}&title=${title}` })
 }
 
 function goAdd() {

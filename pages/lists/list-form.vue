@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page form-page">
-    <BlHeader title="添加清单" back />
+    <BlHeader :title="pageTitle" back />
 
     <view class="bl-card title-card">
       <view class="bl-input">
@@ -25,16 +25,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
-import { addList, ensureListState, findList, updateList } from '../../utils/listStore'
-
-const listState = ref(ensureListState())
+import { addItemTypeInfo, getItemTypeList, updateItemTypeInfo } from '../../utils/api/tasks'
 
 const listId = ref('')
 const title = ref('')
 const color = ref('#f0ad4e')
+const saving = ref(false)
 
 const colors = [
   '#f7c84f',
@@ -53,19 +52,26 @@ const colors = [
   '#c218d4',
 ]
 
-function refresh() {
-  listState.value = ensureListState()
+const pageTitle = computed(() => (listId.value ? '修改清单' : '添加清单'))
+
+async function initEditData(id) {
+  try {
+    const list = await getItemTypeList()
+    const current = list.find((x) => x.id === id)
+    if (current) {
+      title.value = current.title || ''
+      color.value = current.color || color.value
+    }
+  } catch (e) {}
 }
 
 onLoad((options) => {
-  refresh()
   const id = options && options.id ? String(options.id) : ''
   if (!id) return
   listId.value = id
-  const l = findList(listState.value, id)
-  if (!l) return
-  title.value = l.title || ''
-  color.value = l.color || color.value
+  title.value = options && options.title ? decodeURIComponent(String(options.title)) : ''
+  color.value = options && options.color ? decodeURIComponent(String(options.color)) : color.value
+  initEditData(id)
 })
 
 function validate() {
@@ -76,14 +82,21 @@ function validate() {
   return true
 }
 
-function save() {
+async function save() {
   if (!validate()) return
-  if (listId.value) {
-    updateList(listState.value, listId.value, { title: title.value, color: color.value })
-  } else {
-    addList(listState.value, { title: title.value, color: color.value })
+  if (saving.value) return
+  saving.value = true
+  try {
+    if (listId.value) {
+      await updateItemTypeInfo({ typeId: listId.value, typeName: title.value, typeColor: color.value })
+    } else {
+      await addItemTypeInfo({ typeName: title.value, typeColor: color.value })
+    }
+    uni.navigateBack()
+  } catch (e) {
+  } finally {
+    saving.value = false
   }
-  uni.navigateBack()
 }
 </script>
 

@@ -144,126 +144,176 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
-import { onLoad, onShow } from "@dcloudio/uni-app";
-import BlHeader from "../../components/BlHeader.vue";
+import { computed, ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import BlHeader from '../../components/BlHeader.vue'
 import {
-  addListItem,
-  deleteList,
-  deleteListItem,
-  ensureListState,
-  findList,
-  getShowCompleted,
-  listItems,
-  setShowCompleted,
-  toggleListItemDone,
-  updateListItem,
-} from "../../utils/listStore";
+  addItemInfo,
+  deleteItemInfo,
+  deleteItemTypeInfo,
+  getItemListByType,
+  getItemTypeList,
+  updateItemInfo,
+} from '../../utils/api/tasks'
 
-const listState = ref(ensureListState());
-const listId = ref("");
+const SHOW_COMPLETED_KEY = 'list_show_completed_v1'
 
-const itemSheetOpen = ref(false);
-const editingItemId = ref("");
-const itemText = ref("");
+const listId = ref('')
+const listTitle = ref('')
+const remoteList = ref(null)
+const allItems = ref([])
 
-const confirmDeleteOpen = ref(false);
+const itemSheetOpen = ref(false)
+const editingItemId = ref('')
+const itemText = ref('')
 
-function refresh() {
-  listState.value = ensureListState();
-  if (listId.value && !findList(listState.value, listId.value)) {
-    uni.navigateBack();
+const confirmDeleteOpen = ref(false)
+const showCompletedState = ref(true)
+
+function loadShowCompleted(listKey) {
+  try {
+    const raw = uni.getStorageSync(SHOW_COMPLETED_KEY)
+    const obj = typeof raw === 'string' ? JSON.parse(raw || '{}') : raw
+    const value = obj && typeof obj === 'object' ? obj[listKey] : undefined
+    return typeof value === 'boolean' ? value : true
+  } catch (e) {
+    return true
   }
 }
 
-onShow(() => refresh());
+function saveShowCompleted(listKey, show) {
+  try {
+    const raw = uni.getStorageSync(SHOW_COMPLETED_KEY)
+    const obj = raw && typeof raw === 'string' ? JSON.parse(raw || '{}') : raw && typeof raw === 'object' ? raw : {}
+    uni.setStorageSync(SHOW_COMPLETED_KEY, JSON.stringify({ ...(obj || {}), [listKey]: !!show }))
+  } catch (e) {}
+}
+
+async function refresh() {
+  if (!listId.value) return
+  try {
+    const [types, items] = await Promise.all([
+      getItemTypeList(),
+      getItemListByType({ typeId: listId.value }),
+    ])
+    const current = types.find((x) => x.id === listId.value) || null
+    if (!current) {
+      uni.navigateBack()
+      return
+    }
+    remoteList.value = current
+    listTitle.value = current.title || listTitle.value
+    allItems.value = items
+    showCompletedState.value = loadShowCompleted(listId.value)
+  } catch (e) {}
+}
+
+onShow(() => {
+  refresh()
+})
 
 onLoad((options) => {
-  listId.value = options && options.id ? String(options.id) : "";
-  refresh();
-  if (!listId.value) uni.navigateBack();
-});
+  listId.value = options && options.id ? String(options.id) : ''
+  listTitle.value = options && options.title ? decodeURIComponent(String(options.title)) : ''
+  showCompletedState.value = loadShowCompleted(listId.value)
+  if (!listId.value) {
+    uni.navigateBack()
+    return
+  }
+  refresh()
+})
 
-const listTitle = computed(() => {
-  const l = findList(listState.value, listId.value);
-  return l ? l.title : "";
-});
-
-const showCompleted = computed(() =>
-  getShowCompleted(listState.value, listId.value),
-);
-
-const allItems = computed(() => listItems(listState.value, listId.value));
-const undoneItems = computed(() => allItems.value.filter((x) => !x.done));
-const doneItems = computed(() => allItems.value.filter((x) => x.done));
+const showCompleted = computed(() => showCompletedState.value)
+const undoneItems = computed(() => allItems.value.filter((x) => !x.done))
+const doneItems = computed(() => allItems.value.filter((x) => x.done))
 
 const bottomLabel = computed(() => {
-  if (doneItems.value.length === 0) return "显示已勾选事项";
-  return showCompleted.value ? "隐藏已勾选事项" : "显示已勾选事项";
-});
+  if (doneItems.value.length === 0) return '显示已勾选事项'
+  return showCompleted.value ? '隐藏已勾选事项' : '显示已勾选事项'
+})
 
 const sheetTitle = computed(() =>
-  editingItemId.value ? "修改事项" : "添加事项",
-);
-const canConfirmItem = computed(() => !!String(itemText.value || "").trim());
+  editingItemId.value ? '修改事项' : '添加事项',
+)
+const canConfirmItem = computed(() => !!String(itemText.value || '').trim())
 
 function openAdd() {
-  editingItemId.value = "";
-  itemText.value = "";
-  itemSheetOpen.value = true;
+  editingItemId.value = ''
+  itemText.value = ''
+  itemSheetOpen.value = true
 }
 
 function openEdit(it) {
-  editingItemId.value = it.id;
-  itemText.value = it.text || "";
-  itemSheetOpen.value = true;
+  editingItemId.value = it.id
+  itemText.value = it.text || ''
+  itemSheetOpen.value = true
 }
 
 function closeItemSheet() {
-  itemSheetOpen.value = false;
-  editingItemId.value = "";
-  itemText.value = "";
+  itemSheetOpen.value = false
+  editingItemId.value = ''
+  itemText.value = ''
 }
 
-function confirmItem() {
-  if (!canConfirmItem.value) return;
-  if (editingItemId.value) {
-    updateListItem(listState.value, listId.value, editingItemId.value, {
-      text: itemText.value,
-    });
-  } else {
-    addListItem(listState.value, listId.value, itemText.value);
-  }
-  closeItemSheet();
-  refresh();
+async function confirmItem() {
+  if (!canConfirmItem.value || !listId.value) return
+  try {
+    if (editingItemId.value) {
+      const current = allItems.value.find((x) => x.id === editingItemId.value)
+      await updateItemInfo({
+        itemId: editingItemId.value,
+        itemName: itemText.value,
+        status: current && current.done ? 1 : 0,
+      })
+    } else {
+      await addItemInfo({ typeId: listId.value, itemName: itemText.value })
+    }
+    closeItemSheet()
+    refresh()
+  } catch (e) {}
 }
 
-function delItem(id) {
-  deleteListItem(listState.value, listId.value, id);
-  refresh();
+async function delItem(id) {
+  try {
+    await deleteItemInfo({ itemId: id })
+    refresh()
+  } catch (e) {}
 }
 
-function toggleDone(id) {
-  toggleListItemDone(listState.value, listId.value, id);
-  refresh();
+async function toggleDone(id) {
+  const current = allItems.value.find((x) => x.id === id)
+  if (!current) return
+  try {
+    await updateItemInfo({
+      itemId: id,
+      itemName: current.text,
+      status: current.done ? 0 : 1,
+    })
+    refresh()
+  } catch (e) {}
 }
 
 function toggleShowCompleted() {
-  if (doneItems.value.length === 0) return;
-  setShowCompleted(listState.value, listId.value, !showCompleted.value);
-  refresh();
+  if (doneItems.value.length === 0 || !listId.value) return
+  const next = !showCompleted.value
+  showCompletedState.value = next
+  saveShowCompleted(listId.value, next)
 }
 
 function goEdit() {
-  if (!listId.value) return;
-  uni.navigateTo({ url: `/pages/lists/list-form?id=${listId.value}` });
+  if (!listId.value) return
+  const title = encodeURIComponent(String(listTitle.value || ''))
+  const color = encodeURIComponent(String((remoteList.value && remoteList.value.color) || ''))
+  uni.navigateTo({ url: `/pages/lists/list-form?id=${listId.value}&title=${title}&color=${color}` })
 }
 
-function deleteThisList() {
-  if (!listId.value) return;
-  deleteList(listState.value, listId.value);
-  confirmDeleteOpen.value = false;
-  uni.navigateBack();
+async function deleteThisList() {
+  if (!listId.value) return
+  try {
+    await deleteItemTypeInfo({ typeId: listId.value })
+    confirmDeleteOpen.value = false
+    uni.reLaunch({ url: '/pages/lists/index' })
+  } catch (e) {}
 }
 </script>
 
