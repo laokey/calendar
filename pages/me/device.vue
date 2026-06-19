@@ -34,7 +34,7 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.deviceEmail" class="item">
+      <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">{{ d.active ? "已激活" : "未激活" }}</text>
           <text class="name">{{ d.name }}</text>
@@ -77,16 +77,6 @@ const safeTop = computed(() => {
   }
 });
 
-const safeBottom = computed(() => {
-  try {
-    const info = uni.getSystemInfoSync();
-    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null;
-    return insets && typeof insets.bottom === "number" ? insets.bottom : 0;
-  } catch (e) {
-    return 0;
-  }
-});
-
 async function refresh() {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (!logged) {
@@ -95,8 +85,9 @@ async function refresh() {
   }
   loading.value = true
   try {
-    const list = await deviceApi.getCalendarDeviceList()
+    const list = await deviceApi.getLinkDeviceList()
     devices.value = (list || []).map((d) => ({
+      linkId: d.linkId,
       deviceEmail: d.deviceEmail,
       activationCode: d.activationCode,
       name: d.deviceName || '日历',
@@ -136,11 +127,26 @@ function goManage(d) {
   });
 }
 
-function getCode(d) {
-  const code = d && d.activationCode ? String(d.activationCode) : ''
-  uni.navigateTo({
-    url: `/pages/device/activate?code=${encodeURIComponent(code)}`,
-  });
+async function getCode(d) {
+  const linkId = d && d.linkId ? String(d.linkId) : ''
+  if (!linkId) return
+  uni.showLoading({ title: '获取中' })
+  try {
+    const code = await deviceApi.getDeviceActivationCode({ linkId })
+    if (!code) {
+      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      return
+    }
+    uni.navigateTo({
+      url: `/pages/device/activate?code=${encodeURIComponent(code)}`,
+    })
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

@@ -11,7 +11,7 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.deviceEmail" class="item">
+      <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">已激活</text>
           <text class="name">{{ d.deviceName || '日历' }}</text>
@@ -46,7 +46,7 @@ const devices = ref([])
 
 const dialogVisible = ref(false)
 const activeEmail = ref('')
-const removeEmail = ref('')
+const removeLinkId = ref('')
 
 onLoad((options) => {
   const v =
@@ -80,7 +80,7 @@ async function refresh() {
     return
   }
   try {
-    const list = await deviceApi.getCalendarDeviceList()
+    const list = await deviceApi.getLinkDeviceList()
     const active = (list || []).filter((x) => Number(x && x.status) === 1)
     devices.value = activeEmail.value ? active.filter((x) => String(x.deviceEmail) === activeEmail.value) : active
   } catch (e) {
@@ -94,21 +94,21 @@ onShow(() => {
 })
 
 function askRemove(d) {
-  removeEmail.value = d && d.deviceEmail ? String(d.deviceEmail) : ''
+  removeLinkId.value = d && d.linkId ? String(d.linkId) : ''
   dialogVisible.value = true
 }
 
 function closeDialog() {
   dialogVisible.value = false
-  removeEmail.value = ''
+  removeLinkId.value = ''
 }
 
 async function confirmRemove() {
-  const email = removeEmail.value
-  if (!email) return
+  const linkId = removeLinkId.value
+  if (!linkId) return
   uni.showLoading({ title: '解绑中' })
   try {
-    const res = await deviceApi.unbindCalendarDevice(email)
+    const res = await deviceApi.deleteLinkDevice({ linkId })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
       uni.showToast({ title: '解绑失败', icon: 'none' })
       return

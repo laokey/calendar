@@ -24,11 +24,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { deviceApi } from '../../utils/api'
 
-const devices = ref([
-  { id: 'dev_1', name: '日历' },
-  { id: 'dev_2', name: '日历' },
-])
+const devices = ref([])
 
 const safeTop = computed(() => {
   try {
@@ -49,8 +48,33 @@ function goManage() {
 }
 
 function open(d) {
-  uni.navigateTo({ url: `/pages/me/device-linked-manage?id=${encodeURIComponent(String(d && d.id ? d.id : ''))}` })
+  uni.navigateTo({ url: `/pages/me/device-linked-manage?deviceEmail=${encodeURIComponent(String(d && d.deviceEmail ? d.deviceEmail : ''))}` })
 }
+
+async function refresh() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    devices.value = []
+    return
+  }
+  try {
+    const list = await deviceApi.getLinkDeviceList()
+    devices.value = (list || [])
+      .filter((x) => Number(x && x.status) === 1)
+      .map((item) => ({
+        linkId: item.linkId,
+        deviceEmail: item.deviceEmail,
+        name: item.deviceName || '日历',
+      }))
+  } catch (e) {
+    devices.value = []
+    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+  }
+}
+
+onShow(() => {
+  refresh()
+})
 </script>
 
 <style scoped lang="scss">

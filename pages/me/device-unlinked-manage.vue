@@ -11,7 +11,7 @@
     </view>
 
     <view class="list">
-      <view v-for="d in devices" :key="d.deviceEmail" class="item">
+      <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
           <text class="status">未激活</text>
           <text class="name">{{ d.deviceName || '日历' }}</text>
@@ -71,7 +71,7 @@ async function refresh() {
     return
   }
   try {
-    const list = await deviceApi.getCalendarDeviceList()
+    const list = await deviceApi.getLinkDeviceList()
     const inactive = (list || []).filter((x) => Number(x && x.status) === 0)
     devices.value = deviceEmail.value ? inactive.filter((x) => String(x.deviceEmail) === deviceEmail.value) : inactive
   } catch (e) {
@@ -84,9 +84,24 @@ onShow(() => {
   refresh()
 })
 
-function goActivate(d) {
-  const code = d && d.activationCode ? String(d.activationCode) : ''
-  uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
+async function goActivate(d) {
+  const linkId = d && d.linkId ? String(d.linkId) : ''
+  if (!linkId) return
+  uni.showLoading({ title: '获取中' })
+  try {
+    const code = await deviceApi.getDeviceActivationCode({ linkId })
+    if (!code) {
+      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      return
+    }
+    uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 
