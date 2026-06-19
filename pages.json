@@ -151,6 +151,12 @@
       }
     },
     {
+      "path": "pages/me/push-notice",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/me/language",
       "style": {
         "navigationStyle": "custom"

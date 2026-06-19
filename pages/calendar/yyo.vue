@@ -296,7 +296,9 @@ function open(title) {
     return;
   }
   if (title === "通知") {
-    uni.navigateTo({ url: "/pages/activity/index?tab=notice" });
+    uni.navigateTo({
+      url: `/pages/me/notice?deviceName=${encodeURIComponent(String(calendarName.value || ""))}&deviceEmail=${encodeURIComponent(String(calendarEmail.value || ""))}`,
+    });
     return;
   }
   if (title === "贺卡") {

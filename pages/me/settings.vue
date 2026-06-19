@@ -101,7 +101,7 @@ function goAgreement() {
 }
 
 function goNotice() {
-  uni.navigateTo({ url: '/pages/me/notice' })
+  uni.navigateTo({ url: '/pages/me/push-notice' })
 }
 
 function restore() {
