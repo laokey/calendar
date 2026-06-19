@@ -5,13 +5,13 @@
     <view class="content">
       <view class="intro">
         <text class="intro-text">获取有关</text>
-        <text class="intro-text intro-highlight">{{ memberName }}</text>
+        <text class="intro-text intro-highlight">{{ currentDeviceName }}</text>
         <text class="intro-text">的事件和任务的推送通知。</text>
       </view>
 
-      <view v-if="!pushEnabled" class="permission-card">
+      <view v-if="!systemNotifyEnabled" class="permission-card">
         <text class="permission-text">开启推送通知，即可使用相关设置功能</text>
-        <view class="permission-btn" @click="enablePush">
+        <view class="permission-btn" @click="openSystemNotificationSettings">
           <text class="permission-btn-text">打开推送通知</text>
         </view>
       </view>
@@ -86,17 +86,16 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { noticeApi } from '../../utils/api'
-import { ensureMeState, updateSettings } from '../../utils/meStore'
 
 const minuteOptions = [5, 10, 15, 30, 60, 120]
 const saving = ref(false)
 const loading = ref(false)
 const deviceName = ref('')
 const deviceEmail = ref('')
-const pushEnabled = ref(true)
+const systemNotifyEnabled = ref(true)
 const notifyList = ref(createDefaultNotifyList())
 
-const memberName = computed(() => deviceName.value || '该设备')
+const currentDeviceName = computed(() => deviceName.value || '当前设备')
 const eventNotify = computed(() => getNotifyItem(0))
 const advanceNotify = computed(() => getNotifyItem(1))
 const advanceSliderStep = computed(() => minuteToStep(advanceNotify.value.advanceMinutes))
@@ -108,13 +107,12 @@ const advanceFillPercent = computed(() => {
 
 onLoad((options) => {
   readPageContext(options)
-  syncPushEnabled()
 })
 
-onShow(() => {
+onShow(async () => {
   readPageContext()
-  syncPushEnabled()
-  if (pushEnabled.value) loadNotifyList()
+  await refreshSystemNotificationPermission()
+  if (systemNotifyEnabled.value) loadNotifyList()
 })
 
 function createDefaultNotifyList() {
@@ -179,10 +177,20 @@ function stepToMinute(step) {
   return minuteOptions[idx]
 }
 
+function decodeQueryValue(value) {
+  const raw = value === undefined || value === null ? '' : String(value).trim()
+  if (!raw) return ''
+  try {
+    return decodeURIComponent(raw)
+  } catch (e) {
+    return raw
+  }
+}
+
 function readPageContext(options) {
   const opts = options && typeof options === 'object' ? options : {}
-  const passedName = opts.deviceName ? String(opts.deviceName).trim() : ''
-  const passedEmail = opts.deviceEmail ? String(opts.deviceEmail).trim() : ''
+  const passedName = decodeQueryValue(opts.deviceName)
+  const passedEmail = decodeQueryValue(opts.deviceEmail)
   if (passedName) deviceName.value = passedName
   if (passedEmail) deviceEmail.value = passedEmail
   try {
@@ -191,19 +199,6 @@ function readPageContext(options) {
     if (!deviceName.value && ctx && ctx.name) deviceName.value = String(ctx.name)
     if (!deviceEmail.value && ctx && ctx.email) deviceEmail.value = String(ctx.email)
   } catch (e) {}
-}
-
-function syncPushEnabled() {
-  const state = ensureMeState()
-  const notifications = state.settings && state.settings.notifications ? state.settings.notifications : {}
-  pushEnabled.value = notifications.system !== false
-}
-
-function savePushEnabled(next) {
-  const state = ensureMeState()
-  const current = state.settings && state.settings.notifications ? state.settings.notifications : {}
-  updateSettings(state, { notifications: { ...current, system: !!next } })
-  pushEnabled.value = !!next
 }
 
 async function loadNotifyList() {
@@ -259,29 +254,136 @@ async function onAdvanceMinuteChange(e) {
   }
 }
 
-function enablePush() {
+async function refreshSystemNotificationPermission() {
+  try {
+    systemNotifyEnabled.value = await getSystemNotificationEnabled()
+  } catch (e) {
+    systemNotifyEnabled.value = true
+  }
+}
+
+async function getSystemNotificationEnabled() {
+  const fromUni = await getStatusFromUniApi()
+  if (typeof fromUni === 'boolean') return fromUni
+  const fromNative = getStatusFromNativeApi()
+  if (typeof fromNative === 'boolean') return fromNative
+  return true
+}
+
+function getStatusFromUniApi() {
+  return new Promise((resolve) => {
+    if (typeof uni.getAppAuthorizeSetting !== 'function') {
+      resolve(null)
+      return
+    }
+    uni.getAppAuthorizeSetting({
+      success: (res) => {
+        const status = pickNotificationStatus(res)
+        if (!status) {
+          resolve(null)
+          return
+        }
+        resolve(status === 'authorized')
+      },
+      fail: () => resolve(null),
+    })
+  })
+}
+
+function pickNotificationStatus(res) {
+  if (!res || typeof res !== 'object') return ''
+  const candidates = [
+    res.notificationAuthorized,
+    res.notificationAlertAuthorized,
+    res.notificationBadgeAuthorized,
+    res.notificationSoundAuthorized,
+  ]
+  return candidates.find((item) => typeof item === 'string' && item) || ''
+}
+
+function getStatusFromNativeApi() {
+  if (typeof plus === 'undefined' || !plus.os) return null
+  try {
+    if (plus.os.name === 'Android') return getAndroidNotificationEnabled()
+    if (plus.os.name === 'iOS') return getIosNotificationEnabled()
+  } catch (e) {
+    return null
+  }
+  return null
+}
+
+function getAndroidNotificationEnabled() {
+  const main = plus.android.runtimeMainActivity()
+  let NotificationManagerCompat = null
+  try {
+    NotificationManagerCompat = plus.android.importClass('androidx.core.app.NotificationManagerCompat')
+  } catch (e) {
+    NotificationManagerCompat = plus.android.importClass('android.support.v4.app.NotificationManagerCompat')
+  }
+  return !!NotificationManagerCompat.from(main).areNotificationsEnabled()
+}
+
+function getIosNotificationEnabled() {
+  const app = plus.ios.invoke('UIApplication', 'sharedApplication')
+  let types = 0
+  const settings = plus.ios.invoke(app, 'currentUserNotificationSettings')
+  if (settings) {
+    types = settings.plusGetAttribute('types')
+    plus.ios.deleteObject(settings)
+  } else {
+    types = plus.ios.invoke(app, 'enabledRemoteNotificationTypes')
+  }
+  plus.ios.deleteObject(app)
+  return Number(types) !== 0
+}
+
+function openSystemNotificationSettings() {
   if (typeof uni.openAppAuthorizeSetting === 'function') {
     uni.openAppAuthorizeSetting({
-      success: () => {
-        savePushEnabled(true)
-        loadNotifyList()
-      },
+      success: () => {},
       fail: () => {
-        uni.showToast({ title: '请在系统设置中开启通知权限', icon: 'none' })
+        openSystemNotificationSettingsFallback()
       },
     })
     return
   }
-  uni.showModal({
-    title: '',
-    content: '请在系统设置中开启通知权限后返回此页继续设置。',
-    confirmText: '我知道了',
-    showCancel: false,
-    success: () => {
-      savePushEnabled(true)
-      loadNotifyList()
-    },
-  })
+  openSystemNotificationSettingsFallback()
+}
+
+function openSystemNotificationSettingsFallback() {
+  if (typeof plus === 'undefined' || !plus.os) {
+    uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+    return
+  }
+  try {
+    if (plus.os.name === 'iOS') {
+      const app = plus.ios.invoke('UIApplication', 'sharedApplication')
+      const setting = plus.ios.invoke('NSURL', 'URLWithString:', 'app-settings:')
+      plus.ios.invoke(app, 'openURL:', setting)
+      plus.ios.deleteObject(setting)
+      plus.ios.deleteObject(app)
+      return
+    }
+
+    if (plus.os.name === 'Android') {
+      const main = plus.android.runtimeMainActivity()
+      const Intent = plus.android.importClass('android.content.Intent')
+      const Build = plus.android.importClass('android.os.Build')
+      const intent = new Intent('android.settings.APP_NOTIFICATION_SETTINGS')
+      const packageName = main.getPackageName()
+      const uid = main.getApplicationInfo().plusGetAttribute('uid')
+      if (Build.VERSION.SDK_INT >= 26) {
+        intent.putExtra('android.provider.extra.APP_PACKAGE', packageName)
+      } else {
+        intent.putExtra('app_package', packageName)
+        intent.putExtra('app_uid', uid)
+      }
+      main.startActivity(intent)
+      return
+    }
+  } catch (e) {
+    uni.showToast({ title: '打开系统设置失败', icon: 'none' })
+  }
 }
 </script>
 
