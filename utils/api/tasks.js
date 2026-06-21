@@ -165,7 +165,13 @@ function normalizeTask(it) {
         ? x.finishtime
         : x.finish_time !== undefined
           ? x.finish_time
-          : ''
+          : x.taskDate !== undefined
+            ? x.taskDate
+            : x.taskdate !== undefined
+              ? x.taskdate
+              : x.date !== undefined
+                ? x.date
+                : ''
   const isTimeRaw = x.isTime !== undefined ? x.isTime : x.istime !== undefined ? x.istime : 1
   const isRepeatRaw = x.isRepeat !== undefined ? x.isRepeat : x.isrepeat !== undefined ? x.isrepeat : 0
   const statusRaw = x.status !== undefined ? x.status : x.taskStatus !== undefined ? x.taskStatus : 0
@@ -194,14 +200,38 @@ function normalizeTask(it) {
 }
 
 function taskListFromResponse(res) {
-  if (Array.isArray(res)) return res
-  if (res && typeof res === 'object') {
-    if (Array.isArray(res.list)) return res.list
-    if (Array.isArray(res.data)) return res.data
-    if (Array.isArray(res.taskList)) return res.taskList
-    if (Array.isArray(res.taskinfoList)) return res.taskinfoList
+  const raw =
+    Array.isArray(res)
+      ? res
+      : res && typeof res === 'object'
+        ? Array.isArray(res.list)
+          ? res.list
+          : Array.isArray(res.data)
+            ? res.data
+            : Array.isArray(res.taskList)
+              ? res.taskList
+              : Array.isArray(res.taskinfoList)
+                ? res.taskinfoList
+                : []
+        : []
+  if (!raw.length) return []
+  if (raw.some((item) => Array.isArray(item && (item.tasklist || item.taskList)))) {
+    const out = []
+    for (const group of raw) {
+      const groupDate = normalizeDateKey(group && (group.date !== undefined ? group.date : group.taskDate))
+      const list = Array.isArray(group && group.tasklist) ? group.tasklist : Array.isArray(group && group.taskList) ? group.taskList : []
+      for (const task of list) {
+        out.push({
+          ...(task && typeof task === 'object' ? task : {}),
+          taskDate:
+            (task && typeof task === 'object' && (task.taskDate !== undefined ? task.taskDate : task.taskdate !== undefined ? task.taskdate : task.date)) ||
+            groupDate,
+        })
+      }
+    }
+    return out
   }
-  return []
+  return raw
 }
 
 function membersToRemoteValue(payload) {
@@ -358,12 +388,15 @@ export async function addTaskInfo(payload = {}) {
   const token = getToken()
   const email = await resolveDeviceEmail(payload && payload.deviceEmail)
   const members = membersToRemoteValue(payload)
+  const taskDate = normalizeDateKey(payload && payload.date)
   return postForm('/calendar/app/addTaskInfo', {
     token,
     deviceEmail: email,
     deviceemail: email,
     taskTitle: payload.taskTitle,
     tasktitle: payload.taskTitle,
+    taskDate,
+    taskdate: taskDate,
     emoji: payload.emoji || '',
     isTime: payload.timeEnabled ? 0 : 1,
     istime: payload.timeEnabled ? 0 : 1,

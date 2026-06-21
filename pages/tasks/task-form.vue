@@ -341,6 +341,10 @@ function validate() {
     uni.showToast({ title: '请选择成员', icon: 'none' })
     return false
   }
+  if (isRemoteTaskMode() && !date.value) {
+    uni.showToast({ title: '请选择日期', icon: 'none' })
+    return false
+  }
   if (dateEnabled.value && !date.value) {
     uni.showToast({ title: '请选择日期', icon: 'none' })
     return false

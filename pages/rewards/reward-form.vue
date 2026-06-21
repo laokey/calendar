@@ -241,18 +241,12 @@ import BlAvatar from "../../components/BlAvatar.vue";
 import BlHeader from "../../components/BlHeader.vue";
 import BlSheet from "../../components/BlSheet.vue";
 import { ensureCalendarState, listMembers, setMembers } from "../../utils/calendarStore";
-import {
-  addRewardItem,
-  ensureRewardState,
-  findRewardItem,
-  updateRewardItem,
-} from "../../utils/rewardStore";
-import { membersApi } from "../../utils/api";
+import { membersApi, rewardsApi } from "../../utils/api";
 
 const calendarState = ref(ensureCalendarState());
-const rewardState = ref(ensureRewardState());
 
 const itemId = ref("");
+const saving = ref(false);
 
 const title = ref("");
 const emoji = ref("");
@@ -283,7 +277,6 @@ const emojiOptions = [
 
 function refresh() {
   calendarState.value = ensureCalendarState();
-  rewardState.value = ensureRewardState();
 }
 
 async function syncRemoteMembers() {
@@ -306,34 +299,51 @@ onShow(() => {
 });
 
 const memberItems = computed(() => {
-  const base = [{ id: "me", name: "我的", glyph: "我", color: "#4cc38a" }];
-  return [
-    ...base,
-    ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
-  ];
+  return listMembers(calendarState.value).filter((m) => m.enabled !== false);
 });
 
 onLoad((options) => {
-  refresh();
-  const id = options && options.id ? String(options.id) : "";
-  const t = options && options.type ? String(options.type) : "";
-  const mid = options && options.memberId ? String(options.memberId) : "";
+  ;(async () => {
+    refresh();
+    await syncRemoteMembers();
+    const id = options && options.id ? decodeQueryValue(options.id) : "";
+    const t = options && options.type ? decodeQueryValue(options.type) : "";
+    const mid = options && options.memberId ? decodeQueryValue(options.memberId) : "";
 
-  if (mid) memberId.value = mid;
-  if (t) type.value = t === "punish" ? "punish" : "reward";
+    if (mid) memberId.value = mid;
+    if (t) type.value = t === "punish" ? "punish" : "reward";
+    if (!memberId.value && memberItems.value[0]) memberId.value = String(memberItems.value[0].id || "");
 
-  if (!id) return;
-  itemId.value = id;
-  const it = findRewardItem(rewardState.value, id);
-  if (!it) return;
-  title.value = it.title || "";
-  emoji.value = it.emoji || "";
-  resetAfter.value = !!it.resetAfter;
-  hearts.value = String(it.hearts || 0);
-  memberId.value = it.memberId || memberId.value;
-  type.value = it.type === "punish" ? "punish" : "reward";
-  desc.value = it.desc || "";
+    if (!id) return;
+    itemId.value = id;
+    await loadRewardDetail(id);
+  })();
 });
+
+function decodeQueryValue(value) {
+  const raw = value === undefined || value === null ? "" : String(value).trim();
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(raw);
+  } catch (e) {
+    return raw;
+  }
+}
+
+async function loadRewardDetail(id) {
+  try {
+    const it = await rewardsApi.getRewardInfo({ rewardId: id });
+    title.value = it.rewardTitle || "";
+    emoji.value = it.emoji || "";
+    resetAfter.value = Number(it.isReset) === 1;
+    hearts.value = String(it.starNumber || 0);
+    memberId.value = it.members && it.members[0] ? String(it.members[0].memberId || memberId.value) : memberId.value;
+    type.value = Number(it.rewardType) === 1 ? "punish" : "reward";
+    desc.value = it.description || "";
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || "获取奖励详情失败"), icon: "none" });
+  }
+}
 
 function selectEmoji(e) {
   emoji.value = e;
@@ -361,25 +371,31 @@ function validate() {
   return true;
 }
 
-function save() {
-  if (!validate()) return;
+async function save() {
+  if (!validate() || saving.value) return;
+  saving.value = true;
   const payload = {
-    title: title.value,
+    rewardTitle: title.value,
     emoji: emoji.value,
-    resetAfter: resetAfter.value,
-    hearts: Number(hearts.value || 0) || 0,
-    memberId: memberId.value,
-    type: type.value,
-    desc: desc.value,
+    isReset: resetAfter.value ? 1 : 0,
+    starNumber: Number(hearts.value || 0) || 0,
+    members: [memberId.value],
+    rewardType: type.value === "punish" ? 1 : 0,
+    description: desc.value,
   };
-
-  if (itemId.value) {
-    updateRewardItem(rewardState.value, itemId.value, payload);
-  } else {
-    addRewardItem(rewardState.value, payload);
+  try {
+    if (itemId.value) {
+      await rewardsApi.updateRewardInfo({ rewardId: itemId.value, ...payload });
+    } else {
+      await rewardsApi.addRewardInfo(payload);
+    }
+    uni.$emit && uni.$emit("reward:refresh");
+    uni.navigateBack();
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || "保存奖励失败"), icon: "none" });
+  } finally {
+    saving.value = false;
   }
-  uni.$emit && uni.$emit("reward:refresh");
-  uni.navigateBack();
 }
 </script>
 

@@ -63,11 +63,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
-import { addHeartTransfer, computeHeartBalance, ensureRewardState } from '../../utils/rewardStore'
-import { membersApi } from '../../utils/api'
+import { membersApi, rewardsApi } from '../../utils/api'
 
 const calendarState = ref(ensureCalendarState())
-const rewardState = ref(ensureRewardState())
+const memberBalanceMap = ref({})
+const submitting = ref(false)
 
 const memberId = ref('')
 const hearts = ref('10')
@@ -86,11 +86,24 @@ async function syncRemoteMembers() {
 
 function refresh() {
   calendarState.value = ensureCalendarState()
-  rewardState.value = ensureRewardState()
-  if (!memberId.value) {
-    const prefer = rewardState.value.activeMemberId
-    const all = listMembers(calendarState.value).filter((m) => m.enabled !== false)
-    memberId.value = all.some((m) => m.id === prefer) ? prefer : (all[0] ? all[0].id : '')
+  const all = listMembers(calendarState.value).filter((m) => m.enabled !== false)
+  if (!memberId.value) memberId.value = all[0] ? all[0].id : ''
+  }
+
+async function syncRemoteRewards() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    memberBalanceMap.value = {}
+    return
+  }
+  try {
+    const [rewardList, punishList] = await Promise.all([
+      rewardsApi.getMemberRewardList({ rewardType: 0 }),
+      rewardsApi.getMemberRewardList({ rewardType: 1 }),
+    ])
+    memberBalanceMap.value = rewardsApi.collectMemberBalancesFromRewards([...rewardList, ...punishList])
+  } catch (e) {
+    memberBalanceMap.value = {}
   }
 }
 
@@ -98,11 +111,13 @@ onLoad(() => refresh())
 onShow(() => {
   ;(async () => {
     await syncRemoteMembers()
+    await syncRemoteRewards()
     refresh()
   })()
 })
 
 const memberItems = computed(() => listMembers(calendarState.value).filter((m) => m.enabled !== false))
+
 const selectedMemberName = computed(() => {
   const m = memberItems.value.find((x) => x.id === memberId.value)
   return m ? m.name : ''
@@ -110,7 +125,7 @@ const selectedMemberName = computed(() => {
 
 const beforeVal = computed(() => {
   if (!memberId.value) return 0
-  return computeHeartBalance(rewardState.value, memberId.value)
+  return Number(memberBalanceMap.value[String(memberId.value || '')] || 0) || 0
 })
 
 const afterVal = computed(() => {
@@ -135,12 +150,24 @@ function validate() {
   return true
 }
 
-function confirm() {
-  if (!validate()) return
+async function confirm() {
+  if (!validate() || submitting.value) return
+  submitting.value = true
   const n = Number(hearts.value || 0) || 0
-  addHeartTransfer(rewardState.value, { memberId: memberId.value, delta: n, reason: 'give' })
-  uni.$emit && uni.$emit('reward:refresh')
-  uni.navigateBack()
+  try {
+    await rewardsApi.addStarNumberInfo({
+      memberId: memberId.value,
+      rewardId: '0',
+      updateReason: '手动赠送',
+      starNumber: n,
+    })
+    uni.$emit && uni.$emit('reward:refresh')
+    uni.navigateBack()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '给予心心失败'), icon: 'none' })
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

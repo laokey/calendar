@@ -159,32 +159,24 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
-import {
-  computeHeartBalance,
-  deleteRewardItem,
-  ensureRewardState,
-  isItemDoneToday,
-  listRewardItems,
-  redeemItem,
-  saveRewardState,
-  setRewardActiveMember,
-  todayDateKey,
-  addHeartTransfer,
-  updateRewardItem,
-} from '../../utils/rewardStore'
-import { membersApi } from '../../utils/api'
+import { ensureRewardState, setRewardActiveMember } from '../../utils/rewardStore'
+import { membersApi, rewardsApi } from '../../utils/api'
 
 const calendarState = ref(ensureCalendarState())
 const rewardState = ref(ensureRewardState())
+const remoteRewards = ref([])
+const memberBalanceMap = ref({})
+const starRecords = ref([])
+const loading = ref(false)
 
-const activeMemberId = computed(() => rewardState.value.activeMemberId || 'me')
-const todayKey = computed(() => todayDateKey())
+const activeMemberId = computed(() => String(rewardState.value.activeMemberId || ''))
+const todayKey = computed(() => formatDateKey(new Date()))
 
 const actionSheetOpen = ref(false)
 const activeItemId = ref('')
@@ -194,8 +186,9 @@ const resultSheetOpen = ref(false)
 const celebrateType = ref('reward')
 const celebrateTitle = ref('')
 const celebrateItemId = ref('')
+const pendingAction = ref(false)
 
-function refresh() {
+function refreshLocalState() {
   calendarState.value = ensureCalendarState()
   rewardState.value = ensureRewardState()
 }
@@ -212,23 +205,120 @@ async function syncRemoteMembers() {
   }
 }
 
-onMounted(() => refresh())
+const memberItems = computed(() => listMembers(calendarState.value).filter((m) => m.enabled !== false))
+
+const activeMember = computed(() => memberItems.value.find((m) => m.id === activeMemberId.value) || memberItems.value[0] || {
+  id: '',
+  name: '',
+  glyph: '',
+  color: '#4cc38a',
+  avatarUrl: '',
+})
+
+const activeMemberLabel = computed(() => activeMember.value.name || '成员')
+const activeMemberColor = computed(() => activeMember.value.color || '#4cc38a')
+
+const allRemoteItems = computed(() => rewardsApi.mapRemoteRewardsToLocalItems(remoteRewards.value))
+
+const todayDoneMap = computed(() => {
+  const map = {}
+  for (const record of starRecords.value) {
+    const rewardId = String(record && record.rewardId ? record.rewardId : '')
+    if (!rewardId) continue
+    const key = formatDateKey(record && record.updateTime ? record.updateTime : '')
+    if (key === todayKey.value) map[rewardId] = true
+  }
+  return map
+})
+
+watch(
+  activeMemberId,
+  () => {
+    syncStarRecords()
+  },
+  { immediate: true },
+)
+
 onShow(() => {
   ;(async () => {
+    refreshLocalState()
     await syncRemoteMembers()
-    refresh()
+    await refreshRemoteRewards()
   })()
 })
 
-const memberItems = computed(() => {
-  const base = [{ id: 'me', name: '我', glyph: '我', color: '#4cc38a' }]
-  const list = listMembers(calendarState.value).filter((m) => m.enabled !== false)
-  return [...base, ...list]
-})
+function ensureValidActiveMember() {
+  const list = memberItems.value
+  if (!list.length) return
+  if (list.some((m) => m.id === activeMemberId.value)) return
+  rewardState.value = setRewardActiveMember(rewardState.value, list[0].id)
+}
 
-const activeMember = computed(() => memberItems.value.find((m) => m.id === activeMemberId.value) || memberItems.value[0])
-const activeMemberLabel = computed(() => (activeMemberId.value === 'me' ? '我的' : activeMember.value.name))
-const activeMemberColor = computed(() => (activeMemberId.value === 'me' ? '#4cc38a' : activeMember.value.color))
+function dedupeRemoteRewards(list) {
+  const source = Array.isArray(list) ? list : []
+  const seen = new Set()
+  const out = []
+  for (const item of source) {
+    if (!item || !item.rewardId) continue
+    const members = Array.isArray(item.members) ? item.members.map((member) => String(member && member.memberId ? member.memberId : '')).filter(Boolean).sort() : []
+    const key = [String(item.rewardId), String(item.rewardType), members.join(','), String(item.rewardTitle || '')].join('|')
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(item)
+  }
+  return out
+}
+
+async function refreshRemoteRewards() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    remoteRewards.value = []
+    memberBalanceMap.value = {}
+    starRecords.value = []
+    return
+  }
+  loading.value = true
+  try {
+    const [rewardList, punishList] = await Promise.all([
+      rewardsApi.getMemberRewardList({ rewardType: 0 }),
+      rewardsApi.getMemberRewardList({ rewardType: 1 }),
+    ])
+    remoteRewards.value = dedupeRemoteRewards([...rewardList, ...punishList])
+    memberBalanceMap.value = rewardsApi.collectMemberBalancesFromRewards(remoteRewards.value)
+    ensureValidActiveMember()
+    await syncStarRecords()
+  } catch (e) {
+    remoteRewards.value = []
+    memberBalanceMap.value = {}
+    starRecords.value = []
+    uni.showToast({ title: String((e && e.message) || '获取奖励列表失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function syncStarRecords() {
+  const memberId = activeMemberId.value
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged || !memberId) {
+    starRecords.value = []
+    return
+  }
+  try {
+    starRecords.value = await rewardsApi.getStarNumberList({ memberId })
+  } catch (e) {
+    starRecords.value = []
+  }
+}
+
+function formatDateKey(input) {
+  const d = input instanceof Date ? input : new Date(input || Date.now())
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 function hexToRgba(hex, alpha) {
   const a = Math.max(0, Math.min(1, Number(alpha)))
@@ -254,7 +344,7 @@ const panelBackground = computed(() => {
 })
 
 function balance(memberId) {
-  return computeHeartBalance(rewardState.value, memberId)
+  return Number(memberBalanceMap.value[String(memberId || '')] || 0) || 0
 }
 
 function selectMember(id) {
@@ -263,9 +353,9 @@ function selectMember(id) {
 
 const filteredItems = computed(() => {
   const settings = rewardState.value.settings || { sort: 'asc', showDone: true }
-  const items = listRewardItems(rewardState.value)
+  const items = allRemoteItems.value
     .filter((x) => x.memberId === activeMemberId.value)
-    .filter((x) => (settings.showDone ? true : !isItemDoneToday(x, todayKey.value)))
+    .filter((x) => (settings.showDone ? true : !isDoneToday(x)))
 
   const asc = settings.sort === 'asc'
   return items
@@ -277,70 +367,96 @@ const filteredItems = computed(() => {
       const ha = Number(a.hearts || 0) || 0
       const hb = Number(b.hearts || 0) || 0
       if (ha !== hb) return asc ? ha - hb : hb - ha
-      const ca = Number(a.createdAtTs || 0) || 0
-      const cb = Number(b.createdAtTs || 0) || 0
-      return cb - ca
+      const aa = String(a.title || '')
+      const bb = String(b.title || '')
+      return aa.localeCompare(bb, 'zh-Hans-CN')
     })
 })
 
+function isDoneToday(it) {
+  if (!it || !it.rewardId) return false
+  return !!todayDoneMap.value[String(it.rewardId)]
+}
+
 function canAfford(it) {
   if (it && it.type === 'punish') return true
-  return balance(activeMemberId.value) >= (Number(it.hearts || 0) || 0)
+  return balance(activeMemberId.value) >= (Number(it && it.hearts ? it.hearts : 0) || 0)
 }
 
 function buttonMode(it) {
-  if (isItemDoneToday(it, todayKey.value)) return 'today'
+  if (isDoneToday(it)) return 'today'
   if (it && it.type !== 'punish' && it.resetAfter) return 'progress'
   return 'button'
 }
 
 function progressWidth(it) {
   const cur = balance(activeMemberId.value)
-  const need = Number(it.hearts || 0) || 0
+  const need = Number(it && it.hearts ? it.hearts : 0) || 0
   if (!need) return '0%'
   const ratio = Math.max(0, Math.min(1, cur / need))
   return `${Math.floor(ratio * 100)}%`
 }
 
-function tryRedeem(it) {
+async function tryRedeem(it) {
+  if (!it || pendingAction.value) return
   if (buttonMode(it) === 'today') return
-  if (it && it.type !== 'punish' && !canAfford(it)) return
-  const res = redeemItem(rewardState.value, it.id, { nowKey: todayKey.value })
-  if (!res.ok) return
-  celebrateType.value = it.type
-  celebrateTitle.value = it.title
-  celebrateItemId.value = it.id
-  celebrateOpen.value = true
-  setTimeout(() => {
-    celebrateOpen.value = false
-    resultSheetOpen.value = true
-  }, 220)
+  if (it.type !== 'punish' && !canAfford(it)) return
+  pendingAction.value = true
+  try {
+    await rewardsApi.addStarNumberInfo({
+      memberId: it.memberId,
+      rewardId: it.rewardId || it.id,
+      updateReason: it.type === 'punish' ? `惩罚:${it.title}` : `兑换:${it.title}`,
+      starNumber: -(Number(it.hearts || 0) || 0),
+    })
+    celebrateType.value = it.type
+    celebrateTitle.value = it.title
+    celebrateItemId.value = it.rewardId || it.id
+    celebrateOpen.value = true
+    setTimeout(() => {
+      celebrateOpen.value = false
+      resultSheetOpen.value = true
+    }, 220)
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '调整星星失败'), icon: 'none' })
+  } finally {
+    pendingAction.value = false
+  }
 }
 
-function closeResult() {
+async function closeResult() {
   resultSheetOpen.value = false
-  refresh()
+  await refreshRemoteRewards()
 }
 
-function cancelAction() {
+async function cancelAction() {
   const id = celebrateItemId.value
-  if (!id) return
-  const it = listRewardItems(rewardState.value).find((x) => x.id === id)
-  if (!it) return
-  const cost = Number(it.hearts || 0) || 0
-  addHeartTransfer(rewardState.value, { memberId: it.memberId, delta: cost, reason: `cancel:${it.type}:${it.id}` })
-  updateRewardItem(rewardState.value, it.id, { lastActionDate: '' })
-  saveRewardState(rewardState.value)
-  resultSheetOpen.value = false
-  refresh()
+  const it = allRemoteItems.value.find((x) => x.rewardId === id && x.memberId === activeMemberId.value)
+  if (!it || pendingAction.value) return
+  pendingAction.value = true
+  try {
+    await rewardsApi.addStarNumberInfo({
+      memberId: it.memberId,
+      rewardId: it.rewardId,
+      updateReason: `取消:${it.title}`,
+      starNumber: Number(it.hearts || 0) || 0,
+    })
+    resultSheetOpen.value = false
+    await refreshRemoteRewards()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '取消兑换失败'), icon: 'none' })
+  } finally {
+    pendingAction.value = false
+  }
 }
 
 function addItem() {
-  uni.navigateTo({ url: `/pages/rewards/reward-form?type=reward&memberId=${activeMemberId.value}` })
+  const memberId = activeMemberId.value ? `&memberId=${encodeURIComponent(activeMemberId.value)}` : ''
+  uni.navigateTo({ url: `/pages/rewards/reward-form?type=reward${memberId}` })
 }
 
 function openActions(it) {
-  activeItemId.value = it.id
+  activeItemId.value = it.rewardId || it.id
   actionSheetOpen.value = true
 }
 
@@ -348,15 +464,21 @@ function editItem() {
   const id = activeItemId.value
   actionSheetOpen.value = false
   if (!id) return
-  uni.navigateTo({ url: `/pages/rewards/reward-form?id=${id}` })
+  uni.navigateTo({ url: `/pages/rewards/reward-form?id=${encodeURIComponent(id)}` })
 }
 
-function deleteItem() {
+async function deleteItem() {
   const id = activeItemId.value
   actionSheetOpen.value = false
   if (!id) return
-  deleteRewardItem(rewardState.value, id)
-  refresh()
+  const item = allRemoteItems.value.find((x) => (x.rewardId || x.id) === id)
+  if (!item) return
+  try {
+    await rewardsApi.deleteRewardInfo({ rewardId: id, rewardType: item.type === 'punish' ? 1 : 0 })
+    await refreshRemoteRewards()
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '删除奖励失败'), icon: 'none' })
+  }
 }
 
 function goGive() {

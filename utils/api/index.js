@@ -4,6 +4,7 @@ import * as deviceApi from './device'
 import * as mealsApi from './meals'
 import * as membersApi from './members'
 import * as noticeApi from './notice'
+import * as rewardsApi from './rewards'
 import * as tasksApi from './tasks'
 
-export { authApi, calendarApi, deviceApi, mealsApi, membersApi, noticeApi, tasksApi }
+export { authApi, calendarApi, deviceApi, mealsApi, membersApi, noticeApi, rewardsApi, tasksApi }
