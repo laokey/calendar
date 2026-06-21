@@ -9,8 +9,8 @@
       </template>
     </BlHeader>
 
-    <view v-if="active" class="top-card">
-      <view class="bl-card device-card">
+    <view class="top-card">
+      <view v-if="active" class="bl-card device-card">
         <view class="bl-status-tag"><text>已激活</text></view>
         <view class="bl-row">
           <view class="thumb">
@@ -26,58 +26,7 @@
           </view>
         </view>
       </view>
-
-      <view class="bl-card-soft day-card">
-        <text class="day-title">星期四，03月26日</text>
-        <view v-if="todayTasks.length" class="task-list">
-          <view
-            v-for="t in todayTasks"
-            :key="t.id"
-            class="task-card"
-            :class="t.cls"
-          >
-            <view class="task-left">
-              <text class="task-title">{{ t.title }}</text>
-              <view class="task-time">
-                <image
-                  class="clock"
-                  src="/static/calendar/icon_form_clock.png"
-                  mode="aspectFit"
-                />
-
-                <text class="time-text">{{ t.timeText }}</text>
-              </view>
-            </view>
-            <view
-              v-if="t.right.type === 'single'"
-              class="bl-avatar"
-              :class="t.right.cls"
-              ><text>{{ t.right.glyph }}</text></view
-            >
-            <view v-else class="avatars">
-              <view
-                v-for="a in t.right.avatars"
-                :key="a.cls + a.glyph"
-                class="bl-avatar"
-                :class="a.cls"
-                ><text>{{ a.glyph }}</text></view
-              >
-            </view>
-          </view>
-        </view>
-        <view v-else class="empty-activity">
-          <image
-            class="empty-icon"
-            src="/static/home/icon_none_activity.png"
-            mode="aspectFit"
-          />
-          <text class="empty-text bl-muted">今日无活动</text>
-        </view>
-      </view>
-    </view>
-
-    <view v-else class="top-card">
-      <view class="bl-card activate-card">
+      <view v-else class="bl-card activate-card">
         <view class="hero">
           <image
             class="device-img"
@@ -95,9 +44,44 @@
         </view>
       </view>
 
-      <view class="bl-card-soft day-empty">
-        <text class="day-title">星期四，03月26日</text>
-        <view class="empty-activity">
+      <view class="bl-card-soft" :class="todayTasks.length ? 'day-card' : 'day-empty'">
+        <text class="day-title">{{ todayTitleText }}</text>
+        <view v-if="todayTasks.length" class="task-list">
+          <view
+            v-for="t in todayTasks"
+            :key="t.id"
+            class="task-card"
+            :class="t.cls"
+          >
+            <view class="task-left">
+              <text class="task-title">{{ t.title }}</text>
+              <view class="task-time">
+                <image
+                  class="clock"
+                  src="/static/calendar/icon_form_clock.png"
+                  mode="aspectFit"
+                />
+                <text class="time-text">{{ t.timeText }}</text>
+              </view>
+            </view>
+            <view
+              v-if="t.right.type === 'single'"
+              class="bl-avatar"
+              :style="avatarStyle(t.right.color)"
+              ><text>{{ t.right.glyph }}</text></view
+            >
+            <view v-else class="avatars">
+              <view
+                v-for="a in t.right.avatars"
+                :key="a.color + a.glyph"
+                class="bl-avatar"
+                :style="avatarStyle(a.color)"
+                ><text>{{ a.glyph }}</text></view
+              >
+            </view>
+          </view>
+        </view>
+        <view v-else class="empty-activity">
           <image
             class="empty-icon"
             src="/static/home/icon_none_activity.png"
@@ -127,131 +111,254 @@
 </template>
 
 <script setup>
-import { onLoad } from "@dcloudio/uni-app";
+import { onLoad, onShow } from "@dcloudio/uni-app";
 import { computed, ref } from "vue";
 import BlHeader from "../../components/BlHeader.vue";
+import { calendarApi, deviceApi, membersApi, tasksApi } from "../../utils/api";
+import { getAlbumList } from "../../utils/api/gallery";
+import { ensureCalendarState, eventsForDate, listMembers } from "../../utils/calendarStore";
+import { ensureTaskState, isTaskDone, tasksForDate } from "../../utils/taskStore";
 
 const active = ref(false);
 const calendarName = ref("YYO的日历");
-const calendarEmail = ref("601342282@qq.com");
+const calendarEmail = ref("");
+const memberItems = ref([]);
+const todayEventsRaw = ref([]);
+const homeStats = ref({
+  calendarCount: 0,
+  taskPendingCount: 0,
+  listCount: 0,
+  galleryFileCount: 0,
+  memberCount: 0,
+});
 
-const todayTasksRaw = ref([]);
+const BASE_MENUS = [
+  { title: "日历", sub: "今天没有活动", icon: "/static/home/icon_menu_calendar.png", cls: "is-purple" },
+  { title: "任务", sub: "剩余0个", icon: "/static/home/icon_menu_tasks.png", cls: "is-blue" },
+  { title: "奖励", sub: "大胆和小目标", icon: "/static/home/icon_menu_rewards.png", cls: "is-salmon" },
+  { title: "清单", sub: "0清单", icon: "/static/home/icon_menu_list.png", cls: "is-green" },
+  { title: "餐食", sub: "我们吃什么?", icon: "/static/home/icon_menu_meals.png", cls: "is-orange" },
+  { title: "相册", sub: "0个文件", icon: "/static/home/icon_menu_gallery.png", cls: "is-red" },
+  { title: "同步", sub: "同步在线日历", icon: "/static/home/icon_menu_sync.png", cls: "is-mint" },
+  { title: "成员管理", sub: "0个成员", icon: "/static/home/icon_menu_users.png", cls: "is-indigo" },
+  { title: "设备管理", sub: "控制功能", icon: "/static/home/icon_menu_devices.png", cls: "is-blue2" },
+  { title: "用户管理", sub: "邀请你爱的人", icon: "/static/home/icon_menu_members.png", cls: "is-indigo2" },
+  { title: "通知", sub: "通知事件", icon: "/static/home/icon_menu_notice.png", cls: "is-salmon2" },
+  { title: "贺卡", sub: "给设备推送祝福", icon: "/static/home/icon_menu_cards.png", cls: "is-orange2" },
+];
+
+const todayTitleText = computed(() => formatTodayTitle(new Date()));
 const todayTasks = computed(() => {
-  const list = Array.isArray(todayTasksRaw.value) ? todayTasksRaw.value : [];
-  return list.map((t, idx) => {
-    const style = t && typeof t.style === "string" ? t.style : "gray";
-    const cls =
-      style === "pink" ? "is-pink" : style === "green" ? "is-green" : "is-gray";
-    const right =
-      t && t.right && typeof t.right === "object"
-        ? t.right
-        : { type: "single", glyph: "我", cls: "is-green" };
-    return {
-      id: t && t.id ? String(t.id) : `t_${idx}`,
-      title: t && t.title ? String(t.title) : "",
-      timeText: t && t.timeText ? String(t.timeText) : "",
-      cls,
-      right: {
-        type: right.type === "group" ? "group" : "single",
-        glyph: right.glyph ? String(right.glyph) : "我",
-        cls: right.cls ? String(right.cls) : "is-green",
-        avatars: Array.isArray(right.avatars)
-          ? right.avatars.map((a) => ({
-              glyph: String(a.glyph || ""),
-              cls: String(a.cls || ""),
-            }))
-          : [],
-      },
-    };
+  const list = Array.isArray(todayEventsRaw.value) ? todayEventsRaw.value : [];
+  return list.slice(0, 2).map((event, idx) => formatHomeEventCard(event, idx));
+});
+const menus = computed(() => {
+  const stats = homeStats.value || {};
+  return BASE_MENUS.map((item) => {
+    if (item.title === "日历") {
+      return { ...item, sub: stats.calendarCount > 0 ? `今日${stats.calendarCount}个活动` : "今天没有活动" };
+    }
+    if (item.title === "任务") {
+      return { ...item, sub: `剩余${stats.taskPendingCount || 0}个` };
+    }
+    if (item.title === "清单") {
+      return { ...item, sub: `${stats.listCount || 0}清单` };
+    }
+    if (item.title === "相册") {
+      return { ...item, sub: `${stats.galleryFileCount || 0}个文件` };
+    }
+    if (item.title === "成员管理") {
+      return { ...item, sub: `${stats.memberCount || 0}个成员` };
+    }
+    return item;
   });
 });
 
-const menus = ref([
-  {
-    title: "日历",
-    sub: "今天没有活动",
-    icon: "/static/home/icon_menu_calendar.png",
-    cls: "is-purple",
-  },
-  {
-    title: "任务",
-    sub: "剩余0个",
-    icon: "/static/home/icon_menu_tasks.png",
-    cls: "is-blue",
-  },
-  {
-    title: "奖励",
-    sub: "大胆和小目标",
-    icon: "/static/home/icon_menu_rewards.png",
-    cls: "is-salmon",
-  },
-  {
-    title: "清单",
-    sub: "2清单",
-    icon: "/static/home/icon_menu_list.png",
-    cls: "is-green",
-  },
-  {
-    title: "餐食",
-    sub: "我们吃什么?",
-    icon: "/static/home/icon_menu_meals.png",
-    cls: "is-orange",
-  },
-  {
-    title: "相册",
-    sub: "2个文件",
-    icon: "/static/home/icon_menu_gallery.png",
-    cls: "is-red",
-  },
-  {
-    title: "同步",
-    sub: "同步在线日历",
-    icon: "/static/home/icon_menu_sync.png",
-    cls: "is-mint",
-  },
-  {
-    title: "成员管理",
-    sub: "2个成员",
-    icon: "/static/home/icon_menu_users.png",
-    cls: "is-indigo",
-  },
-  {
-    title: "设备管理",
-    sub: "控制功能",
-    icon: "/static/home/icon_menu_devices.png",
-    cls: "is-blue2",
-  },
-  {
-    title: "用户管理",
-    sub: "邀请你爱的人",
-    icon: "/static/home/icon_menu_members.png",
-    cls: "is-indigo2",
-  },
-  {
-    title: "通知",
-    sub: "通知事件",
-    icon: "/static/home/icon_menu_notice.png",
-    cls: "is-salmon2",
-  },
-  {
-    title: "贺卡",
-    sub: "给设备推送祝福",
-    icon: "/static/home/icon_menu_cards.png",
-    cls: "is-orange2",
-  },
-]);
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
-onLoad((options) => {
-  active.value = options?.active === "1";
+function formatTodayTitle(date) {
+  const d = date instanceof Date ? date : new Date();
+  const weekdayMap = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  return `${weekdayMap[d.getDay()]}，${String(d.getMonth() + 1).padStart(2, "0")}月${String(d.getDate()).padStart(2, "0")}日`;
+}
+
+function loadContext() {
+  try {
+    const storedName = String(uni.getStorageSync("active_device_name_v1") || "").trim();
+    const storedEmail = String(uni.getStorageSync("active_device_email_v1") || "").trim();
+    if (storedName) calendarName.value = storedName;
+    if (storedEmail) calendarEmail.value = storedEmail;
+  } catch (e) {}
   try {
     const raw = uni.getStorageSync("calendar_detail_ctx_v1");
     const ctx = raw && typeof raw === "string" ? JSON.parse(raw) : raw;
     if (ctx && typeof ctx === "object") {
       if (ctx.name) calendarName.value = String(ctx.name);
       if (ctx.email) calendarEmail.value = String(ctx.email);
-      if (Array.isArray(ctx.tasks)) todayTasksRaw.value = ctx.tasks;
     }
   } catch (e) {}
+}
+
+async function syncDeviceActivationStatus() {
+  const email = String(calendarEmail.value || "").trim();
+  if (!email) {
+    active.value = false;
+    return false;
+  }
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (!logged) {
+    active.value = false;
+    return false;
+  }
+  try {
+    const devices = await deviceApi.getCalendarDeviceList();
+    const current = (devices || []).find((item) => String(item.deviceEmail || "").trim() === email);
+    active.value = !!(current && Number(current.status) === 1);
+    if (current && current.deviceName) calendarName.value = String(current.deviceName);
+    return true;
+  } catch (e) {
+    active.value = false;
+    return false;
+  }
+}
+
+function avatarStyle(color) {
+  return { background: String(color || "#4cc38a") };
+}
+
+function findMember(id) {
+  return (memberItems.value || []).find((item) => String(item.id) === String(id || "")) || null;
+}
+
+function memberGlyph(id) {
+  const member = findMember(id);
+  return member && member.glyph ? member.glyph : "我";
+}
+
+function memberColor(id) {
+  const member = findMember(id);
+  return member && member.color ? member.color : "#4cc38a";
+}
+
+function colorThemeClass(color) {
+  const lower = String(color || "").toLowerCase();
+  if (["#ff5a5f", "#ff4b3f", "#ff4bd8", "#9b59ff", "#a600a6"].includes(lower)) return "is-pink";
+  if (["#4cc38a", "#00b060", "#7ddc5a"].includes(lower)) return "is-green";
+  return "is-gray";
+}
+
+function eventTimeText(event) {
+  if (!event) return "";
+  if (event.allDay) return "全天";
+  const start = String(event.startTime || "").trim();
+  const end = String(event.endTime || "").trim();
+  if (start && end) return `${start}-${end}`;
+  return start || end || "全天";
+}
+
+function formatHomeEventCard(event, idx) {
+  const memberIds = Array.isArray(event && event.memberIds) ? event.memberIds.filter(Boolean) : [];
+  const firstMemberId = memberIds[0] || "";
+  const firstColor = memberColor(firstMemberId);
+  return {
+    id: event && event.id ? String(event.id) : `ev_${idx}`,
+    title: event && event.title ? String(event.title) : "",
+    timeText: eventTimeText(event),
+    cls: memberIds.length > 1 ? "is-gray" : colorThemeClass(firstColor),
+    right:
+      memberIds.length > 1
+        ? {
+            type: "group",
+            avatars: memberIds.slice(0, 4).map((id) => ({
+              glyph: memberGlyph(id),
+              color: memberColor(id),
+            })),
+          }
+        : {
+            type: "single",
+            glyph: memberGlyph(firstMemberId),
+            color: memberColor(firstMemberId),
+          },
+  };
+}
+
+function refreshLocalFallback() {
+  const today = todayKey();
+  const calendarState = ensureCalendarState();
+  const taskState = ensureTaskState();
+  const localMembers = listMembers(calendarState).filter((item) => item.enabled !== false);
+  const localEvents = eventsForDate(calendarState, today);
+  const localTasks = tasksForDate(taskState, today, { memberId: "all" });
+  memberItems.value = localMembers;
+  todayEventsRaw.value = localEvents;
+  homeStats.value = {
+    calendarCount: localEvents.length,
+    taskPendingCount: localTasks.filter((item) => !isTaskDone(item)).length,
+    listCount: 0,
+    galleryFileCount: 0,
+    memberCount: localMembers.length,
+  };
+}
+
+async function refreshHomeData() {
+  loadContext();
+  await syncDeviceActivationStatus();
+  if (!active.value) {
+    refreshLocalFallback();
+    return;
+  }
+  const email = String(calendarEmail.value || "").trim();
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (!logged || !email) {
+    refreshLocalFallback();
+    return;
+  }
+  const today = todayKey();
+  const [memberRes, matterRes, taskRes, listRes, albumRes] = await Promise.allSettled([
+    membersApi.getMemberList({ deviceEmail: email }),
+    calendarApi.getMatterInfoList({ deviceEmail: email, startDate: today, endDate: today }),
+    tasksApi.getTaskInfoList({ deviceEmail: email, startDate: today, endDate: today }),
+    tasksApi.getItemTypeList({ deviceEmail: email }),
+    getAlbumList({ deviceEmail: email }),
+  ]);
+
+  const nextMembers =
+    memberRes.status === "fulfilled" ? membersApi.mapRemoteMembersToLocalMembers(memberRes.value) : [];
+  memberItems.value = nextMembers;
+
+  const nextEvents =
+    matterRes.status === "fulfilled" ? calendarApi.mapRemoteMattersToLocalEvents(matterRes.value) : [];
+  todayEventsRaw.value = nextEvents
+    .slice()
+    .sort((a, b) => String(a.startTime || "99:99").localeCompare(String(b.startTime || "99:99")));
+
+  const nextTasks = taskRes.status === "fulfilled" ? taskRes.value : [];
+  const nextLists = listRes.status === "fulfilled" ? listRes.value : [];
+  const nextAlbums = albumRes.status === "fulfilled" ? albumRes.value : [];
+  const galleryFileCount = nextAlbums.reduce((sum, album) => {
+    const total = Number(album && album.total !== undefined ? album.total : Array.isArray(album?.photos) ? album.photos.length : 0);
+    return sum + (Number.isFinite(total) ? total : 0);
+  }, 0);
+
+  homeStats.value = {
+    calendarCount: nextEvents.length,
+    taskPendingCount: nextTasks.filter((item) => !isTaskDone(item)).length,
+    listCount: nextLists.length,
+    galleryFileCount,
+    memberCount: nextMembers.length,
+  };
+}
+
+onLoad(() => {
+  loadContext();
+  refreshHomeData();
+});
+
+onShow(() => {
+  refreshHomeData();
 });
 
 function open(title) {
@@ -404,30 +511,40 @@ function goActivate() {
 
 .day-card {
   margin-top: 18rpx;
+  padding: 18rpx 18rpx 16rpx;
+  background: #eef4ff;
+  border-radius: 20rpx;
 }
 
 .day-title {
   display: block;
-  font-size: 26rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.7);
-  margin-bottom: 14rpx;
+  font-size: 25rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.8);
+  margin-bottom: 12rpx;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
 
 .task-card {
-  border-radius: 24rpx;
-  padding: 18rpx 18rpx;
+  min-height: 92rpx;
+  border-radius: 18rpx;
+  padding: 16rpx 18rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .task-card + .task-card {
-  margin-top: 14rpx;
+  margin-top: 0;
 }
 
 .task-card.is-pink {
-  background: #fdecee;
+  background: #fbecef;
 }
 
 .task-card.is-green {
@@ -435,39 +552,66 @@ function goActivate() {
 }
 
 .task-card.is-gray {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .task-left {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 8rpx;
 }
 
 .task-title {
-  font-size: 30rpx;
+  font-size: 26rpx;
   font-weight: 900;
+  color: rgba(17, 17, 17, 0.88);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-time {
   display: flex;
   align-items: center;
-  gap: 10rpx;
-  color: rgba(17, 17, 17, 0.55);
-  font-size: 24rpx;
+  gap: 8rpx;
+  color: rgba(17, 17, 17, 0.42);
+  font-size: 21rpx;
   font-weight: 700;
+  line-height: 1;
 }
 
 .clock {
-  width: 26rpx;
-  height: 26rpx;
+  width: 22rpx;
+  height: 22rpx;
   display: block;
+  opacity: 0.65;
+}
+
+.time-text {
+  color: rgba(17, 17, 17, 0.42);
 }
 
 .avatars {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  margin-left: 16rpx;
+}
+
+.bl-avatar {
+  width: 42rpx;
+  height: 42rpx;
+  font-size: 20rpx;
+  font-weight: 900;
+  border: 3rpx solid #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 4rpx 10rpx rgba(17, 17, 17, 0.06);
+}
+
+.avatars .bl-avatar + .bl-avatar {
+  margin-left: -10rpx;
 }
 
 .bl-avatar.is-blue {
