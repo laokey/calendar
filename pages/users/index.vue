@@ -9,7 +9,7 @@
     <text class="method">方法1</text>
     <view class="invite-row">
       <input v-model="email" class="invite-input" placeholder="您朋友的电子邮件" placeholder-class="ph" />
-      <view class="invite-btn" :class="{ disabled: !canAdd }" @click="add">
+      <view class="invite-btn" :class="{ disabled: !canAdd || submitting }" @click="add">
         <text class="invite-btn-text">+添加</text>
       </view>
     </view>
@@ -52,15 +52,19 @@
         </view>
 
         <view v-if="active === 'pending'" class="actions">
-          <view class="btn approve" @click="approve(u.id)"><text class="btn-text">批准</text></view>
-          <view class="btn reject" @click="reject(u.id)"><text class="btn-text">拒绝</text></view>
+          <template v-if="u.canReview">
+            <view class="btn approve" @click="approve(u)"><text class="btn-text">批准</text></view>
+            <view class="btn reject" @click="reject(u)"><text class="btn-text">拒绝</text></view>
+          </template>
+          <text v-else class="status-text">等待对方处理</text>
         </view>
 
         <view v-else-if="active === 'approved'" class="actions">
           <view class="btn ghost" @click="openPermission(u)"><text class="ghost-text">权限管理</text></view>
-          <view class="trash" @click="del(u.id)">
-            <image class="trash-img" src="/static/my/icon_trash.png" mode="aspectFit" />
-          </view>
+        </view>
+
+        <view v-else class="actions">
+          <text class="status-text is-muted">{{ u.statusText }}</text>
         </view>
       </view>
     </view>
@@ -95,19 +99,104 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
-import { addInvite, approveInvite, ensureUserManageState, listUsersByStatus, rejectInvite, removeUser, updatePermission } from '../../utils/userManageStore'
+import { usersApi } from '../../utils/api'
 
-const state = ref(ensureUserManageState())
 const active = ref('pending')
 const email = ref('')
+const submitting = ref(false)
+const pendingUsers = ref([])
+const approvedUsers = ref([])
+const rejectedUsers = ref([])
 
 onLoad((options) => {
   const t = options && options.tab ? String(options.tab) : ''
   if (t === 'approved' || t === 'pending' || t === 'rejected') active.value = t
 })
 
-function refresh() {
-  state.value = ensureUserManageState()
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function currentUserEmail() {
+  return normalizeEmail(uni.getStorageSync('auth_email') || '')
+}
+
+function palette() {
+  return ['#34c38f', '#ff5a5f', '#ffb020', '#3d6afb', '#9b59ff', '#7cc7ff', '#ff8a3d']
+}
+
+function glyphFromEmail(value) {
+  const v = String(value || '').trim()
+  if (!v) return '友'
+  const ch = v[0]
+  return ch && ch.toUpperCase ? ch.toUpperCase() : ch || '友'
+}
+
+function colorForEmail(value) {
+  const v = String(value || '').trim()
+  const list = palette()
+  if (!v) return list[0]
+  let sum = 0
+  for (let i = 0; i < v.length; i += 1) sum += v.charCodeAt(i)
+  return list[sum % list.length]
+}
+
+function friendWho(emailText) {
+  return {
+    glyph: glyphFromEmail(emailText),
+    color: colorForEmail(emailText),
+  }
+}
+
+function mapInviteItem(item, tab) {
+  const selfEmail = currentUserEmail()
+  const inviter = normalizeEmail(item && item.inviterEmail)
+  const invitee = normalizeEmail(item && item.inviteeEmail)
+  const targetEmail = inviter && inviter === selfEmail ? invitee : inviter || invitee
+  const canReview = !!inviter && inviter !== selfEmail
+  return {
+    id: item && item.id ? String(item.id) : `${inviter}|${invitee}|${tab}`,
+    email: targetEmail || invitee || inviter,
+    createdAt: String(item && item.inviteTime ? item.inviteTime : ''),
+    who: friendWho(targetEmail || invitee || inviter),
+    inviterEmail: item && item.inviterEmail ? String(item.inviterEmail) : '',
+    inviteeEmail: item && item.inviteeEmail ? String(item.inviteeEmail) : '',
+    canReview,
+    statusText: canReview ? '你已拒绝' : '对方已拒绝',
+  }
+}
+
+function mapFriendItem(item) {
+  const emailText = item && item.friendEmail ? String(item.friendEmail) : ''
+  return {
+    id: emailText,
+    email: emailText,
+    createdAt: String(item && item.addTime ? item.addTime : ''),
+    who: friendWho(emailText),
+    permission: item && item.permission ? item.permission : 'self',
+    authority: item && item.authority !== undefined ? Number(item.authority) : 0,
+  }
+}
+
+function showError(error, fallback, map = {}) {
+  const code = Number(error && error.code)
+  const msg = map[code] || String((error && error.message) || fallback || '操作失败')
+  uni.showToast({ title: msg, icon: 'none' })
+}
+
+async function refresh() {
+  const [pendingRes, rejectedRes, approvedRes] = await Promise.allSettled([
+    usersApi.getInviteFriendList({ status: 0 }),
+    usersApi.getInviteFriendList({ status: 2 }),
+    usersApi.getFriendList(),
+  ])
+  pendingUsers.value = pendingRes.status === 'fulfilled' ? pendingRes.value.map((item) => mapInviteItem(item, 'pending')) : []
+  rejectedUsers.value = rejectedRes.status === 'fulfilled' ? rejectedRes.value.map((item) => mapInviteItem(item, 'rejected')) : []
+  approvedUsers.value = approvedRes.status === 'fulfilled' ? approvedRes.value.map(mapFriendItem) : []
+  const firstError = [pendingRes, rejectedRes, approvedRes].find((item) => item.status === 'rejected')
+  if (firstError && firstError.status === 'rejected') {
+    showError(firstError.reason, '加载失败', { 201: '用户不存在' })
+  }
 }
 
 onShow(() => {
@@ -117,58 +206,67 @@ onShow(() => {
 const canAdd = computed(() => !!String(email.value || '').trim())
 
 const items = computed(() => {
-  return listUsersByStatus(state.value, active.value)
+  if (active.value === 'approved') return approvedUsers.value
+  if (active.value === 'rejected') return rejectedUsers.value
+  return pendingUsers.value
 })
 
-function add() {
-  if (!canAdd.value) return
-  const v = String(email.value || '').trim()
-  const s = ensureUserManageState()
-  addInvite(s, v)
-  email.value = ''
-  state.value = ensureUserManageState()
-  active.value = 'pending'
-  uni.showToast({ title: '已添加', icon: 'none' })
+async function add() {
+  if (!canAdd.value || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.inviteNewFriend({ inviteeEmail: String(email.value || '').trim() })
+    email.value = ''
+    active.value = 'pending'
+    uni.showToast({ title: '邀请已发送', icon: 'none' })
+    await refresh()
+  } catch (e) {
+    showError(e, '邀请失败', {
+      201: '用户不存在',
+      202: '被邀请用户不存在',
+      203: '邀请提交失败',
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 
 function share() {
-  const link = `https://example.com/invite?ts=${Date.now()}`
-  uni.setClipboardData({
-    data: link,
-    success: () => {
-      uni.showToast({ title: '链接已复制', icon: 'none' })
-    },
-  })
+  uni.showToast({ title: '接口文档未提供分享链接', icon: 'none' })
 }
 
-function approve(id) {
-  const s = ensureUserManageState()
-  approveInvite(s, id)
-  state.value = ensureUserManageState()
-  uni.showToast({ title: '已通过', icon: 'none' })
+async function approve(item) {
+  if (!item || !item.inviterEmail || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.agreeAddFriend({ inviterEmail: item.inviterEmail })
+    uni.showToast({ title: '已通过', icon: 'none' })
+    await refresh()
+  } catch (e) {
+    showError(e, '添加失败', {
+      201: '用户不存在',
+      202: '添加失败',
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 
-function reject(id) {
-  const s = ensureUserManageState()
-  rejectInvite(s, id)
-  state.value = ensureUserManageState()
-  uni.showToast({ title: '已拒绝', icon: 'none' })
-}
-
-function del(id) {
-  uni.showModal({
-    title: '',
-    content: '删除该用户？',
-    cancelText: '取消',
-    confirmText: '删除',
-    confirmColor: '#ff3b30',
-    success: (res) => {
-      if (!res.confirm) return
-      const s = ensureUserManageState()
-      removeUser(s, id)
-      state.value = ensureUserManageState()
-    },
-  })
+async function reject(item) {
+  if (!item || !item.inviterEmail || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.refuseAddFriend({ inviterEmail: item.inviterEmail })
+    uni.showToast({ title: '已拒绝', icon: 'none' })
+    await refresh()
+  } catch (e) {
+    showError(e, '拒绝失败', {
+      201: '用户不存在',
+      202: '拒绝失败',
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 
 const permissionOpen = ref(false)
@@ -181,13 +279,25 @@ function openPermission(u) {
   permissionOpen.value = true
 }
 
-function confirmPermission() {
-  if (!permissionUserId.value) return
-  const s = ensureUserManageState()
-  updatePermission(s, permissionUserId.value, permissionDraft.value)
-  state.value = ensureUserManageState()
-  permissionOpen.value = false
-  uni.showToast({ title: '已更新', icon: 'none' })
+async function confirmPermission() {
+  if (!permissionUserId.value || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.setFriendAuthority({
+      friendEmail: permissionUserId.value,
+      authority: usersApi.authorityFromPermission(permissionDraft.value),
+    })
+    permissionOpen.value = false
+    uni.showToast({ title: '已更新', icon: 'none' })
+    await refresh()
+  } catch (e) {
+    showError(e, '设置失败', {
+      201: '用户不存在',
+      202: '设置失败',
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -408,6 +518,16 @@ function confirmPermission() {
   font-size: 26rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.85);
+}
+
+.status-text {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #3d6afb;
+}
+
+.status-text.is-muted {
+  color: rgba(17, 17, 17, 0.42);
 }
 
 .trash {
