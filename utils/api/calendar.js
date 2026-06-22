@@ -188,6 +188,19 @@ export function mapRemoteMattersToLocalEvents(list) {
   return src.map(normalizeMatter).filter((e) => e && e.id && e.startDate)
 }
 
+function flattenMatterList(list) {
+  const src = Array.isArray(list) ? list : []
+  const out = []
+  for (const item of src) {
+    if (item && typeof item === 'object' && Array.isArray(item.matterList)) {
+      out.push(...item.matterList)
+      continue
+    }
+    out.push(item)
+  }
+  return out
+}
+
 export async function getMatterInfoList({ deviceEmail, startDate, endDate } = {}) {
   const token = getToken()
   const email = await resolveDeviceEmail(deviceEmail)
@@ -210,7 +223,7 @@ export async function getMatterInfoList({ deviceEmail, startDate, endDate } = {}
           : res && typeof res === 'object' && Array.isArray(res.matterList)
             ? res.matterList
             : []
-  return list
+  return flattenMatterList(list)
 }
 
 export async function addMatterInfo(payload = {}) {

@@ -131,6 +131,7 @@ const homeStats = ref({
   galleryFileCount: 0,
   memberCount: 0,
 });
+const HOME_EVENT_PREVIEW_LIMIT = 4;
 
 const BASE_MENUS = [
   { title: "日历", sub: "今天没有活动", icon: "/static/home/icon_menu_calendar.png", cls: "is-purple" },
@@ -150,7 +151,7 @@ const BASE_MENUS = [
 const todayTitleText = computed(() => formatTodayTitle(new Date()));
 const todayTasks = computed(() => {
   const list = Array.isArray(todayEventsRaw.value) ? todayEventsRaw.value : [];
-  return list.slice(0, 2).map((event, idx) => formatHomeEventCard(event, idx));
+  return list.slice(0, HOME_EVENT_PREVIEW_LIMIT).map((event, idx) => formatHomeEventCard(event, idx));
 });
 const menus = computed(() => {
   const stats = homeStats.value || {};
@@ -185,6 +186,24 @@ function formatTodayTitle(date) {
   return `${weekdayMap[d.getDay()]}，${String(d.getMonth() + 1).padStart(2, "0")}月${String(d.getDate()).padStart(2, "0")}日`;
 }
 
+function formatDateKey(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function homeEventQueryRange() {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() - today.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return {
+    today: formatDateKey(today),
+    startDate: formatDateKey(start),
+    endDate: formatDateKey(end),
+  };
+}
+
 function loadContext() {
   try {
     const storedName = String(uni.getStorageSync("active_device_name_v1") || "").trim();
@@ -202,8 +221,38 @@ function loadContext() {
   } catch (e) {}
 }
 
+async function ensureCalendarEmail() {
+  const direct = String(calendarEmail.value || "").trim();
+  if (direct) return direct;
+  try {
+    const stored = String(uni.getStorageSync("active_device_email_v1") || "").trim();
+    if (stored) {
+      calendarEmail.value = stored;
+      return stored;
+    }
+  } catch (e) {}
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (!logged) return "";
+  try {
+    const devices = await deviceApi.getCalendarDeviceList();
+    const current = Array.isArray(devices)
+      ? devices.find((item) => Number(item && item.status) === 1) || devices[0]
+      : null;
+    const email = current && current.deviceEmail ? String(current.deviceEmail).trim() : "";
+    if (!email) return "";
+    calendarEmail.value = email;
+    if (current && current.deviceName) calendarName.value = String(current.deviceName);
+    try {
+      uni.setStorageSync("active_device_email_v1", email);
+    } catch (e) {}
+    return email;
+  } catch (e) {
+    return "";
+  }
+}
+
 async function syncDeviceActivationStatus() {
-  const email = String(calendarEmail.value || "").trim();
+  const email = await ensureCalendarEmail();
   if (!email) {
     active.value = false;
     return false;
@@ -295,7 +344,7 @@ function refreshLocalFallback() {
   memberItems.value = localMembers;
   todayEventsRaw.value = localEvents;
   homeStats.value = {
-    calendarCount: localEvents.length,
+    calendarCount: Math.min(localEvents.length, HOME_EVENT_PREVIEW_LIMIT),
     taskPendingCount: localTasks.filter((item) => !isTaskDone(item)).length,
     listCount: 0,
     galleryFileCount: 0,
@@ -306,20 +355,16 @@ function refreshLocalFallback() {
 async function refreshHomeData() {
   loadContext();
   await syncDeviceActivationStatus();
-  if (!active.value) {
-    refreshLocalFallback();
-    return;
-  }
-  const email = String(calendarEmail.value || "").trim();
+  const email = await ensureCalendarEmail();
   const logged = !!uni.getStorageSync("auth_logged_in");
   if (!logged || !email) {
     refreshLocalFallback();
     return;
   }
-  const today = todayKey();
+  const { today, startDate, endDate } = homeEventQueryRange();
   const [memberRes, matterRes, taskRes, listRes, albumRes] = await Promise.allSettled([
     membersApi.getMemberList({ deviceEmail: email }),
-    calendarApi.getMatterInfoList({ deviceEmail: email, startDate: today, endDate: today }),
+    calendarApi.getMatterInfoList({ deviceEmail: email, startDate, endDate }),
     tasksApi.getTaskInfoList({ deviceEmail: email, startDate: today, endDate: today }),
     tasksApi.getItemTypeList({ deviceEmail: email }),
     getAlbumList({ deviceEmail: email }),
@@ -330,7 +375,11 @@ async function refreshHomeData() {
   memberItems.value = nextMembers;
 
   const nextEvents =
-    matterRes.status === "fulfilled" ? calendarApi.mapRemoteMattersToLocalEvents(matterRes.value) : [];
+    matterRes.status === "fulfilled"
+      ? calendarApi
+          .mapRemoteMattersToLocalEvents(matterRes.value)
+          .filter((item) => String(item && item.startDate ? item.startDate : "") === today)
+      : [];
   todayEventsRaw.value = nextEvents
     .slice()
     .sort((a, b) => String(a.startTime || "99:99").localeCompare(String(b.startTime || "99:99")));
@@ -344,7 +393,7 @@ async function refreshHomeData() {
   }, 0);
 
   homeStats.value = {
-    calendarCount: nextEvents.length,
+    calendarCount: Math.min(nextEvents.length, HOME_EVENT_PREVIEW_LIMIT),
     taskPendingCount: nextTasks.filter((item) => !isTaskDone(item)).length,
     listCount: nextLists.length,
     galleryFileCount,
