@@ -1,24 +1,31 @@
 <template>
-  <view class="bl-page preview-page">
-    <BlHeader title="预览" back>
-      <template #right>
-        <view class="top-refresh" @click="reload"><text class="top-refresh-text">↻</text></view>
-      </template>
-    </BlHeader>
+  <view class="preview-page" :style="{ paddingTop: safeTop + 'px' }">
+    <view class="topbar">
+      <view class="topbar-side" @click="back">
+        <image class="topbar-back" src="/static/card/icon-card-nav-back.png" mode="aspectFit" />
+      </view>
+      <view class="topbar-center">
+        <text class="topbar-title">预览</text>
+      </view>
+      <view class="topbar-side right" @click="reload">
+        <image class="topbar-refresh" src="/static/card/icon-card-loading.png" mode="aspectFit" />
+      </view>
+    </view>
 
     <view class="stage">
-      <view class="card photo">
-        <view v-if="draft.photoPath" class="photo-wrap">
-          <image class="photo-img" :src="draft.photoPath" mode="aspectFill" />
+      <view class="book">
+        <view class="book-page left-page">
+          <view class="card photo">
+            <view v-if="draft.photoPath || draft.imageUrl" class="photo-wrap">
+              <image class="photo-img" :src="draft.photoPath || draft.imageUrl" mode="aspectFill" />
+            </view>
+            <view v-else class="placeholder"><text class="ph">未添加照片</text></view>
+          </view>
         </view>
-        <view v-else class="placeholder"><text class="ph">未添加照片</text></view>
-      </view>
-
-      <view class="card content">
-        <view class="content-inner">
-          <text class="content-emoji">😀</text>
-          <text class="content-text">{{ doodleTitle }}</text>
-          <view v-if="stickerEmoji" class="content-sticker"><text class="content-sticker-text">{{ stickerEmoji }}</text></view>
+        <view class="book-page right-page">
+          <view class="card content">
+            <CardDoodlePreview canvas-id="cardPreviewCanvas" :doodle="draft.doodle" background="transparent" />
+          </view>
         </view>
       </view>
     </view>
@@ -32,39 +39,33 @@
     <view class="mode">
       <view class="mode-item" @click="playMode = 'auto'">
         <view class="mode-left">
-          <view class="mode-ico"><text class="mode-ico-text">▶</text></view>
+          <view class="mode-ico"><image class="mode-ico-img" src="/static/card/icon-card-play.png" mode="aspectFit" /></view>
           <view class="mode-meta">
             <text class="mode-title">自动播放</text>
             <text class="mode-sub bl-muted">收到相框后，祝福会自动打开</text>
           </view>
         </view>
-        <image
-          class="mode-sel"
-          :src="playMode === 'auto' ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
-          mode="aspectFit"
-        />
+        <image class="mode-sel" :src="playMode === 'auto' ? '/static/card/icon-card-select-on.png' : '/static/common/icon_radio_off.png'" mode="aspectFit" />
       </view>
 
       <view class="mode-item" @click="playMode = 'manual'">
         <view class="mode-left">
-          <view class="mode-ico"><text class="mode-ico-text">☝</text></view>
+          <view class="mode-ico"><image class="mode-ico-img" src="/static/card/icon-card-hand-pointer.png" mode="aspectFit" /></view>
           <view class="mode-meta">
             <text class="mode-title">手动播放</text>
             <text class="mode-sub bl-muted">收到相框后，祝福会手动打开</text>
           </view>
         </view>
-        <image
-          class="mode-sel"
-          :src="playMode === 'manual' ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
-          mode="aspectFit"
-        />
+        <image class="mode-sel" :src="playMode === 'manual' ? '/static/card/icon-card-select-on.png' : '/static/common/icon_radio_off.png'" mode="aspectFit" />
       </view>
     </view>
 
     <view class="schedule">
       <view class="schedule-head">
         <text class="schedule-title">定期发送</text>
-        <switch :checked="scheduleEnabled" color="#3d6afb" @change="scheduleEnabled = !!$event.detail.value" />
+        <view class="schedule-switch" :class="{ on: scheduleEnabled }" @click="scheduleEnabled = !scheduleEnabled">
+          <view class="schedule-switch-dot" />
+        </view>
       </view>
 
       <view v-if="scheduleEnabled" class="schedule-grid">
@@ -92,7 +93,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import BlHeader from '../../components/BlHeader.vue'
+import CardDoodlePreview from '../../components/CardDoodlePreview.vue'
 import { ensureCardDraft, saveCardDraft } from '../../utils/cardStore'
 
 const draft = ref(ensureCardDraft())
@@ -111,20 +112,18 @@ onShow(() => {
   scheduleTime.value = String(draft.value.scheduleTime || '')
 })
 
-const doodleTitle = computed(() => {
-  const list = draft.value?.doodle?.texts || []
-  const t = list.length ? list[list.length - 1] : null
-  return t && t.text ? String(t.text) : ''
-})
-
-const stickerEmoji = computed(() => {
-  const list = draft.value?.doodle?.stickers || []
-  const s = list.length ? list[list.length - 1] : null
-  return s && s.emoji ? String(s.emoji) : ''
-})
-
 const canSend = computed(() => {
   return String(message.value || '').trim().length > 0
+})
+
+const safeTop = computed(() => {
+  try {
+    const info = uni.getSystemInfoSync()
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
+    return insets && typeof insets.top === 'number' ? insets.top : 0
+  } catch (e) {
+    return 0
+  }
 })
 
 function persist() {
@@ -142,6 +141,10 @@ function reload() {
   draft.value = ensureCardDraft()
 }
 
+function back() {
+  uni.navigateBack()
+}
+
 function send() {
   if (!canSend.value) {
     uni.showToast({ title: '请输入祝福内容', icon: 'none' })
@@ -154,48 +157,119 @@ function send() {
 
 <style scoped lang="scss">
 .preview-page {
-  padding-bottom: 240rpx;
+  min-height: 100vh;
+  background: #eaf2ff;
+  padding: 0 36rpx 240rpx;
 }
 
-.top-refresh {
+.topbar {
+  height: 92rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-side {
+  width: 72rpx;
   height: 72rpx;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-right: 12rpx;
+  justify-content: flex-start;
 }
 
-.top-refresh-text {
-  font-size: 34rpx;
+.topbar-side.right {
+  justify-content: flex-end;
+}
+
+.topbar-back {
+  width: 26rpx;
+  height: 26rpx;
+  display: block;
+}
+
+.topbar-refresh {
+  width: 30rpx;
+  height: 30rpx;
+  display: block;
+  opacity: 0.72;
+}
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-title {
+  font-size: 32rpx;
   font-weight: 900;
-  color: rgba(17, 17, 17, 0.55);
+  color: #111111;
 }
 
 .stage {
-  margin-top: 18rpx;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18rpx;
-  align-items: stretch;
+  margin-top: 26rpx;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 246 / 150;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book {
+  width: 90%;
+  height: 88%;
+  display: flex;
+  box-shadow: 0 16rpx 32rpx rgba(17, 17, 17, 0.08);
+  border-radius: 16rpx;
+}
+
+.book-page {
+  flex: 1;
+  position: relative;
+  height: 100%;
+}
+
+.book-page.left-page {
+  background: #ffffff;
+  border-radius: 16rpx 0 0 16rpx;
+  box-shadow: inset -12rpx 0 20rpx -12rpx rgba(17, 17, 17, 0.08);
+}
+
+.book-page.right-page {
+  background: #f2e9c9;
+  border-radius: 0 16rpx 16rpx 0;
+  box-shadow: inset 12rpx 0 20rpx -12rpx rgba(17, 17, 17, 0.15);
 }
 
 .card {
-  height: 420rpx;
-  border-radius: 24rpx;
+  position: absolute;
+  border-radius: 0;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .card.photo {
-  transform: rotate(-6deg);
+  left: -5%;
+  top: 6%;
+  width: 95%;
+  height: 95%;
+  transform: rotate(-7deg);
+  transform-origin: center center;
 }
 
 .card.content {
-  background: rgba(255, 214, 77, 0.22);
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 1;
 }
 
 .photo-wrap {
@@ -214,57 +288,27 @@ function send() {
   color: rgba(17, 17, 17, 0.45);
 }
 
-.content-inner {
-  width: 100%;
-  height: 100%;
-  padding: 20rpx;
-  position: relative;
-}
-
-.content-emoji {
-  font-size: 44rpx;
-  font-weight: 900;
-}
-
-.content-text {
-  margin-top: 10rpx;
-  font-size: 42rpx;
-  font-weight: 900;
-  line-height: 56rpx;
-  color: rgba(17, 17, 17, 0.9);
-}
-
-.content-sticker {
-  position: absolute;
-  right: 24rpx;
-  bottom: 24rpx;
-}
-
-.content-sticker-text {
-  font-size: 64rpx;
-}
-
 .msg {
-  margin-top: 18rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 18rpx 18rpx;
-  min-height: 180rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  margin-top: 22rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 16rpx 18rpx 42rpx;
+  min-height: 164rpx;
+  box-shadow: 0 8rpx 20rpx rgba(17, 17, 17, 0.05);
   position: relative;
 }
 
 .msg-input {
   width: 100%;
-  min-height: 140rpx;
-  font-size: 30rpx;
-  font-weight: 800;
-  line-height: 44rpx;
+  min-height: 108rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 38rpx;
   color: rgba(17, 17, 17, 0.85);
 }
 
 .ph-msg {
-  color: rgba(255, 75, 63, 0.85);
+  color: rgba(17, 17, 17, 0.28);
 }
 
 .counter {
@@ -272,30 +316,31 @@ function send() {
   right: 18rpx;
   bottom: 14rpx;
   font-size: 24rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.35);
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.28);
 }
 
 .section {
   display: block;
-  margin-top: 24rpx;
+  margin-top: 38rpx;
   font-size: 28rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.85);
 }
 
 .mode {
-  margin-top: 12rpx;
+  margin-top: 24rpx;
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 
 .mode-item {
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
-  padding: 18rpx 18rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8rpx 18rpx rgba(17, 17, 17, 0.05);
+  padding: 16rpx 18rpx;
+  margin-bottom: 12rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -304,46 +349,47 @@ function send() {
 .mode-left {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 14rpx;
 }
 
 .mode-ico {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 22rpx;
-  background: rgba(61, 106, 251, 0.12);
-  border: 2rpx solid rgba(61, 106, 251, 0.4);
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 14rpx;
+  background: rgba(61, 106, 251, 0.08);
+  border: 2rpx solid rgba(61, 106, 251, 0.36);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mode-ico-text {
-  font-size: 28rpx;
-  font-weight: 900;
-  color: #3d6afb;
+.mode-ico-img {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
 }
 
 .mode-meta {
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: 4rpx;
 }
 
 .mode-title {
-  font-size: 30rpx;
+  font-size: 26rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.9);
 }
 
 .mode-sub {
-  font-size: 24rpx;
+  font-size: 20rpx;
   font-weight: 700;
+  line-height: 30rpx;
 }
 
 .mode-sel {
-  width: 40rpx;
-  height: 40rpx;
+  width: 28rpx;
+  height: 28rpx;
   display: block;
 }
 
@@ -363,30 +409,57 @@ function send() {
   color: rgba(17, 17, 17, 0.85);
 }
 
+.schedule-switch {
+  width: 70rpx;
+  height: 38rpx;
+  border-radius: 999rpx;
+  background: rgba(17, 17, 17, 0.15);
+  padding: 4rpx;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.schedule-switch.on {
+  background: #3d6afb;
+}
+
+.schedule-switch-dot {
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.schedule-switch.on .schedule-switch-dot {
+  transform: translateX(32rpx);
+}
+
 .schedule-grid {
-  margin-top: 14rpx;
+  margin-top: 12rpx;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 
 .schedule-cell {
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
-  padding: 18rpx 18rpx;
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 16rpx 16rpx 14rpx;
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 8rpx;
 }
 
 .schedule-label {
-  font-size: 24rpx;
+  font-size: 20rpx;
   font-weight: 700;
+  color: rgba(17, 17, 17, 0.28);
 }
 
 .schedule-value {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.9);
 }
@@ -396,22 +469,23 @@ function send() {
   left: 28rpx;
   right: 28rpx;
   bottom: 34rpx;
-  height: 104rpx;
+  height: 92rpx;
   border-radius: 999rpx;
   background: #3d6afb;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 16rpx 28rpx rgba(61, 106, 251, 0.2);
 }
 
 .send.disabled {
   background: rgba(61, 106, 251, 0.18);
+  box-shadow: none;
 }
 
 .send-text {
   color: #ffffff;
-  font-size: 34rpx;
+  font-size: 30rpx;
   font-weight: 900;
 }
 </style>
-

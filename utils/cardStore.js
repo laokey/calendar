@@ -19,12 +19,17 @@ function seedDraft() {
   return {
     version: 1,
     photoPath: '',
+    imageUrl: '',
+    resourceType: 1,
     templateKey: 'birthday_1',
     doodle: {
       strokes: [],
       stickers: [],
       texts: [],
       brushColor: '#111111',
+      textColor: '#111111',
+      canvasWidthPx: 0,
+      canvasHeightPx: 0,
     },
     message: '',
     playMode: 'auto',
@@ -45,11 +50,17 @@ export function loadCardDraft() {
     if (!Array.isArray(draft.doodle.strokes)) draft.doodle.strokes = []
     if (!Array.isArray(draft.doodle.stickers)) draft.doodle.stickers = []
     if (!Array.isArray(draft.doodle.texts)) draft.doodle.texts = []
+    if (!draft.doodle.brushColor) draft.doodle.brushColor = '#111111'
+    if (!draft.doodle.textColor) draft.doodle.textColor = '#111111'
+    if (!draft.doodle.canvasWidthPx) draft.doodle.canvasWidthPx = 0
+    if (!draft.doodle.canvasHeightPx) draft.doodle.canvasHeightPx = 0
     if (!draft.scheduleDate) draft.scheduleDate = seedDraft().scheduleDate
     if (!draft.scheduleTime) draft.scheduleTime = seedDraft().scheduleTime
     if (!draft.playMode) draft.playMode = 'auto'
     if (!draft.templateKey) draft.templateKey = seedDraft().templateKey
     if (typeof draft.scheduleEnabled !== 'boolean') draft.scheduleEnabled = false
+    if (!draft.imageUrl) draft.imageUrl = ''
+    if (!draft.resourceType) draft.resourceType = 1
     return draft
   } catch (e) {
     return seedDraft()
@@ -81,4 +92,3 @@ export function draftHasContent(draft) {
   const hasDoodle = (doodle.strokes && doodle.strokes.length) || (doodle.stickers && doodle.stickers.length) || (doodle.texts && doodle.texts.length)
   return !!(hasPhoto || hasDoodle)
 }
-

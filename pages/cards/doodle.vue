@@ -7,17 +7,18 @@
     </BlHeader>
 
     <view class="top-tools">
-      <view class="circle-btn" @click="undo"><text class="circle-text">↶</text></view>
-      <view class="circle-btn" @click="redo"><text class="circle-text">↷</text></view>
-      <view class="circle-btn right" @click="clearAll"><text class="circle-text">🧹</text></view>
+      <view class="circle-btn" @click="undo"><image class="circle-ico" src="/static/card/icon-card-tool-undo.png" mode="aspectFit" /></view>
+      <view class="circle-btn" @click="redo"><image class="circle-ico" src="/static/card/icon-card-tool-redo.png" mode="aspectFit" /></view>
+      <view class="circle-btn right" @click="clearAll"><image class="circle-ico" src="/static/card/icon-card-tool-clear.png" mode="aspectFit" /></view>
     </view>
 
-    <view class="canvas-wrap">
-      <view class="canvas-bg">
+    <view id="canvasWrap" class="canvas-wrap" :style="{ height: canvasHeightPx + 'px' }">
+      <view class="canvas-bg" :style="{ width: canvasWidthPx + 'px', height: canvasHeightPx + 'px' }">
         <canvas
           canvas-id="doodleCanvas"
           id="doodleCanvas"
           class="canvas"
+          :style="{ width: canvasWidthPx + 'px', height: canvasHeightPx + 'px' }"
           disable-scroll
           @touchstart="onCanvasStart"
           @touchmove="onCanvasMove"
@@ -29,13 +30,14 @@
           v-for="s in stickers"
           :key="s.id"
           class="sticker"
-          :style="{ left: s.x + 'px', top: s.y + 'px' }"
+          :style="{ left: s.x + 'px', top: s.y + 'px', width: stickerSizePx(s) + 'px', height: stickerSizePx(s) + 'px' }"
           @touchstart.stop.prevent="onStickerStart($event, s.id)"
           @touchmove.stop.prevent="onStickerMove"
           @touchend.stop.prevent="onStickerEnd"
           @touchcancel.stop.prevent="onStickerEnd"
         >
-          <text class="sticker-text">{{ s.emoji }}</text>
+          <image v-if="s.src" class="sticker-img" :src="s.src" mode="aspectFit" />
+          <text v-else class="sticker-text">{{ s.emoji }}</text>
         </view>
 
         <view v-for="t in texts" :key="t.id" class="txt" :style="{ left: t.x + 'px', top: t.y + 'px', color: t.color }">
@@ -45,49 +47,87 @@
     </view>
 
     <view v-if="draggingSticker" class="trash" :class="{ active: overTrash }">
+      <image class="trash-ico" src="/static/card/icon-card-trash.png" mode="aspectFit" />
       <text class="trash-text">拖到此处删除</text>
     </view>
 
     <view class="bottom-tabs">
-      <view class="bt" :class="{ active: tool === 'sticker' }" @click="tool = 'sticker'">
-        <text class="bt-ico">☺</text>
+      <view class="bt" :class="{ active: tool === 'sticker' }" @click="openStickerSheet">
+        <image class="bt-ico-img" src="/static/card/icon-card-tab-sticker.png" mode="aspectFit" />
         <text class="bt-text">贴纸</text>
       </view>
-      <view class="bt" :class="{ active: tool === 'brush' }" @click="tool = 'brush'">
-        <text class="bt-ico">✎</text>
+      <view class="bt" :class="{ active: tool === 'brush' }" @click="toggleBrushPanel">
+        <image class="bt-ico-img" src="/static/card/icon-card-tab-brush.png" mode="aspectFit" />
         <text class="bt-text">涂鸦</text>
       </view>
       <view class="bt" :class="{ active: tool === 'text' }" @click="openTextPanel">
-        <text class="bt-ico">T</text>
+        <image class="bt-ico-img" src="/static/card/icon-card-tab-text.png" mode="aspectFit" />
         <text class="bt-text">文本</text>
       </view>
     </view>
 
-    <view v-if="tool === 'sticker'" class="panel">
-      <view class="sticker-row">
-        <view v-for="e in stickerOptions" :key="e" class="sticker-opt" @click="addSticker(e)">
-          <text class="sticker-opt-text">{{ e }}</text>
+    <view v-if="stickerSheetOpen" class="sheet-mask" @click="closeStickerSheet">
+      <view class="sticker-sheet" @click.stop>
+        <view class="sheet-head">
+          <text class="sheet-title">贴纸</text>
+          <view class="sheet-close" @click="closeStickerSheet">
+            <image class="sheet-close-img" src="/static/card/icon-card-close.png" mode="aspectFit" />
+          </view>
+        </view>
+        <view class="sheet-grid">
+          <view
+            v-for="e in stickerOptions"
+            :key="e.id"
+            class="sheet-item"
+            :class="{ selected: selectedStickerId === e.id }"
+            @click="selectSticker(e.id)"
+          >
+            <image class="sheet-item-img" :src="e.src" mode="aspectFit" />
+            <image v-if="selectedStickerId === e.id" class="sheet-check" src="/static/card/icon-card-select-on.png" mode="aspectFit" />
+          </view>
+        </view>
+        <view class="sheet-actions">
+          <view class="sheet-btn ghost" @click="closeStickerSheet"><text class="sheet-btn-text ghost-text">取消</text></view>
+          <view class="sheet-btn" @click="confirmSticker"><text class="sheet-btn-text">完成</text></view>
         </view>
       </view>
     </view>
 
-    <view v-if="tool === 'brush'" class="panel">
+    <view v-if="brushPanelOpen" class="panel">
       <view class="colors">
         <view v-for="c in palette" :key="c" class="c" :style="{ background: c }" @click="setBrushColor(c)">
           <view v-if="brushColor === c" class="c-check"><text class="c-check-text">✓</text></view>
         </view>
       </view>
       <view class="panel-actions">
-        <view class="p-btn ghost" @click="tool = 'sticker'"><text class="p-text">取消</text></view>
-        <view class="p-btn" @click="tool = 'sticker'"><text class="p-text">完成</text></view>
+        <view class="p-btn ghost" @click="closeBrushPanel"><text class="p-text">取消</text></view>
+        <view class="p-btn" @click="closeBrushPanel"><text class="p-text">完成</text></view>
       </view>
     </view>
 
     <view v-if="textPanelOpen" class="text-panel">
       <view class="text-card" @click.stop>
-        <text class="text-title">文本</text>
+        <view class="text-head">
+          <text class="text-title">文本</text>
+          <view class="text-close" @click="closeTextPanel">
+            <image class="text-close-img" src="/static/card/icon-card-close.png" mode="aspectFit" />
+          </view>
+        </view>
         <view class="text-input">
-          <input v-model="textDraft" class="text-input-real" placeholder="请输入文本" placeholder-class="ph" />
+          <textarea
+            v-model="textDraft"
+            class="text-input-real"
+            placeholder="输入你想表达的话"
+            placeholder-class="ph"
+            maxlength="60"
+            auto-height
+            cursor-spacing="20"
+          />
+        </view>
+        <view class="colors text-colors">
+          <view v-for="c in palette" :key="`text_${c}`" class="c" :style="{ background: c }" @click="setTextColor(c)">
+            <view v-if="textColor === c" class="c-check"><text class="c-check-text">✓</text></view>
+          </view>
         </view>
         <view class="panel-actions">
           <view class="p-btn ghost" @click="closeTextPanel"><text class="p-text">取消</text></view>
@@ -99,20 +139,34 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { getCurrentInstance, nextTick, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureCardDraft, saveCardDraft } from '../../utils/cardStore'
 
+const instance = getCurrentInstance()
 const draft = ref(ensureCardDraft())
-const tool = ref('sticker')
+const tool = ref('brush')
 const brushColor = ref('#111111')
+const textColor = ref('#111111')
+const canvasWidthPx = ref(uni.getSystemInfoSync().windowWidth - uni.upx2px(36))
+const canvasHeightPx = ref(uni.upx2px(640))
 const strokes = ref([])
 const redoStack = ref([])
 const stickers = ref([])
 const texts = ref([])
+const stickerSheetOpen = ref(false)
+const selectedStickerId = ref('')
+const brushPanelOpen = ref(false)
 
-const stickerOptions = ['🌸', '⭐', '🎈', '🎉', '❤️', '✨']
+const stickerOptions = [
+  { id: 'flower', src: '/static/card/sticker-card-flower.png', label: '花朵' },
+  { id: 'citrus', src: '/static/card/sticker-card-citrus.png', label: '柑橘' },
+  { id: 'rainbow', src: '/static/card/sticker-card-rainbow.png', label: '彩虹' },
+  { id: 'smile_badge', src: '/static/card/sticker-card-smile-badge.png', label: '笑脸' },
+  { id: 'sale_tag', src: '/static/card/sticker-card-sale-tag.png', label: '标签' },
+  { id: 'bright_side', src: '/static/card/sticker-card-bright-side.png', label: '卡片' },
+]
 
 const palette = [
   '#ffb020',
@@ -143,27 +197,36 @@ const overTrash = ref(false)
 let stickerStart = { x: 0, y: 0, cx: 0, cy: 0 }
 let trashRect = { left: 0, top: 0, right: 0, bottom: 0 }
 
-onLoad((options) => {
-  const t = options && options.tool ? String(options.tool) : ''
-  if (t === 'text') {
-    tool.value = 'text'
-    textPanelOpen.value = true
-  }
-})
+// onLoad((options) => {
+//   const t = options && options.tool ? String(options.tool) : ''
+//   if (t === 'text') {
+//     tool.value = 'text'
+//     textPanelOpen.value = true
+//   } else if (t === 'sticker') {
+//     openStickerSheet()
+//   }
+// })
 
 onShow(() => {
   draft.value = ensureCardDraft()
   brushColor.value = draft.value?.doodle?.brushColor || '#111111'
+  textColor.value = draft.value?.doodle?.textColor || '#111111'
   strokes.value = (draft.value?.doodle?.strokes || []).slice()
   redoStack.value = []
   stickers.value = (draft.value?.doodle?.stickers || []).slice()
   texts.value = (draft.value?.doodle?.texts || []).slice()
-  redraw()
+  nextTick(() => {
+    measureCanvasSize()
+    redraw()
+  })
 })
 
 onMounted(() => {
   ctx = uni.createCanvasContext('doodleCanvas')
-  setTimeout(() => redraw(), 30)
+  setTimeout(() => {
+    measureCanvasSize()
+    redraw()
+  }, 30)
 })
 
 function persist() {
@@ -174,6 +237,9 @@ function persist() {
       stickers: stickers.value.slice(),
       texts: texts.value.slice(),
       brushColor: brushColor.value,
+      textColor: textColor.value,
+      canvasWidthPx: canvasPx().w,
+      canvasHeightPx: canvasPx().h,
     },
   })
 }
@@ -182,13 +248,88 @@ function setBrushColor(c) {
   brushColor.value = c
 }
 
+function setTextColor(c) {
+  textColor.value = c
+}
+
+function openStickerSheet() {
+  tool.value = 'sticker'
+  stickerSheetOpen.value = true
+  brushPanelOpen.value = false
+  if (!selectedStickerId.value && stickerOptions.length) selectedStickerId.value = stickerOptions[0].id
+}
+
+function closeStickerSheet() {
+  stickerSheetOpen.value = false
+}
+
+function selectSticker(id) {
+  selectedStickerId.value = String(id || '')
+}
+
+function confirmSticker() {
+  const id = String(selectedStickerId.value || '').trim()
+  const option = stickerOptions.find((x) => x.id === id)
+  if (option) addSticker(option)
+  closeStickerSheet()
+}
+
+function toggleBrushPanel() {
+  if (tool.value === 'brush') {
+    brushPanelOpen.value = !brushPanelOpen.value
+    stickerSheetOpen.value = false
+    return
+  }
+  tool.value = 'brush'
+  stickerSheetOpen.value = false
+  brushPanelOpen.value = false
+}
+
+function closeBrushPanel() {
+  brushPanelOpen.value = false
+}
+
 function canvasPx() {
   try {
-    const w = uni.upx2px(640)
-    return { w, h: w }
+    const w = Math.max(Number(canvasWidthPx.value) || 320, uni.upx2px(240))
+    const h = Math.max(Number(canvasHeightPx.value) || w, w)
+    return { w, h }
   } catch (e) {
-    return { w: 320, h: 320 }
+    const h = Math.max(Number(canvasHeightPx.value) || 320, 320)
+    const w = Math.max(Number(canvasWidthPx.value) || 320, 320)
+    return { w, h }
   }
+}
+
+function measureCanvasSize() {
+  nextTick(() => {
+    const proxy = instance && instance.proxy ? instance.proxy : null
+    if (!proxy) return
+    const query = uni.createSelectorQuery().in(proxy)
+    query.select('#canvasWrap').boundingClientRect((rect) => {
+      if (!rect) return
+      try {
+        const info = uni.getSystemInfoSync()
+        const sideGapPx = uni.upx2px(36)
+        const bottomTabsPx = uni.upx2px(186)
+        const safeBottom = info && info.safeAreaInsets && typeof info.safeAreaInsets.bottom === 'number' ? info.safeAreaInsets.bottom : 0
+        const viewportH = info && typeof info.windowHeight === 'number' ? info.windowHeight : 0
+        const viewportW = info && typeof info.windowWidth === 'number' ? info.windowWidth : uni.upx2px(640)
+        const nextWidth = Math.floor(viewportW - sideGapPx)
+        const nextHeight = Math.floor(viewportH - rect.top - bottomTabsPx - safeBottom)
+        const minWidth = uni.upx2px(240)
+        const minHeight = uni.upx2px(240)
+        canvasWidthPx.value = Math.max(nextWidth, minWidth)
+        canvasHeightPx.value = Math.max(nextHeight, minHeight)
+        redraw()
+      } catch (e) {
+        canvasWidthPx.value = uni.upx2px(640)
+        canvasHeightPx.value = uni.upx2px(640)
+        redraw()
+      }
+    })
+    query.exec()
+  })
 }
 
 function redraw() {
@@ -285,14 +426,39 @@ function clearAll() {
   redraw()
 }
 
-function addSticker(emoji) {
+function defaultStickerSize() {
+  try {
+    return uni.upx2px(72)
+  } catch (e) {
+    return 36
+  }
+}
+
+function stickerSizePx(sticker) {
+  const n = Number(sticker && sticker.size)
+  return n > 0 ? n : defaultStickerSize()
+}
+
+function addSticker(option) {
   const id = `st_${Date.now()}_${Math.random().toString(16).slice(2)}`
   const px = canvasPx().w
-  stickers.value = [...stickers.value, { id, emoji, x: px / 2 - 18, y: px / 2 - 18 }]
+  const size = defaultStickerSize()
+  const opt = option && typeof option === 'object' ? option : {}
+  stickers.value = [
+    ...stickers.value,
+    {
+      id,
+      emoji: String(opt.label || opt.emoji || ''),
+      src: String(opt.src || ''),
+      x: px / 2 - size / 2,
+      y: px / 2 - size / 2,
+      size,
+    },
+  ]
   persist()
 }
 
-function computeTrashRect(e) {
+function computeTrashRect() {
   try {
     const info = uni.getSystemInfoSync()
     const windowHeight = info && typeof info.windowHeight === 'number' ? info.windowHeight : 0
@@ -315,7 +481,7 @@ function onStickerStart(e, id) {
   draggingStickerId.value = id
   overTrash.value = false
   stickerStart = { x: s.x, y: s.y, cx: touch.clientX, cy: touch.clientY }
-  computeTrashRect(e)
+  computeTrashRect()
 }
 
 function onStickerMove(e) {
@@ -345,11 +511,13 @@ function onStickerEnd() {
 function openTextPanel() {
   tool.value = 'text'
   textPanelOpen.value = true
+  stickerSheetOpen.value = false
+  brushPanelOpen.value = false
 }
 
 function closeTextPanel() {
   textPanelOpen.value = false
-  tool.value = 'sticker'
+  tool.value = 'brush'
   textDraft.value = ''
 }
 
@@ -357,8 +525,7 @@ function confirmText() {
   const v = String(textDraft.value || '').trim()
   if (!v) return
   const id = `tx_${Date.now()}_${Math.random().toString(16).slice(2)}`
-  const px = canvasPx().w
-  texts.value = [...texts.value, { id, text: v, x: 22, y: 22, color: '#111111' }]
+  texts.value = [...texts.value, { id, text: v, x: 22, y: 22, color: textColor.value }]
   persist()
   closeTextPanel()
 }
@@ -372,6 +539,7 @@ function goNext() {
 <style scoped lang="scss">
 .doodle-page {
   padding-bottom: 240rpx;
+  background: #ffffff;
 }
 
 .top-next {
@@ -382,6 +550,7 @@ function goNext() {
 
 .top-tools {
   margin-top: 14rpx;
+  padding: 0 18rpx;
   display: flex;
   align-items: center;
   gap: 14rpx;
@@ -391,7 +560,7 @@ function goNext() {
   width: 74rpx;
   height: 74rpx;
   border-radius: 999rpx;
-  background: rgba(17, 17, 17, 0.06);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -401,40 +570,43 @@ function goNext() {
   margin-left: auto;
 }
 
-.circle-text {
-  font-size: 34rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.75);
+.circle-ico {
+  width: 74rpx;
+  height: 74rpx;
+  display: block;
 }
 
 .canvas-wrap {
   margin-top: 18rpx;
   display: flex;
   justify-content: center;
+  padding: 0 18rpx;
+  box-sizing: border-box;
 }
 
 .canvas-bg {
-  width: 640rpx;
-  height: 640rpx;
   border-radius: 28rpx;
-  background: rgba(255, 214, 77, 0.22);
+  background: #f2e9c9;
   overflow: hidden;
   position: relative;
   box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .canvas {
-  width: 640rpx;
-  height: 640rpx;
+  display: block;
 }
 
 .sticker {
   position: absolute;
-  width: 72rpx;
-  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.sticker-img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .sticker-text {
@@ -464,10 +636,18 @@ function goNext() {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12rpx;
 }
 
 .trash.active {
   background: rgba(255, 75, 63, 0.18);
+}
+
+.trash-ico {
+  width: 40rpx;
+  height: 40rpx;
+  display: block;
+  opacity: 0.85;
 }
 
 .trash-text {
@@ -481,9 +661,9 @@ function goNext() {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 164rpx;
-  background: rgba(255, 255, 255, 0.96);
-  padding: 18rpx 28rpx 0;
+  height: 186rpx;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 22rpx 28rpx 0;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 18rpx;
@@ -502,9 +682,15 @@ function goNext() {
   color: rgba(17, 17, 17, 0.92);
 }
 
-.bt-ico {
-  font-size: 38rpx;
-  font-weight: 900;
+.bt-ico-img {
+  width: 44rpx;
+  height: 44rpx;
+  display: block;
+  opacity: 0.65;
+}
+
+.bt.active .bt-ico-img {
+  opacity: 1;
 }
 
 .bt-text {
@@ -512,41 +698,144 @@ function goNext() {
   font-weight: 800;
 }
 
-.panel {
+.sheet-mask {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 164rpx;
-  background: rgba(255, 255, 255, 0.98);
-  padding: 18rpx 28rpx 22rpx;
-  box-shadow: 0 -18rpx 36rpx rgba(17, 17, 17, 0.06);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 22rpx 22rpx;
 }
 
-.sticker-row {
+.sticker-sheet {
+  width: 100%;
+  border-radius: 28rpx;
+  background: #ffffff;
+  padding: 18rpx 18rpx 22rpx;
+  box-shadow: 0 18rpx 36rpx rgba(17, 17, 17, 0.16);
+}
+
+.sheet-head {
+  height: 70rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18rpx;
+  justify-content: center;
+  position: relative;
 }
 
-.sticker-opt {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.06);
+.sheet-title {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.9);
+}
+
+.sheet-close {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sticker-opt-text {
-  font-size: 50rpx;
+.sheet-close-img {
+  width: 34rpx;
+  height: 34rpx;
+  display: block;
+  opacity: 0.75;
+}
+
+.sheet-grid {
+  margin-top: 10rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18rpx;
+}
+
+.sheet-item {
+  height: 150rpx;
+  border-radius: 22rpx;
+  background: rgba(17, 17, 17, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 2rpx solid transparent;
+}
+
+.sheet-item.selected {
+  border-color: rgba(61, 106, 251, 0.55);
+  background: rgba(61, 106, 251, 0.08);
+}
+
+.sheet-item-img {
+  width: 92rpx;
+  height: 92rpx;
+  display: block;
+}
+
+.sheet-check {
+  position: absolute;
+  top: 10rpx;
+  left: 10rpx;
+  width: 36rpx;
+  height: 36rpx;
+  display: block;
+}
+
+.sheet-actions {
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+}
+
+.sheet-btn {
+  height: 92rpx;
+  border-radius: 9999rpx;
+  background: #3d6afb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-btn.ghost {
+  background: rgba(61, 106, 251, 0.12);
+}
+
+.sheet-btn-text {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.sheet-btn-text.ghost-text {
+  color: #3d6afb;
+}
+
+.panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 186rpx;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 18rpx 28rpx 22rpx;
+  box-shadow: 0 -18rpx 36rpx rgba(17, 17, 17, 0.06);
 }
 
 .colors {
   display: flex;
   flex-wrap: wrap;
   gap: 18rpx;
+}
+
+.text-colors {
+  margin-top: 18rpx;
 }
 
 .c {
@@ -618,33 +907,58 @@ function goNext() {
   padding: 18rpx 18rpx 22rpx;
 }
 
+.text-head {
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
 .text-title {
-  display: block;
-  text-align: center;
   font-size: 30rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.9);
 }
 
-.text-input {
-  margin-top: 18rpx;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: rgba(17, 17, 17, 0.04);
-  padding: 0 18rpx;
+.text-close {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.text-close-img {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
+  opacity: 0.78;
+}
+
+.text-input {
+  margin-top: 18rpx;
+  min-height: 132rpx;
+  border-radius: 24rpx;
+  background: rgba(17, 17, 17, 0.04);
+  padding: 18rpx;
+  display: flex;
 }
 
 .text-input-real {
   width: 100%;
+  min-height: 96rpx;
   font-size: 34rpx;
   font-weight: 900;
   color: #111111;
+  line-height: 46rpx;
 }
 
 .ph {
   color: rgba(17, 17, 17, 0.35);
 }
 </style>
-

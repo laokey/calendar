@@ -6,6 +6,15 @@
       <view class="head-right" @click="clearAll"><text class="clear">清除</text></view>
     </view>
 
+    <view class="tabs">
+      <view class="tab" @click="active = 'local'">
+        <text class="tab-text" :class="{ on: active === 'local' }">本地</text>
+      </view>
+      <view class="tab" @click="active = 'online'">
+        <text class="tab-text" :class="{ on: active === 'online' }">在线</text>
+      </view>
+    </view>
+
     <view v-if="items.length === 0" class="empty">
       <image class="empty-img" src="/static/my/img_empty_cards.png" mode="widthFix" />
       <text class="empty-text">尚无卡片记录</text>
@@ -25,9 +34,11 @@
         <view class="bottom">
           <text class="badge" :class="{ unread: it.status === 'unread' }">{{ it.status === 'unread' ? '未读' : '已读' }}</text>
           <view class="actions">
-            <view class="a-btn" @click="undo(it.id)"><image class="a-img" src="/static/my/icon_preview.png" mode="aspectFit" /></view>
-            <view class="a-btn" @click="preview(it.id)"><image class="a-img" src="/static/task/icon_edit_square.png" mode="aspectFit" /></view>
-            <view class="a-btn danger" @click="remove(it.id)"><image class="a-img danger-img" src="/static/task/icon_trash_red.png" mode="aspectFit" /></view>
+            <view class="a-btn" @click="preview(it)"><image class="a-img" src="/static/task/icon_edit_square.png" mode="aspectFit" /></view>
+            <template v-if="active === 'local'">
+              <view class="a-btn" @click="undo(it.id)"><image class="a-img" src="/static/my/icon_preview.png" mode="aspectFit" /></view>
+              <view class="a-btn danger" @click="remove(it.id)"><image class="a-img danger-img" src="/static/task/icon_trash_red.png" mode="aspectFit" /></view>
+            </template>
           </view>
         </view>
       </view>
@@ -51,14 +62,18 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { clearCardRecords, deleteCardRecord, ensureMeState, listCardRecords } from '../../utils/meStore'
+import { cardsApi } from '../../utils/api'
 
 const state = ref(ensureMeState())
+const active = ref('local')
+const onlineItems = ref([])
 const dialogVisible = ref(false)
 const dialogType = ref('') // 'remove' | 'undo'
 const activeId = ref('')
 
 onShow(() => {
   state.value = ensureMeState()
+  refreshOnline()
 })
 
 const safeTop = computed(() => {
@@ -71,7 +86,10 @@ const safeTop = computed(() => {
   }
 })
 
-const items = computed(() => listCardRecords(state.value))
+const items = computed(() => {
+  if (active.value === 'online') return onlineItems.value
+  return listCardRecords(state.value)
+})
 
 function back() {
   uni.navigateBack()
@@ -79,6 +97,10 @@ function back() {
 
 function clearAll() {
   if (!items.value.length) return
+  if (active.value === 'online') {
+    uni.showToast({ title: '在线记录暂不支持清除', icon: 'none' })
+    return
+  }
   uni.showModal({
     title: '',
     content: '确定清除全部卡片记录？',
@@ -93,8 +115,20 @@ function clearAll() {
   })
 }
 
-function preview(id) {
-  uni.navigateTo({ url: `/pages/me/card-preview?id=${encodeURIComponent(id)}` })
+function preview(it) {
+  if (!it) return
+  if (active.value === 'online') {
+    const url = String(it.imageUrl || '').trim()
+    if (url) {
+      uni.previewImage({ urls: [url] })
+    }
+    const msg = String(it.message || '').trim()
+    if (msg) {
+      uni.showModal({ title: '祝福语', content: msg, showCancel: false })
+    }
+    return
+  }
+  uni.navigateTo({ url: `/pages/me/card-preview?id=${encodeURIComponent(String(it.id || ''))}` })
 }
 
 function undo(id) {
@@ -123,6 +157,32 @@ function confirmDialog() {
     uni.showToast({ title: '已撤回', icon: 'none' })
   }
   closeDialog()
+}
+
+async function refreshOnline() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) {
+    onlineItems.value = []
+    return
+  }
+  try {
+    const list = await cardsApi.getGreetingCardList()
+    onlineItems.value = (list || []).map((c) => {
+      const isTimer = Number(c && c.isTimer) === 1
+      const timeText = isTimer ? `${c.timedDate || ''} ${c.timedTime || ''}`.trim() : ''
+      return {
+        id: String(c.cardId || ''),
+        title: '贺卡',
+        device: String(c.deviceEmail || ''),
+        timeText,
+        status: 'read',
+        message: String(c.greetings || ''),
+        imageUrl: String(c.imageUrl || ''),
+      }
+    })
+  } catch (e) {
+    onlineItems.value = []
+  }
 }
 </script>
 
@@ -174,6 +234,33 @@ function confirmDialog() {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+.tabs {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.tab {
+  height: 64rpx;
+  padding: 0 22rpx;
+  border-radius: 9999rpx;
+  background: rgba(17, 17, 17, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-text {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.tab-text.on {
+  color: rgba(17, 17, 17, 0.9);
 }
 
 .clear {

@@ -8,7 +8,7 @@
 
     <view class="hero">
       <view class="hero-icon">
-        <text class="hero-emoji">💬</text>
+        <image class="hero-img" src="/static/card/icon-card-share-hero.png" mode="aspectFit" />
       </view>
       <text class="hero-title">分享给您的家人或朋友</text>
       <text class="hero-sub bl-muted">您想共享哪个设备</text>
@@ -19,7 +19,7 @@
         <text class="row-text">{{ d.name }}</text>
         <image
           class="row-sel"
-          :src="selectedId === d.id ? '/static/common/icon_radio_on.png' : '/static/common/icon_radio_off.png'"
+          :src="selectedId === d.id ? '/static/common/icon_checkbox_checked.png' : '/static/common/icon_radio_off.png'"
           mode="aspectFit"
         />
       </view>
@@ -37,42 +37,78 @@ import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { clearCardDraft, ensureCardDraft } from '../../utils/cardStore'
 import { addCardRecord, ensureMeState } from '../../utils/meStore'
-import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
-import { membersApi } from '../../utils/api'
+import { cardsApi, deviceApi } from '../../utils/api'
 
 const draft = ref(ensureCardDraft())
 const selectedId = ref('')
+const submitting = ref(false)
+const deviceList = ref([])
 
 const devices = computed(() => {
-  const state = ensureCalendarState()
-  const members = listMembers(state).filter((m) => m && m.group !== 'calendarColor')
-  const list = members.slice(0, 6).map((m) => ({ id: String(m.id), name: `${m.name}的日历` }))
-  if (!list.length) return [{ id: 'dev_1', name: '家庭日历' }]
-  return list
+  return deviceList.value
 })
 
 onShow(() => {
   ;(async () => {
-    const logged = !!uni.getStorageSync('auth_logged_in')
-    if (logged) {
-      try {
-        const list = await membersApi.getMemberList()
-        const state = ensureCalendarState()
-        setMembers(state, membersApi.mapRemoteMembersToLocalMembers(list))
-      } catch (e) {}
-    }
     draft.value = ensureCardDraft()
-    if (!selectedId.value && devices.value.length) selectedId.value = String(devices.value[0].id)
+    try {
+      const logged = !!uni.getStorageSync('auth_logged_in')
+      if (!logged) {
+        deviceList.value = []
+        return
+      }
+      const list = await deviceApi.getCalendarDeviceList()
+      deviceList.value = (list || []).map((d) => ({
+        id: String(d && d.deviceEmail ? d.deviceEmail : ''),
+        name: d && d.deviceName ? String(d.deviceName) : String(d && d.deviceEmail ? d.deviceEmail : ''),
+        email: String(d && d.deviceEmail ? d.deviceEmail : ''),
+      })).filter((x) => !!x.id)
+      if (!selectedId.value && deviceList.value.length) selectedId.value = String(deviceList.value[0].id)
+    } catch (e) {
+      deviceList.value = []
+      uni.showToast({ title: String((e && e.message) || '加载设备失败'), icon: 'none' })
+    }
   })()
 })
 
-function confirmSend() {
+async function confirmSend() {
   const dev = devices.value.find((x) => x.id === selectedId.value)
   if (!dev) {
     uni.showToast({ title: '请选择设备', icon: 'none' })
     return
   }
-  uni.showToast({ title: '已发送', icon: 'none' })
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const localPhoto = String(draft.value.photoPath || '').trim()
+    const remotePhoto = /^https?:\/\//i.test(localPhoto) ? localPhoto : ''
+    const imageUrl = remotePhoto || String(draft.value.imageUrl || '').trim()
+    if (!imageUrl) {
+      uni.showToast({ title: '请选择贺卡图片', icon: 'none' })
+      return
+    }
+    const greetings = String(draft.value.message || '').trim()
+    if (!greetings) {
+      uni.showToast({ title: '请输入祝福内容', icon: 'none' })
+      return
+    }
+    const scheduleEnabled = !!draft.value.scheduleEnabled
+    await cardsApi.sendGreetingCard({
+      deviceEmail: dev.email || dev.id,
+      imageUrl,
+      greetings,
+      playMode: cardsApi.playModeFromDraft(draft.value.playMode),
+      isTimer: scheduleEnabled ? 1 : 0,
+      timedDate: scheduleEnabled ? String(draft.value.scheduleDate || '').trim() : '',
+      timedTime: scheduleEnabled ? String(draft.value.scheduleTime || '').trim() : '',
+    })
+    uni.showToast({ title: '已发送', icon: 'none' })
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '发送失败'), icon: 'none' })
+    return
+  } finally {
+    submitting.value = false
+  }
   const me = ensureMeState()
   addCardRecord(me, {
     title: '贺卡',
@@ -110,8 +146,10 @@ function confirmSend() {
   justify-content: center;
 }
 
-.hero-emoji {
-  font-size: 74rpx;
+.hero-img {
+  width: 140rpx;
+  height: 140rpx;
+  display: block;
 }
 
 .hero-title {
