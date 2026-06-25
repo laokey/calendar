@@ -52,6 +52,7 @@
             :key="t.id"
             class="task-card"
             :class="t.cls"
+            :style="{ background: t.bg }"
           >
             <view class="task-left">
               <text class="task-title">{{ t.title }}</text>
@@ -278,6 +279,39 @@ function avatarStyle(color) {
   return { background: String(color || "#4cc38a") };
 }
 
+function rgbaFromColor(color, alpha) {
+  const c = String(color || "").trim();
+  if (!c) return `rgba(61, 106, 251, ${alpha})`;
+  if (c.startsWith("rgba(")) {
+    const inner = c.slice(5, -1);
+    const parts = inner.split(",").map((x) => x.trim());
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+    return c;
+  }
+  if (c.startsWith("rgb(")) {
+    const inner = c.slice(4, -1);
+    const parts = inner.split(",").map((x) => x.trim());
+    if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+    return c;
+  }
+  if (c.startsWith("#")) {
+    let hex = c.slice(1);
+    if (hex.length === 3) {
+      hex = hex
+        .split("")
+        .map((x) => x + x)
+        .join("");
+    }
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+  }
+  return c;
+}
+
 function findMember(id) {
   return (memberItems.value || []).find((item) => String(item.id) === String(id || "")) || null;
 }
@@ -292,13 +326,6 @@ function memberColor(id) {
   return member && member.color ? member.color : "#4cc38a";
 }
 
-function colorThemeClass(color) {
-  const lower = String(color || "").toLowerCase();
-  if (["#ff5a5f", "#ff4b3f", "#ff4bd8", "#9b59ff", "#a600a6"].includes(lower)) return "is-pink";
-  if (["#4cc38a", "#00b060", "#7ddc5a"].includes(lower)) return "is-green";
-  return "is-gray";
-}
-
 function eventTimeText(event) {
   if (!event) return "";
   if (event.allDay) return "全天";
@@ -311,12 +338,15 @@ function eventTimeText(event) {
 function formatHomeEventCard(event, idx) {
   const memberIds = Array.isArray(event && event.memberIds) ? event.memberIds.filter(Boolean) : [];
   const firstMemberId = memberIds[0] || "";
-  const firstColor = memberColor(firstMemberId);
+  const eventColorIdx = event && event.memberColor !== undefined && event.memberColor !== null ? Number(event.memberColor) : NaN;
+  const directColor = Number.isFinite(eventColorIdx) ? membersApi.memberHexFromColorIndex(eventColorIdx) : "";
+  const firstColor = directColor || memberColor(firstMemberId);
   return {
     id: event && event.id ? String(event.id) : `ev_${idx}`,
     title: event && event.title ? String(event.title) : "",
     timeText: eventTimeText(event),
-    cls: memberIds.length > 1 ? "is-gray" : colorThemeClass(firstColor),
+    cls: "",
+    bg: memberIds.length > 1 ? "rgba(255, 255, 255, 0.88)" : rgbaFromColor(firstColor, 0.14),
     right:
       memberIds.length > 1
         ? {
@@ -329,7 +359,7 @@ function formatHomeEventCard(event, idx) {
         : {
             type: "single",
             glyph: memberGlyph(firstMemberId),
-            color: memberColor(firstMemberId),
+            color: firstColor,
           },
   };
 }

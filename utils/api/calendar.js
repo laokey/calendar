@@ -75,12 +75,46 @@ export function deleteEvent(id) {
 
 function parseIdList(raw) {
   if (raw === undefined || raw === null) return []
-  if (Array.isArray(raw)) return raw.map((x) => String(x)).filter(Boolean)
+  if (Array.isArray(raw)) {
+    return raw
+      .map((x) => {
+        if (x && typeof x === 'object') {
+          const id =
+            x.memberId !== undefined
+              ? x.memberId
+              : x.memberid !== undefined
+                ? x.memberid
+                : x.id !== undefined
+                  ? x.id
+                  : ''
+          return id === undefined || id === null ? '' : String(id).trim()
+        }
+        return String(x || '').trim()
+      })
+      .filter(Boolean)
+  }
   const s = String(raw).trim()
   if (!s) return []
   if (s.startsWith('[') && s.endsWith(']')) {
     const parsed = safeJsonParse(s)
-    if (Array.isArray(parsed)) return parsed.map((x) => String(x)).filter(Boolean)
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((x) => {
+          if (x && typeof x === 'object') {
+            const id =
+              x.memberId !== undefined
+                ? x.memberId
+                : x.memberid !== undefined
+                  ? x.memberid
+                  : x.id !== undefined
+                    ? x.id
+                    : ''
+            return id === undefined || id === null ? '' : String(id).trim()
+          }
+          return String(x || '').trim()
+        })
+        .filter(Boolean)
+    }
   }
   return s
     .split(',')
@@ -163,7 +197,37 @@ function normalizeMatter(it) {
   const endTime = normalizeTimeText(endTimeRaw)
   const desc =
     x.description !== undefined ? String(x.description) : x.desc !== undefined ? String(x.desc) : ''
-  const memberIds = parseIdList(x.members !== undefined ? x.members : x.memberIds !== undefined ? x.memberIds : [])
+  const membersRaw = x.members !== undefined ? x.members : x.memberIds !== undefined ? x.memberIds : []
+  const memberIds = parseIdList(membersRaw)
+  let memberColorFromMembers = null
+  if (Array.isArray(membersRaw) && membersRaw.length === 1 && membersRaw[0] && typeof membersRaw[0] === 'object') {
+    const v = membersRaw[0].memberColor !== undefined ? membersRaw[0].memberColor : membersRaw[0].membercolor
+    const n = Number(v)
+    memberColorFromMembers = Number.isFinite(n) ? Math.round(n) : null
+  } else if (typeof membersRaw === 'string' && membersRaw.trim().startsWith('[')) {
+    const parsed = safeJsonParse(membersRaw.trim())
+    if (Array.isArray(parsed) && parsed.length === 1 && parsed[0] && typeof parsed[0] === 'object') {
+      const v = parsed[0].memberColor !== undefined ? parsed[0].memberColor : parsed[0].membercolor
+      const n = Number(v)
+      memberColorFromMembers = Number.isFinite(n) ? Math.round(n) : null
+    }
+  }
+  const memberColorRaw =
+    x.memberColor !== undefined
+      ? x.memberColor
+      : x.membercolor !== undefined
+        ? x.membercolor
+        : x.colorIndex !== undefined
+          ? x.colorIndex
+          : x.colorindex !== undefined
+            ? x.colorindex
+            : x.colorId !== undefined
+              ? x.colorId
+              : x.colorid !== undefined
+                ? x.colorid
+                : memberColorFromMembers
+  const memberColorNum = Number(memberColorRaw)
+  const memberColor = Number.isFinite(memberColorNum) ? Math.round(memberColorNum) : null
 
   return {
     id: idRaw === undefined || idRaw === null ? '' : String(idRaw),
@@ -174,6 +238,7 @@ function normalizeMatter(it) {
     startTime: allDay ? '' : startTime,
     endTime: allDay ? '' : endTime,
     memberIds,
+    memberColor,
     desc,
     location: '',
     tagColor: '#3d6afb',
@@ -185,7 +250,17 @@ function normalizeMatter(it) {
 
 export function mapRemoteMattersToLocalEvents(list) {
   const src = Array.isArray(list) ? list : []
-  return src.map(normalizeMatter).filter((e) => e && e.id && e.startDate)
+  const out = []
+  const seen = new Set()
+  for (const it of src) {
+    const e = normalizeMatter(it)
+    if (!e || !e.id || !e.startDate) continue
+    const k = String(e.id)
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push(e)
+  }
+  return out
 }
 
 function flattenMatterList(list) {

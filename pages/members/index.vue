@@ -30,6 +30,8 @@
           :data-group="'member'"
           :data-index="idx"
           @touchstart.stop.prevent="onHandleTouchStart"
+          @longpress.stop.prevent="onHandleLongPress"
+          @mousedown.stop.prevent="onHandleMouseDown"
           @touchmove.stop.prevent="onDragMove"
           @touchend.stop.prevent="onDragEnd"
           @touchcancel.stop.prevent="onDragEnd"
@@ -63,6 +65,8 @@
           :data-group="'calendarColor'"
           :data-index="idx"
           @touchstart.stop.prevent="onHandleTouchStart"
+          @longpress.stop.prevent="onHandleLongPress"
+          @mousedown.stop.prevent="onHandleMouseDown"
           @touchmove.stop.prevent="onDragMove"
           @touchend.stop.prevent="onDragEnd"
           @touchcancel.stop.prevent="onDragEnd"
@@ -157,6 +161,7 @@ let dragStartClientY = 0
 let pressTimer = null
 let pressStartClientY = 0
 let pendingStart = null
+let windowBound = false
 const itemStepPx = (() => {
   try {
     if (typeof uni?.upx2px === 'function') return uni.upx2px(132)
@@ -164,9 +169,47 @@ const itemStepPx = (() => {
   return 66
 })()
 
+function eventPointY(e) {
+  const t = e?.touches?.[0] || e?.changedTouches?.[0]
+  if (t) {
+    const y = t.clientY !== undefined ? t.clientY : t.pageY !== undefined ? t.pageY : t.y
+    const n = Number(y)
+    return Number.isFinite(n) ? n : NaN
+  }
+  const y = e?.clientY !== undefined ? e.clientY : e?.pageY !== undefined ? e.pageY : e?.y
+  const n = Number(y)
+  return Number.isFinite(n) ? n : NaN
+}
+
+function bindWindowDrag() {
+  if (windowBound) return
+  if (typeof window === 'undefined') return
+  windowBound = true
+  try {
+    window.addEventListener('mousemove', onDragMove, { passive: false })
+    window.addEventListener('mouseup', onDragEnd, { passive: false })
+    window.addEventListener('touchmove', onDragMove, { passive: false })
+    window.addEventListener('touchend', onDragEnd, { passive: false })
+    window.addEventListener('touchcancel', onDragEnd, { passive: false })
+  } catch (e) {}
+}
+
+function unbindWindowDrag() {
+  if (!windowBound) return
+  windowBound = false
+  if (typeof window === 'undefined') return
+  try {
+    window.removeEventListener('mousemove', onDragMove, false)
+    window.removeEventListener('mouseup', onDragEnd, false)
+    window.removeEventListener('touchmove', onDragMove, false)
+    window.removeEventListener('touchend', onDragEnd, false)
+    window.removeEventListener('touchcancel', onDragEnd, false)
+  } catch (e) {}
+}
+
 function onHandleTouchStart(e) {
-  const touch = e?.touches?.[0]
-  if (!touch) return
+  const y = eventPointY(e)
+  if (!Number.isFinite(y)) return
   const ds = e?.currentTarget?.dataset || {}
   const group = ds.group === 'calendarColor' ? 'calendarColor' : 'member'
   const idx = Number(ds.index)
@@ -174,7 +217,7 @@ function onHandleTouchStart(e) {
   const list = group === 'calendarColor' ? colorList.value : memberList.value
   const m = list[idx]
   if (!m) return
-  pressStartClientY = touch.clientY
+  pressStartClientY = y
   pendingStart = { id: String(m.id), group, idx }
   if (pressTimer) clearTimeout(pressTimer)
   pressTimer = setTimeout(() => {
@@ -186,6 +229,55 @@ function onHandleTouchStart(e) {
     dragStartClientY = pressStartClientY
     pendingStart = null
   }, 260)
+  bindWindowDrag()
+}
+
+function onHandleMouseDown(e) {
+  const y = eventPointY(e)
+  if (!Number.isFinite(y)) return
+  const ds = e?.currentTarget?.dataset || {}
+  const group = ds.group === 'calendarColor' ? 'calendarColor' : 'member'
+  const idx = Number(ds.index)
+  if (!Number.isFinite(idx)) return
+  const list = group === 'calendarColor' ? colorList.value : memberList.value
+  const m = list[idx]
+  if (!m) return
+  pressStartClientY = y
+  pendingStart = { id: String(m.id), group, idx }
+  if (pressTimer) clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    if (!pendingStart) return
+    dragging.value = true
+    draggingId.value = pendingStart.id
+    draggingGroup.value = pendingStart.group
+    dragIndex = pendingStart.idx
+    dragStartClientY = pressStartClientY
+    pendingStart = null
+  }, 260)
+  bindWindowDrag()
+}
+
+function onHandleLongPress(e) {
+  const y = eventPointY(e)
+  const ds = e?.currentTarget?.dataset || {}
+  const group = ds.group === 'calendarColor' ? 'calendarColor' : 'member'
+  const idx = Number(ds.index)
+  if (!Number.isFinite(idx)) return
+  const list = group === 'calendarColor' ? colorList.value : memberList.value
+  const m = list[idx]
+  if (!m) return
+  if (pressTimer) clearTimeout(pressTimer)
+  pressTimer = null
+  pendingStart = null
+  dragging.value = true
+  draggingId.value = String(m.id)
+  draggingGroup.value = group
+  dragIndex = idx
+  if (Number.isFinite(y)) {
+    pressStartClientY = y
+    dragStartClientY = y
+  }
+  bindWindowDrag()
 }
 
 function commitOrder() {
@@ -211,27 +303,28 @@ function moveInGroup(direction) {
 }
 
 function onDragMove(e) {
-  const touch = e?.touches?.[0]
-  if (!touch) return
+  const y = eventPointY(e)
+  if (!Number.isFinite(y)) return
   if (!dragging.value) {
-    if (pendingStart && Math.abs(touch.clientY - pressStartClientY) > 6) {
+    if (pendingStart && Math.abs(y - pressStartClientY) > 6) {
       pendingStart = null
       if (pressTimer) clearTimeout(pressTimer)
       pressTimer = null
     }
     return
   }
-  const dy = touch.clientY - dragStartClientY
+  const dy = y - dragStartClientY
   if (Math.abs(dy) < itemStepPx / 2) return
   const direction = dy > 0 ? 1 : -1
   moveInGroup(direction)
-  dragStartClientY = touch.clientY
+  dragStartClientY = y
 }
 
 function onDragEnd() {
   if (pressTimer) clearTimeout(pressTimer)
   pressTimer = null
   pendingStart = null
+  unbindWindowDrag()
   if (!dragging.value) return
   dragging.value = false
   draggingId.value = ''

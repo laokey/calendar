@@ -510,13 +510,16 @@ function goSyncAdd() {
 
 function buildPayload() {
   const n = String(title.value || "").trim();
+  const isAllDay = !!allDay.value;
+  const sDate = startDate.value;
+  const eDate = endDate.value || sDate;
   const payload = {
     title: n,
-    allDay: !!allDay.value,
-    startDate: startDate.value,
-    startTime: startTime.value,
-    endDate: endDate.value,
-    endTime: endTime.value,
+    allDay: isAllDay,
+    startDate: sDate,
+    startTime: isAllDay ? "" : startTime.value,
+    endDate: eDate,
+    endTime: isAllDay ? "" : endTime.value,
     memberIds: selectedMemberIds.value.slice(),
     desc: desc.value,
     location: location.value,

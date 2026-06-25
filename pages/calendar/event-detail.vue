@@ -61,7 +61,7 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
-import { deleteEvent, ensureCalendarState, eventDateText, findEvent, listMembers, setMembers } from '../../utils/calendarStore'
+import { deleteEvent, ensureCalendarState, eventDateText, findEvent, listMembers, saveCalendarState, setMembers } from '../../utils/calendarStore'
 import { calendarApi, membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
@@ -108,8 +108,28 @@ onLoad((options) => {
 onShow(() => {
   ;(async () => {
     await syncRemoteMembers()
+    try {
+      const logged = !!uni.getStorageSync('auth_logged_in')
+      const start = event.value && event.value.startDate ? String(event.value.startDate) : ''
+      const end = event.value && event.value.endDate ? String(event.value.endDate) : start
+      if (logged && start) {
+        const list = await calendarApi.getMatterInfoList({ startDate: start, endDate: end || start })
+        const remoteEvents = calendarApi.mapRemoteMattersToLocalEvents(list)
+        const keep = (state.value.events || []).filter((e) => {
+          const isRemote = /^\d+$/.test(String(e && e.id ? e.id : ''))
+          if (!isRemote) return true
+          const d = e && e.startDate ? String(e.startDate) : ''
+          return !(d && d >= start && d <= (end || start))
+        })
+        state.value.events = [...keep, ...remoteEvents]
+        saveCalendarState(state.value)
+      }
+    } catch (e) {}
     state.value = ensureCalendarState()
     members.value = listMembers(state.value)
+    const id = event.value && event.value.id ? String(event.value.id) : ''
+    const ev = id ? findEvent(state.value, id) : null
+    if (ev) event.value = ev
   })()
 })
 

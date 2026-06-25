@@ -235,7 +235,7 @@ function toCnDateText(key) {
 const dateText = computed(() => toCnDateText(date.value))
 
 const members = computed(() => [
-  { id: 'me', name: '我的', glyph: '我', color: '#4cc38a' },
+  // { id: 'me', name: '我的', glyph: '我', color: '#4cc38a' },
   ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
 ])
 
