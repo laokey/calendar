@@ -6,8 +6,11 @@
       <view class="input-wrap">
         <input v-model="email" class="input" placeholder="新邮箱" placeholder-class="ph" confirm-type="next" />
       </view>
-      <view class="input-wrap">
+      <view class="input-wrap code-wrap">
         <input v-model="code" class="input" placeholder="验证码" placeholder-class="ph" confirm-type="next" />
+        <view class="code-btn" :class="{ disabled: !canSendCode }" @click="sendCode">
+          <text class="code-btn-text">{{ codeBtnText }}</text>
+        </view>
       </view>
       <view class="input-wrap">
         <input
@@ -39,27 +42,123 @@
 import { computed, ref } from 'vue'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateProfile } from '../../utils/meStore'
+import { usersApi } from '../../utils/api'
+import { onUnload } from '@dcloudio/uni-app'
 
 const email = ref('')
 const code = ref('')
 const password = ref('')
 const showPassword = ref(false)
+const codeSeconds = ref(0)
+const codeSending = ref(false)
+let codeTimer = 0
 
 const canSubmit = computed(() => {
   return email.value.trim() && code.value.trim() && password.value.trim()
 })
 
-function submit() {
+function isEmail(value) {
+  const v = String(value || '').trim()
+  if (!v) return false
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)
+}
+
+const canSendCode = computed(() => {
+  if (codeSending.value) return false
+  if (codeSeconds.value > 0) return false
+  return isEmail(email.value.trim())
+})
+
+const codeBtnText = computed(() => {
+  if (codeSeconds.value > 0) return `${codeSeconds.value}s`
+  return '获取验证码'
+})
+
+function clearCodeTimer() {
+  if (!codeTimer) return
+  clearInterval(codeTimer)
+  codeTimer = 0
+}
+
+function startCodeCountdown(seconds = 60) {
+  clearCodeTimer()
+  codeSeconds.value = seconds
+  codeTimer = setInterval(() => {
+    if (codeSeconds.value <= 1) {
+      codeSeconds.value = 0
+      clearCodeTimer()
+      return
+    }
+    codeSeconds.value -= 1
+  }, 1000)
+}
+
+onUnload(() => {
+  clearCodeTimer()
+})
+
+async function sendCode() {
+  if (!canSendCode.value) {
+    if (!email.value.trim()) {
+      uni.showToast({ title: '请输入新邮箱', icon: 'none' })
+      return
+    }
+    if (!isEmail(email.value.trim())) {
+      uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+      return
+    }
+    return
+  }
+  codeSending.value = true
+  uni.showLoading({ title: '发送中' })
+  try {
+    await usersApi.sendEmailVerifyCode({ newEmail: email.value.trim() })
+    uni.showToast({ title: '验证码已发送', icon: 'none' })
+    startCodeCountdown(60)
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '发送失败'), icon: 'none' })
+  } finally {
+    codeSending.value = false
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
+
+async function submit() {
   if (!canSubmit.value) {
     uni.showToast({ title: '请完善信息', icon: 'none' })
     return
   }
   const v = email.value.trim()
-  const s = ensureMeState()
-  updateProfile(s, { email: v })
-  uni.setStorageSync('auth_email', v)
-  uni.showToast({ title: '修改成功', icon: 'none' })
-  setTimeout(() => uni.navigateBack(), 300)
+  uni.showLoading({ title: '修改中' })
+  try {
+    await usersApi.updateUserEmailAddress({ newEmail: v, verifyCode: code.value.trim(), password: password.value.trim() })
+    const s = ensureMeState()
+    updateProfile(s, { email: v })
+    uni.setStorageSync('auth_email', v)
+    uni.showToast({ title: '修改成功', icon: 'none' })
+    setTimeout(() => uni.navigateBack(), 300)
+  } catch (e) {
+    const errCode = e && e.code !== undefined ? e.code : undefined
+    if (errCode === 201 || errCode === '201') {
+      uni.showToast({ title: '用户不存在', icon: 'none' })
+      return
+    }
+    if (errCode === 202 || errCode === '202') {
+      uni.showToast({ title: '邮箱已被注册', icon: 'none' })
+      return
+    }
+    if (errCode === 203 || errCode === '203') {
+      uni.showToast({ title: '密码错误', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '修改失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 
@@ -88,6 +187,10 @@ function submit() {
   gap: 10rpx;
 }
 
+.code-wrap {
+  gap: 12rpx;
+}
+
 .input {
   flex: 1;
   font-size: 34rpx;
@@ -114,6 +217,25 @@ function submit() {
   width: 34rpx;
   height: 34rpx;
   opacity: 0.7;
+}
+
+.code-btn {
+  height: 72rpx;
+  padding: 0 16rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.code-btn-text {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #3d6afb;
+}
+
+.code-btn.disabled .code-btn-text {
+  color: rgba(17, 17, 17, 0.32);
 }
 
 .btn {

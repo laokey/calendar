@@ -32,6 +32,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import BlHeader from '../../components/BlHeader.vue'
+import { usersApi } from '../../utils/api'
 
 const oldPwd = ref('')
 const newPwd = ref('')
@@ -45,7 +46,7 @@ const canSubmit = computed(() => {
   return oldPwd.value.trim() && newPwd.value.trim() && newPwd2.value.trim()
 })
 
-function submit() {
+async function submit() {
   if (!canSubmit.value) {
     uni.showToast({ title: '请完善信息', icon: 'none' })
     return
@@ -54,8 +55,27 @@ function submit() {
     uni.showToast({ title: '两次密码不一致', icon: 'none' })
     return
   }
-  uni.showToast({ title: '修改成功', icon: 'none' })
-  setTimeout(() => uni.navigateBack(), 300)
+  uni.showLoading({ title: '修改中' })
+  try {
+    await usersApi.resetPassword({ oldPassword: oldPwd.value.trim(), newPassword: newPwd.value.trim() })
+    uni.showToast({ title: '修改成功', icon: 'none' })
+    setTimeout(() => uni.navigateBack(), 300)
+  } catch (e) {
+    const code = e && e.code !== undefined ? e.code : undefined
+    if (code === 201 || code === '201') {
+      uni.showToast({ title: '用户不存在', icon: 'none' })
+      return
+    }
+    if (code === 202 || code === '202') {
+      uni.showToast({ title: '原密码错误', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '修改失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 

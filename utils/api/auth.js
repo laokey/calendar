@@ -101,11 +101,12 @@ export async function logout() {
   return true
 }
 
-export async function unregister(token) {
+export async function unregister({ token, inviterEmail } = {}) {
   try {
     const t = String(token || '').trim()
+    const inviter = String(inviterEmail || '').trim()
     if (t) {
-      await post(`/calendar/app/unregister${buildQuery({ token: t })}`, undefined, {
+      await post(`/calendar/app/unregister${buildQuery({ token: t, inviterEmail: inviter || undefined })}`, undefined, {
         withAuth: false,
         showErrorToast: false,
         header: { 'Content-Type': 'application/x-www-form-urlencoded' },

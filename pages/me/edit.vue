@@ -1,6 +1,12 @@
 <template>
   <view class="page">
-    <BlHeader title="编辑信息" back />
+    <view class="head" :style="{ paddingTop: safeTop + 'px' }">
+      <view class="head-left" @click="back">
+        <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
+      </view>
+      <text class="head-title">编辑信息</text>
+      <view class="head-right" />
+    </view>
 
     <view class="avatar-wrap">
       <image v-if="profile.avatarUrl" class="avatar" :src="profile.avatarUrl" mode="aspectFill" />
@@ -57,8 +63,9 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateProfile } from '../../utils/meStore'
+import { authApi, usersApi } from '../../utils/api'
+import { getToken } from '../../utils/authToken'
 
 const state = ref(ensureMeState())
 
@@ -67,6 +74,16 @@ onShow(() => {
 })
 
 const profile = computed(() => state.value.profile)
+
+const safeTop = computed(() => {
+  try {
+    const info = uni.getSystemInfoSync()
+    const insets = info && info.safeAreaInsets ? info.safeAreaInsets : null
+    return insets && typeof insets.top === 'number' ? insets.top : 0
+  } catch (e) {
+    return 0
+  }
+})
 
 const birthdayPickerValue = computed(() => {
   const v = profile.value.birthday || ''
@@ -84,12 +101,34 @@ function chooseAvatar() {
       uni.chooseImage({
         count: 1,
         sourceType,
-        success: (r) => {
+        success: async (r) => {
           const path = r && r.tempFilePaths && r.tempFilePaths[0] ? r.tempFilePaths[0] : ''
           if (!path) return
-          const s = ensureMeState()
-          updateProfile(s, { avatarUrl: path })
-          state.value = ensureMeState()
+          uni.showLoading({ title: '上传中' })
+          try {
+            const res = await usersApi.updateUserAvatar({ filePath: path })
+            const avatarUrl =
+              typeof res === 'string'
+                ? String(res).trim()
+                : res && typeof res === 'object'
+                  ? String(res.data || res.url || res.avatarUrl || '').trim()
+                  : ''
+            const s = ensureMeState()
+            updateProfile(s, { avatarUrl: avatarUrl || path })
+            state.value = ensureMeState()
+            uni.showToast({ title: '已更新', icon: 'none' })
+          } catch (e) {
+            const code = e && e.code !== undefined ? e.code : undefined
+            if (code === 201 || code === '201') {
+              uni.showToast({ title: '用户不存在', icon: 'none' })
+              return
+            }
+            uni.showToast({ title: String((e && e.message) || '上传失败'), icon: 'none' })
+          } finally {
+            try {
+              uni.hideLoading()
+            } catch (e) {}
+          }
         },
       })
     },
@@ -105,6 +144,10 @@ function onBirthdayChange(e) {
   const s = ensureMeState()
   updateProfile(s, { birthday: text })
   state.value = ensureMeState()
+}
+
+function back() {
+  uni.navigateBack()
 }
 
 function goNickname() {
@@ -125,11 +168,22 @@ function deleteAccount() {
     content: '删除账号后将无法恢复，请谨慎操作',
     cancelText: '取消',
     confirmText: '确定',
-    success: (res) => {
+    success: async (res) => {
       if (!res.confirm) return
-      uni.removeStorageSync('me_state_v1')
-      uni.removeStorageSync('auth_logged_in')
-      uni.reLaunch({ url: '/pages/login/index' })
+      uni.showLoading({ title: '处理中' })
+      try {
+        const token = getToken()
+        const inviterEmail = String(uni.getStorageSync('auth_inviter_email') || '').trim()
+        await authApi.unregister({ token, inviterEmail })
+      } catch (e) {
+      } finally {
+        try {
+          uni.hideLoading()
+        } catch (e) {}
+        uni.removeStorageSync('me_state_v1')
+        uni.removeStorageSync('auth_logged_in')
+        uni.reLaunch({ url: '/pages/login/index' })
+      }
     },
   })
 }
@@ -139,18 +193,51 @@ function deleteAccount() {
 .page {
   min-height: 100vh;
   background: #ffffff;
+  padding: 0 28rpx 48rpx;
+}
+
+.head {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.head-left,
+.head-right {
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+}
+
+.head-right {
+  justify-content: flex-end;
+}
+
+.back-img {
+  width: 36rpx;
+  height: 36rpx;
+  display: block;
+  opacity: 0.88;
+}
+
+.head-title {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #111111;
 }
 
 .avatar-wrap {
-  margin-top: 26rpx;
+  margin-top: 34rpx;
   display: flex;
   justify-content: center;
   position: relative;
 }
 
 .avatar {
-  width: 170rpx;
-  height: 170rpx;
+  width: 200rpx;
+  height: 200rpx;
   border-radius: 9999rpx;
   background: rgba(17, 17, 17, 0.06);
   overflow: hidden;
@@ -163,8 +250,8 @@ function deleteAccount() {
 }
 
 .ph-logo {
-  width: 180rpx;
-  height: 180rpx;
+  width: 154rpx;
+  height: 154rpx;
   opacity: 0.9;
 }
 
@@ -172,82 +259,81 @@ function deleteAccount() {
   position: absolute;
   right: 50%;
   bottom: 0;
-  transform: translateX(90rpx);
-  width: 86rpx;
-  height: 86rpx;
+  transform: translateX(100rpx);
+  width: 62rpx;
+  height:62rpx;
   border-radius: 9999rpx;
   background: #3d6afb;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10rpx 30rpx rgba(61, 106, 251, 0.25);
+  box-shadow: 0 8rpx 18rpx rgba(61, 106, 251, 0.22);
+  border: 4rpx solid #f7f7f7;
 }
 
 .cam-img {
-  width: 40rpx;
-  height: 40rpx;
+  width: 24rpx;
+  height: 24rpx;
   filter: brightness(0) invert(1);
 }
 
 .card {
-  margin: 24rpx 28rpx 0;
-  background: rgba(17, 17, 17, 0.03);
-  border-radius: 28rpx;
+  margin-top: 42rpx;
+  background: #fafafa;
+  border-radius: 24rpx;
   overflow: hidden;
+  box-shadow: 0 6rpx 18rpx rgba(17, 17, 17, 0.03);
 }
 
 .row {
-  padding: 22rpx 22rpx;
+  min-height: 100rpx;
+  padding: 0rpx 24rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14rpx;
+  gap: 18rpx;
   background: transparent;
 }
 
 .row + .row {
-  border-top: 2rpx solid rgba(17, 17, 17, 0.06);
+  border-top: 1rpx solid rgba(17, 17, 17, 0.05);
 }
 
 .label {
   font-size: 30rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.9);
+  font-weight: 800;
+  color: #222222;
 }
 
 .right {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 12rpx;
 }
 
 .value {
   font-size: 28rpx;
-  font-weight: 800;
-  color: #999999;
-}
-
-.muted {
-  color: rgba(17, 17, 17, 0.45);
+  font-weight: 600;
+  color: #b0b0b0;
 }
 
 .chev-img {
-  width: 22rpx;
-  height: 22rpx;
-  opacity: 0.55;
+  width: 20rpx;
+  height: 20rpx;
+  opacity: 0.42;
 }
 
 .left {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: 8rpx;
 }
 
-.sub {
+.left .value {
   font-size: 24rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.4);
-  line-height: 34rpx;
+  font-weight: 500;
+  color: #b4b4b4;
+  line-height: 1.4;
 }
 </style>

@@ -68,6 +68,7 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { clearCache, ensureMeState } from '../../utils/meStore'
+import { authApi } from '../../utils/api'
 
 const state = ref(ensureMeState())
 const restoreVisible = ref(false)
@@ -133,10 +134,19 @@ function logout() {
   logoutVisible.value = true
 }
 
-function confirmLogout() {
+async function confirmLogout() {
   logoutVisible.value = false
-  uni.removeStorageSync('auth_logged_in')
-  uni.reLaunch({ url: '/pages/login/index' })
+  uni.showLoading({ title: '退出中' })
+  try {
+    await authApi.logout()
+  } catch (e) {
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+    uni.removeStorageSync('auth_logged_in')
+    uni.reLaunch({ url: '/pages/login/index' })
+  }
 }
 </script>
 

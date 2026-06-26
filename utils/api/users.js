@@ -1,5 +1,6 @@
 import { post } from '../request'
 import { getToken } from '../authToken'
+import { getApiBaseUrl } from '../apiConfig'
 
 function buildQuery(params) {
   const obj = params && typeof params === 'object' ? params : {}
@@ -35,6 +36,22 @@ function extractList(res, keys) {
     if (Array.isArray(res[key])) return res[key]
   }
   return []
+}
+
+function safeJsonParse(raw) {
+  try {
+    return JSON.parse(raw)
+  } catch (e) {
+    return null
+  }
+}
+
+function joinUrl(baseURL, url) {
+  const b = String(baseURL || '').replace(/\/+$/, '')
+  const u = String(url || '').replace(/^\/+/, '')
+  if (!b) return `/${u}`
+  if (!u) return b
+  return `${b}/${u}`
 }
 
 export function permissionFromAuthority(authority) {
@@ -169,5 +186,111 @@ export async function setFriendAuthority({ friendEmail, authority } = {}) {
     friendEmail: email,
     friendemail: email,
     authority: nextAuthority,
+  })
+}
+
+export async function resetPassword({ oldPassword, newPassword } = {}) {
+  const token = getToken()
+  return postForm('/calendar/app/resetPassword', {
+    token,
+    oldPassword: normalizeText(oldPassword),
+    newPassword: normalizeText(newPassword),
+  })
+}
+
+export async function updateUserNickname({ nickName } = {}) {
+  const token = getToken()
+  const name = normalizeText(nickName)
+  return postForm('/calendar/app/updateUserNickname', {
+    token,
+    nickName: name,
+    nickname: name,
+    name,
+  })
+}
+
+export async function updateUserEmailAddress({ newEmail, verifyCode, password } = {}) {
+  const token = getToken()
+  return postForm('/calendar/app/updateUserEmailAddress', {
+    token,
+    newEmail: normalizeText(newEmail),
+    verifyCode: normalizeText(verifyCode),
+    password: normalizeText(password),
+  })
+}
+
+async function postFormWithFallback(paths, query) {
+  const list = Array.isArray(paths) ? paths.filter((x) => String(x || '').trim()) : []
+  let lastError = null
+  for (const path of list) {
+    try {
+      return await postForm(path, query)
+    } catch (e) {
+      lastError = e
+      const statusCode = e && typeof e.statusCode === 'number' ? e.statusCode : 0
+      if (statusCode === 404) continue
+      throw e
+    }
+  }
+  throw lastError || new Error('请求失败')
+}
+
+export async function sendEmailVerifyCode({ newEmail } = {}) {
+  const token = getToken()
+  const email = normalizeText(newEmail)
+  return postFormWithFallback(
+    [
+      '/calendar/app/sendEmailVerifyCode',
+      '/calendar/app/sendVerifyCode',
+      '/calendar/app/getEmailVerifyCode',
+      '/calendar/app/sendEmailCode',
+      '/calendar/app/getVerifyCode',
+    ],
+    {
+      token,
+      newEmail: email,
+      email,
+    },
+  )
+}
+
+export async function updateUserAvatar({ filePath } = {}) {
+  const token = getToken()
+  const path = normalizeText(filePath)
+  if (!token) throw new Error('缺少 token')
+  if (!path) throw new Error('请选择图片')
+
+  const baseURL = getApiBaseUrl()
+  const url = `${joinUrl(baseURL, '/calendar/app/updateUserAvatar')}${buildQuery({ token })}`
+
+  return new Promise((resolve, reject) => {
+    uni.uploadFile({
+      url,
+      filePath: path,
+      name: 'file',
+      success: (res) => {
+        const status = res && Number.isFinite(res.statusCode) ? res.statusCode : 0
+        const raw = res && res.data !== undefined ? res.data : undefined
+        if (status < 200 || status >= 300) {
+          reject(new Error(`HTTP ${status || 'Error'}`))
+          return
+        }
+        const body = typeof raw === 'string' ? safeJsonParse(raw) : raw
+        if (body && typeof body === 'object' && Object.prototype.hasOwnProperty.call(body, 'code')) {
+          const ok = body.code === 200 || body.code === 0 || body.code === '200' || body.code === '0'
+          if (!ok) {
+            const err = new Error(String(body.message || body.msg || body.error || '上传失败'))
+            err.code = body.code
+            err.data = body
+            reject(err)
+            return
+          }
+        }
+        resolve(body !== null ? body : raw)
+      },
+      fail: (e) => {
+        reject(e)
+      },
+    })
   })
 }

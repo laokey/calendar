@@ -18,6 +18,7 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateProfile } from '../../utils/meStore'
+import { usersApi } from '../../utils/api'
 
 const name = ref('')
 
@@ -26,16 +27,31 @@ onLoad(() => {
   name.value = s.profile && s.profile.name ? s.profile.name : ''
 })
 
-function save() {
+async function save() {
   const v = name.value.trim()
   if (!v) {
     uni.showToast({ title: '请输入昵称', icon: 'none' })
     return
   }
-  const s = ensureMeState()
-  updateProfile(s, { name: v })
-  uni.setStorageSync('auth_name', v)
-  uni.navigateBack()
+  uni.showLoading({ title: '保存中' })
+  try {
+    await usersApi.updateUserNickname({ nickName: v })
+    const s = ensureMeState()
+    updateProfile(s, { name: v })
+    uni.setStorageSync('auth_name', v)
+    uni.navigateBack()
+  } catch (e) {
+    const code = e && e.code !== undefined ? e.code : undefined
+    if (code === 201 || code === '201') {
+      uni.showToast({ title: '用户不存在', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 </script>
 
