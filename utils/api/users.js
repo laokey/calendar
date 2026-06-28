@@ -131,6 +131,43 @@ function normalizeFriend(item) {
   }
 }
 
+function normalizeUserInfo(item) {
+  const it = item && typeof item === 'object' ? item : {}
+  const userName =
+    it.userName !== undefined
+      ? it.userName
+      : it.username !== undefined
+        ? it.username
+        : it.nickName !== undefined
+          ? it.nickName
+          : it.nickname !== undefined
+            ? it.nickname
+            : it.name !== undefined
+              ? it.name
+              : ''
+  const avatarUrl =
+    it.avatarUrl !== undefined
+      ? it.avatarUrl
+      : it.avatarurl !== undefined
+        ? it.avatarurl
+        : it.avatar !== undefined
+          ? it.avatar
+          : ''
+  const brithDate =
+    it.brithDate !== undefined
+      ? it.brithDate
+      : it.birthDate !== undefined
+        ? it.birthDate
+        : it.birthday !== undefined
+          ? it.birthday
+          : ''
+  return {
+    userName: normalizeText(userName),
+    avatarUrl: normalizeText(avatarUrl),
+    brithDate: normalizeText(brithDate),
+  }
+}
+
 export async function inviteNewFriend({ inviteeEmail } = {}) {
   const token = getToken()
   const email = normalizeText(inviteeEmail)
@@ -206,6 +243,20 @@ export async function updateUserNickname({ nickName } = {}) {
     nickName: name,
     nickname: name,
     name,
+  })
+}
+
+export async function getUserInfo() {
+  const token = getToken()
+  const res = await postForm('/calendar/app/getUserInfo', { token })
+  return normalizeUserInfo(res)
+}
+
+export async function updateUserBrithDate({ brithDate } = {}) {
+  const token = getToken()
+  return postForm('/calendar/app/updateUserBrithDate', {
+    token,
+    brithDate: normalizeText(brithDate),
   })
 }
 

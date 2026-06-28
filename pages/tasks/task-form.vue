@@ -373,6 +373,7 @@ async function save() {
     }
     try {
       await tasksApi.addTaskInfo({
+        taskDate: date.value,
         taskTitle: title.value,
         emoji: emoji.value,
         dateEnabled: dateEnabled.value,

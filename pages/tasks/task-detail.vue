@@ -254,7 +254,12 @@ async function toggleDone() {
       return
     }
     try {
-      await tasksApi.completeTask({ taskId: task.value.id })
+      await tasksApi.completeTask({
+        taskId: task.value.id,
+        memberId: task.value.memberId,
+        updateReason: task.value.title ? `完成任务:${task.value.title}` : '完成任务',
+        starNumber: Number(task.value.hearts || 0) || 0,
+      })
       markTaskDone(taskState.value, task.value.id)
       refresh(task.value.id)
       uni.$emit && uni.$emit('task:refresh')

@@ -165,6 +165,15 @@ export function ensureActivityState() {
   return state
 }
 
+export function replaceActivityCollections(state, payload = {}) {
+  const next = state && typeof state === 'object' ? state : ensureActivityState()
+  next.dynamics = Array.isArray(payload.dynamics) ? payload.dynamics : []
+  next.notices = Array.isArray(payload.notices) ? payload.notices : []
+  next.invites = Array.isArray(payload.invites) ? payload.invites : []
+  saveActivityState(next)
+  return next
+}
+
 export function removeDynamic(state, id) {
   state.dynamics = (state.dynamics || []).filter((x) => x.id !== id)
   saveActivityState(state)
@@ -198,4 +207,3 @@ export function setInviteStatus(state, id, status) {
   saveActivityState(state)
   return true
 }
-

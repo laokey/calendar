@@ -116,10 +116,12 @@
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlBottomNav from '../../components/BlBottomNav.vue'
-import { ensureActivityState, removeInvite } from '../../utils/activityStore'
+import { ensureActivityState, removeInvite, replaceActivityCollections } from '../../utils/activityStore'
+import { noticeApi, usersApi } from '../../utils/api'
 
 const tab = ref('dynamic')
 const state = ref(ensureActivityState())
+const submitting = ref(false)
 
 onLoad((options) => {
   if (options && options.tab) {
@@ -129,7 +131,7 @@ onLoad((options) => {
 })
 
 onShow(() => {
-  state.value = ensureActivityState()
+  refresh()
 })
 
 const safeTop = computed(() => {
@@ -146,6 +148,31 @@ function setTab(t) {
   tab.value = t
 }
 
+function showError(error, fallback, map = {}) {
+  const code = Number(error && error.code)
+  const msg = map[code] || String((error && error.message) || fallback || '操作失败')
+  uni.showToast({ title: msg, icon: 'none' })
+}
+
+async function refresh() {
+  const [dynamicRes, noticeRes, inviteRes] = await Promise.allSettled([
+    noticeApi.getDynamicList(),
+    noticeApi.getNoticeList(),
+    noticeApi.getInviteList(),
+  ])
+  const s = ensureActivityState()
+  replaceActivityCollections(s, {
+    dynamics: dynamicRes.status === 'fulfilled' ? dynamicRes.value : [],
+    notices: noticeRes.status === 'fulfilled' ? noticeRes.value : [],
+    invites: inviteRes.status === 'fulfilled' ? inviteRes.value : [],
+  })
+  state.value = ensureActivityState()
+  const firstError = [dynamicRes, noticeRes, inviteRes].find((item) => item.status === 'rejected')
+  if (firstError && firstError.status === 'rejected') {
+    showError(firstError.reason, '加载失败', { 201: '用户不存在' })
+  }
+}
+
 function openDynamic(id) {
   uni.navigateTo({ url: `/pages/activity/dynamic-detail?id=${encodeURIComponent(id)}` })
 }
@@ -154,18 +181,38 @@ function openNotice(id) {
   uni.navigateTo({ url: `/pages/activity/notice-detail?id=${encodeURIComponent(id)}` })
 }
 
-function accept(id) {
-  uni.showToast({ title: '已加入', icon: 'none' })
-  const s = ensureActivityState()
-  removeInvite(s, id)
-  state.value = ensureActivityState()
+async function accept(id) {
+  const item = (state.value.invites || []).find((x) => x.id === id)
+  if (!item || !item.inviterEmail || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.agreeAddFriend({ inviterEmail: item.inviterEmail })
+    uni.showToast({ title: '已加入', icon: 'none' })
+    const s = ensureActivityState()
+    removeInvite(s, id)
+    state.value = ensureActivityState()
+  } catch (e) {
+    showError(e, '操作失败', { 201: '用户不存在', 202: '添加失败' })
+  } finally {
+    submitting.value = false
+  }
 }
 
-function reject(id) {
-  uni.showToast({ title: '已取消', icon: 'none' })
-  const s = ensureActivityState()
-  removeInvite(s, id)
-  state.value = ensureActivityState()
+async function reject(id) {
+  const item = (state.value.invites || []).find((x) => x.id === id)
+  if (!item || !item.inviterEmail || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.refuseAddFriend({ inviterEmail: item.inviterEmail })
+    uni.showToast({ title: '已取消', icon: 'none' })
+    const s = ensureActivityState()
+    removeInvite(s, id)
+    state.value = ensureActivityState()
+  } catch (e) {
+    showError(e, '操作失败', { 201: '用户不存在', 202: '拒绝失败' })
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

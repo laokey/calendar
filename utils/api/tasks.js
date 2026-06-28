@@ -199,33 +199,117 @@ function normalizeTask(it) {
   }
 }
 
-function taskListFromResponse(res) {
-  const raw =
-    Array.isArray(res)
-      ? res
-      : res && typeof res === 'object'
-        ? Array.isArray(res.list)
-          ? res.list
-          : Array.isArray(res.data)
-            ? res.data
-            : Array.isArray(res.taskList)
-              ? res.taskList
-              : Array.isArray(res.taskinfoList)
-                ? res.taskinfoList
-                : []
-        : []
+function extractTaskListSource(res) {
+  const queue = [res]
+  const seen = new Set()
+  while (queue.length) {
+    const cur = queue.shift()
+    if (!cur) continue
+    if (Array.isArray(cur)) return cur
+    if (typeof cur !== 'object') continue
+    if (seen.has(cur)) continue
+    seen.add(cur)
+    const directKeys = ['taskList', 'tasklist', 'taskInfoList', 'taskinfoList', 'list', 'rows', 'records', 'data']
+    for (const key of directKeys) {
+      if (Array.isArray(cur[key])) return cur[key]
+    }
+    const nestedKeys = ['data', 'result', 'payload']
+    for (const key of nestedKeys) {
+      if (cur[key] && typeof cur[key] === 'object') queue.push(cur[key])
+    }
+  }
+  return []
+}
+
+function taskListFromResponse(res, fallbackDate = '') {
+  const raw = extractTaskListSource(res)
   if (!raw.length) return []
-  if (raw.some((item) => Array.isArray(item && (item.tasklist || item.taskList)))) {
+  if (raw.some((item) => Array.isArray(item && (item.tasklist || item.taskList || item.taskInfoList || item.taskinfoList)))) {
     const out = []
     for (const group of raw) {
-      const groupDate = normalizeDateKey(group && (group.date !== undefined ? group.date : group.taskDate))
-      const list = Array.isArray(group && group.tasklist) ? group.tasklist : Array.isArray(group && group.taskList) ? group.taskList : []
+      const groupDate = normalizeDateKey(
+        group &&
+          (group.date !== undefined
+            ? group.date
+            : group.taskDate !== undefined
+              ? group.taskDate
+              : group.taskdate !== undefined
+                ? group.taskdate
+                : group.finishTime !== undefined
+                  ? group.finishTime
+                  : group.finishtime),
+      )
+      const list = Array.isArray(group && group.tasklist)
+        ? group.tasklist
+        : Array.isArray(group && group.taskList)
+          ? group.taskList
+          : Array.isArray(group && group.taskInfoList)
+            ? group.taskInfoList
+            : Array.isArray(group && group.taskinfoList)
+              ? group.taskinfoList
+              : []
+      const groupMember =
+        group && typeof group === 'object'
+          ? {
+              memberId:
+                group.memberId !== undefined
+                  ? group.memberId
+                  : group.memberid !== undefined
+                    ? group.memberid
+                    : group.memeberId !== undefined
+                      ? group.memeberId
+                    : group.id !== undefined
+                        ? group.id
+                        : '',
+              memberName:
+                group.memberName !== undefined
+                  ? group.memberName
+                  : group.membername !== undefined
+                    ? group.membername
+                    : group.memeberName !== undefined
+                      ? group.memeberName
+                    : group.name !== undefined
+                        ? group.name
+                        : '',
+            }
+          : null
       for (const task of list) {
+        const taskMembersRaw =
+          task && typeof task === 'object'
+            ? task.members !== undefined && task.members !== null
+              ? task.members
+              : task.memberList !== undefined && task.memberList !== null
+                ? task.memberList
+                : task.memberIds !== undefined && task.memberIds !== null
+                  ? task.memberIds
+                  : undefined
+            : undefined
+        const taskDate =
+          normalizeDateKey(
+            task &&
+              typeof task === 'object' &&
+              (task.taskDate !== undefined
+                ? task.taskDate
+                : task.taskdate !== undefined
+                  ? task.taskdate
+                  : task.date !== undefined
+                    ? task.date
+                    : task.finishTime !== undefined
+                      ? task.finishTime
+                      : task.finishtime),
+          ) ||
+          groupDate ||
+          normalizeDateKey(fallbackDate)
         out.push({
           ...(task && typeof task === 'object' ? task : {}),
-          taskDate:
-            (task && typeof task === 'object' && (task.taskDate !== undefined ? task.taskDate : task.taskdate !== undefined ? task.taskdate : task.date)) ||
-            groupDate,
+          taskDate,
+          taskdate: taskDate,
+          members:
+            taskMembersRaw !== undefined
+              ? taskMembersRaw
+              : groupMember && groupMember.memberId !== undefined && groupMember.memberId !== null && String(groupMember.memberId).trim()
+                ? [groupMember]
+                : [],
         })
       }
     }
@@ -240,16 +324,17 @@ function membersToRemoteValue(payload) {
     : payload && payload.memberId
       ? [payload.memberId]
       : []
-  return source
+  const ids = source
     .map((it) => {
       if (it && typeof it === 'object') {
-        if (it.id !== undefined && it.id !== null) return String(it.id)
-        if (it.memberId !== undefined && it.memberId !== null) return String(it.memberId)
+        if (it.id !== undefined && it.id !== null) return String(it.id).trim()
+        if (it.memberId !== undefined && it.memberId !== null) return String(it.memberId).trim()
         return ''
       }
       return String(it || '').trim()
     })
     .filter(Boolean)
+  return JSON.stringify(ids)
 }
 
 function finishTimeFromPayload(payload) {
@@ -375,20 +460,30 @@ function normalizeListItem(it) {
 export async function getTaskInfoList({ deviceEmail, startDate, endDate } = {}) {
   const token = getToken()
   const email = await resolveDeviceEmail(deviceEmail)
+  const normalizedEndDate = normalizeDateKey(endDate || startDate)
   const res = await postForm('/calendar/app/getTaskInfoList', {
     token,
     deviceEmail: email,
-    startDate,
-    endDate,
+    deviceemail: email,
+    taskDate: startDate,
+    taskdate: startDate,
+    taskEndDate: normalizedEndDate,
+    taskendDate: normalizedEndDate,
+    endDate: normalizedEndDate,
+    enddate: normalizedEndDate,
   })
-  return taskListFromResponse(res).map(normalizeTask).filter((x) => x && x.id)
+  const parsed = taskListFromResponse(res, startDate)
+  const normalized = parsed.map(normalizeTask).filter((x) => x && x.id)
+  return normalized
 }
 
 export async function addTaskInfo(payload = {}) {
   const token = getToken()
   const email = await resolveDeviceEmail(payload && payload.deviceEmail)
   const members = membersToRemoteValue(payload)
-  const taskDate = normalizeDateKey(payload && payload.date)
+  const taskDate = normalizeDateKey(
+    (payload && (payload.taskDate !== undefined ? payload.taskDate : payload.date)) || finishTimeFromPayload(payload),
+  )
   return postForm('/calendar/app/addTaskInfo', {
     token,
     deviceEmail: email,
@@ -409,14 +504,18 @@ export async function addTaskInfo(payload = {}) {
   })
 }
 
-export async function completeTask({ taskId } = {}) {
+export async function completeTask({ taskId, memberId, updateReason, starNumber } = {}) {
   const token = getToken()
   const id = String(taskId || '').trim()
+  const mid = String(memberId || '').trim()
+  const reason = normalizeText(updateReason) || '完成任务'
+  const stars = Number(starNumber || 0) || 0
   return postForm('/calendar/app/completeTask', {
     token,
     taskId: id,
-    taskid: id,
-    taskID: id,
+    memberId: mid,
+    updateReason: reason,
+    starNumber: stars,
   })
 }
 

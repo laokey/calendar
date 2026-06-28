@@ -71,6 +71,7 @@ const state = ref(ensureMeState())
 
 onShow(() => {
   state.value = ensureMeState()
+  refreshProfile()
 })
 
 const profile = computed(() => state.value.profile)
@@ -135,15 +136,50 @@ function chooseAvatar() {
   })
 }
 
-function onBirthdayChange(e) {
+async function refreshProfile() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return
+  try {
+    const info = await usersApi.getUserInfo()
+    const patch = {}
+    if (info.userName) {
+      patch.name = info.userName
+      uni.setStorageSync('auth_name', info.userName)
+    }
+    if (info.avatarUrl) patch.avatarUrl = info.avatarUrl
+    if (info.brithDate) patch.birthday = String(info.brithDate).replace(/-/g, '.')
+    if (!Object.keys(patch).length) return
+    const s = ensureMeState()
+    updateProfile(s, patch)
+    state.value = ensureMeState()
+  } catch (e) {}
+}
+
+async function onBirthdayChange(e) {
   const v = e && e.detail && e.detail.value ? String(e.detail.value) : ''
   if (!v) return
   const parts = v.split('-')
   if (parts.length !== 3) return
   const text = `${parts[0]}.${parts[1]}.${parts[2]}`
-  const s = ensureMeState()
-  updateProfile(s, { birthday: text })
-  state.value = ensureMeState()
+  uni.showLoading({ title: '保存中' })
+  try {
+    await usersApi.updateUserBrithDate({ brithDate: text })
+    const s = ensureMeState()
+    updateProfile(s, { birthday: text })
+    state.value = ensureMeState()
+    uni.showToast({ title: '更新成功', icon: 'none' })
+  } catch (e) {
+    const code = e && e.code !== undefined ? e.code : undefined
+    if (code === 201 || code === '201') {
+      uni.showToast({ title: '用户不存在', icon: 'none' })
+      return
+    }
+    uni.showToast({ title: String((e && e.message) || '更新失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
 }
 
 function back() {

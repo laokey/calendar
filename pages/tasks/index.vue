@@ -420,23 +420,6 @@ function isRemoteTaskMode() {
   return !!uni.getStorageSync('auth_logged_in')
 }
 
-function monthRangeForKey(key) {
-  const rows = monthMatrix(key)
-  const flat = []
-  for (let i = 0; i < rows.length; i += 1) {
-    const row = Array.isArray(rows[i]) ? rows[i] : []
-    for (let j = 0; j < row.length; j += 1) {
-      flat.push(row[j])
-    }
-  }
-  const first = flat[0]
-  const last = flat[flat.length - 1]
-  return {
-    startDate: first ? formatKey(first) : key,
-    endDate: last ? formatKey(last) : key,
-  }
-}
-
 function refresh() {
   taskState.value = ensureTaskState()
   calendarState.value = ensureCalendarState()
@@ -460,7 +443,8 @@ async function syncRemoteTasks(targetKey = cursorKey.value) {
   if (!isRemoteTaskMode()) return false
   try {
     const baseKey = String(targetKey || taskState.value.cursorDate || todayKey())
-    const { startDate, endDate } = monthRangeForKey(baseKey)
+    const startDate = baseKey
+    const endDate = baseKey
     const list = await tasksApi.getTaskInfoList({ startDate, endDate })
     taskState.value = replaceTaskList(taskState.value, list)
     return true
@@ -776,7 +760,12 @@ async function toggleDone(t) {
       return
     }
     try {
-      await tasksApi.completeTask({ taskId: t.id })
+      await tasksApi.completeTask({
+        taskId: t.id,
+        memberId: t.memberId,
+        updateReason: t.title ? `完成任务:${t.title}` : '完成任务',
+        starNumber: Number(t.hearts || 0) || 0,
+      })
       markTaskDone(taskState.value, t.id)
       refresh()
       await syncRemoteTasks(cursorKey.value)

@@ -81,13 +81,15 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlBottomNav from '../../components/BlBottomNav.vue'
-import { ensureMeState } from '../../utils/meStore'
+import { ensureMeState, updateProfile } from '../../utils/meStore'
+import { usersApi } from '../../utils/api'
 
 const state = ref(ensureMeState())
 const supportVisible = ref(false)
 
 onShow(() => {
   state.value = ensureMeState()
+  refreshProfile()
 })
 
 const profile = computed(() => state.value.profile)
@@ -101,6 +103,25 @@ const safeTop = computed(() => {
     return 0
   }
 })
+
+async function refreshProfile() {
+  const logged = !!uni.getStorageSync('auth_logged_in')
+  if (!logged) return
+  try {
+    const info = await usersApi.getUserInfo()
+    const patch = {}
+    if (info.userName) {
+      patch.name = info.userName
+      uni.setStorageSync('auth_name', info.userName)
+    }
+    if (info.avatarUrl) patch.avatarUrl = info.avatarUrl
+    if (info.brithDate) patch.birthday = String(info.brithDate).replace(/-/g, '.')
+    if (!Object.keys(patch).length) return
+    const s = ensureMeState()
+    updateProfile(s, patch)
+    state.value = ensureMeState()
+  } catch (e) {}
+}
 
 function goEdit() {
   uni.navigateTo({ url: '/pages/me/edit' })
