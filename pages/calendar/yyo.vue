@@ -597,9 +597,9 @@ function goActivate() {
 
 .day-title {
   display: block;
-  font-size: 25rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.8);
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #000000;
   margin-bottom: 12rpx;
 }
 
@@ -794,6 +794,7 @@ function goActivate() {
 
 .bl-card-soft.day-empty {
   margin-top: 18rpx;
+  padding: 40rpx 32rpx;
   background: url("/static/home/bg_none_activity.png") no-repeat;
   background-size: 100% 100%;
 }
@@ -802,6 +803,7 @@ function goActivate() {
   height: 240rpx;
   margin-top: 22rpx;
   display: flex;
+  padding: 40rpx 32rpx;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -809,8 +811,8 @@ function goActivate() {
 }
 
 .empty-icon {
-  width: 120rpx;
-  height: 120rpx;
+  width: 150rpx;
+  height: 180rpx;
   display: block;
 }
 
@@ -829,18 +831,18 @@ function goActivate() {
 
 .tile {
   border-radius: 28rpx;
-  padding: 20rpx 18rpx;
+  padding: 28rpx;
   min-height: 154rpx;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 18rpx;
   background: #ffffff;
   box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .tile-icon {
-  width: 70rpx;
-  height: 70rpx;
+  width: 108rpx;
+  height: 108rpx;
   border-radius: 24rpx;
   background: transparent;
   display: flex;
@@ -849,8 +851,8 @@ function goActivate() {
 }
 
 .tile-icon-img {
-  width: 70rpx;
-  height: 70rpx;
+  width: 108rpx;
+  height: 108rpx;
 }
 
 .tile-title {

@@ -43,12 +43,13 @@ async function postForm(path, query) {
 
 function normalizeDevice(item) {
   const it = item && typeof item === 'object' ? item : {}
+  const linkIdRaw = it.linkId !== undefined ? it.linkId : it.linkid !== undefined ? it.linkid : it.id !== undefined ? it.id : ''
   const deviceEmail = it.deviceEmail !== undefined ? String(it.deviceEmail) : ''
   const activationCode = it.activationCode !== undefined ? String(it.activationCode) : ''
   const deviceName = it.deviceName !== undefined ? String(it.deviceName) : ''
   const statusRaw = it.status !== undefined ? Number(it.status) : NaN
   const status = Number.isFinite(statusRaw) ? statusRaw : 0
-  return { deviceEmail, activationCode, deviceName, status }
+  return { linkId: normalizeText(linkIdRaw), deviceEmail, activationCode, deviceName, status }
 }
 
 function normalizeLinkDevice(item) {
@@ -177,12 +178,12 @@ export async function addLinkDevice({ deviceEmail, deviceName } = {}) {
   })
 }
 
-export async function getDeviceActivationCode({ linkId } = {}) {
+export async function getDeviceActivationCode({ deviceEmail } = {}) {
   const token = getToken()
-  const id = normalizeText(linkId)
+  const email = normalizeText(deviceEmail)
   const res = await postForm('/calendar/app/getDeviceActivationCode', {
     token,
-    linkId: id,
+    deviceEmail: email,
   })
   if (typeof res === 'string') return res
   if (res && typeof res === 'object') {

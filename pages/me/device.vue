@@ -128,11 +128,11 @@ function goManage(d) {
 }
 
 async function getCode(d) {
-  const linkId = d && d.linkId ? String(d.linkId) : ''
-  if (!linkId) return
+  const deviceEmail = d && d.deviceEmail ? String(d.deviceEmail) : ''
+  if (!deviceEmail) return
   uni.showLoading({ title: '获取中' })
   try {
-    const code = await deviceApi.getDeviceActivationCode({ linkId })
+    const code = await deviceApi.getDeviceActivationCode({ deviceEmail })
     if (!code) {
       uni.showToast({ title: '获取激活码失败', icon: 'none' })
       return

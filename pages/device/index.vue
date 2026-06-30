@@ -218,7 +218,8 @@ function goAdd() {
 
 function goActivate(d) {
   const code = d && d.activationCode ? String(d.activationCode) : ''
-  uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
+  const deviceEmail = d && d.deviceEmail ? String(d.deviceEmail) : ''
+  uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(deviceEmail)}` })
 }
 
 function openCalendar(index) {

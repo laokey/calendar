@@ -3,7 +3,7 @@
     <BlHeader title="激活设备" back />
 
     <view class="hero">
-      <image class="device-img" src="/static/device/device_hero.png" mode="aspectFit" />
+      <image class="device-img" src="/static/device/device_hero_plain.png" mode="aspectFit" />
     </view>
 
     <view class="code-card">
@@ -11,9 +11,9 @@
       <view class="code-main">
         <text class="code-number">{{ code }}</text>
         <view class="code-actions">
-          <view class="bl-btn-secondary" @click="copy"><text>复制</text></view>
+          <view class="bl-btn-secondary bordered" @click="copy"><text>复制</text></view>
           <view class="bl-btn-secondary is-dark" @click="share">
-            <image class="btn-icon" src="/static/device/icon_activate_action_add.png" mode="aspectFit" />
+            <!-- <image class="btn-icon" src="/static/device/icon_activate_action_add.png" mode="aspectFit" /> -->
             <text>分享</text>
           </view>
         </view>
@@ -31,7 +31,7 @@
           <text class="step-text">打开您的新日历</text>
         </view>
         <view class="step-dots">
-          <image class="step-dots-img" src="/static/device/icon_activate_step_dots.png" mode="aspectFit" />
+          <image class="step-dots-img" src="/static/device/icon_activate_step_dots_alt.png" mode="aspectFit" />
         </view>
         <view class="step">
           <view class="step-icon">
@@ -40,7 +40,7 @@
           <text class="step-text">连接到Wi‑Fi</text>
         </view>
         <view class="step-dots">
-          <image class="step-dots-img" src="/static/device/icon_activate_step_dots.png" mode="aspectFit" />
+          <image class="step-dots-img" src="/static/device/icon_activate_step_dots_alt.png" mode="aspectFit" />
         </view>
         <view class="step">
           <view class="step-icon">
@@ -57,15 +57,53 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
+import { deviceApi } from '../../utils/api'
 
-const code = ref('002482')
+const code = ref('')
+
+function normalizeRouteText(value) {
+  const raw = value === undefined || value === null ? '' : String(value).trim()
+  if (!raw || raw === 'null' || raw === 'undefined') return ''
+  try {
+    return decodeURIComponent(raw)
+  } catch (e) {
+    return raw
+  }
+}
+
+async function loadActivationCode(deviceEmail, fallbackCode = '') {
+  const email = String(deviceEmail || '').trim()
+  if (!email) {
+    code.value = String(fallbackCode || '').trim()
+    return
+  }
+  uni.showLoading({ title: '获取中' })
+  try {
+    const remoteCode = await deviceApi.getDeviceActivationCode({ deviceEmail: email })
+    const nextCode = String(remoteCode || fallbackCode || '').trim()
+    if (!nextCode) {
+      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      return
+    }
+    code.value = nextCode
+  } catch (e) {
+    code.value = String(fallbackCode || '').trim()
+    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+  } finally {
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
 
 onLoad((options) => {
-  const v = options && (options.code || options.activationCode) ? String(options.code || options.activationCode) : ''
-  if (v) code.value = v
+  const fallbackCode = normalizeRouteText(options && (options.code || options.activationCode))
+  const deviceEmail = normalizeRouteText(options && (options.deviceEmail || options.deviceemail))
+  loadActivationCode(deviceEmail, fallbackCode)
 })
 
 function copy() {
+  if (!code.value) return
   uni.setClipboardData({ data: code.value })
 }
 
@@ -125,9 +163,10 @@ function share() {
 }
 
 .code-card {
-  background: #eef4ff;
-  border-radius: 28rpx;
-  padding: 22rpx;
+  background: linear-gradient( 180deg, #DEE9FF 0%, #FAFAFA 100%);
+  border-radius: 24rpx;
+  border: 4rpx solid rgba(64,109,255,0.2);
+  padding: 40rpx;
   position: relative;
 }
 
@@ -136,8 +175,8 @@ function share() {
   left: 0;
   top: 0;
   height: 54rpx;
-  padding: 0 22rpx;
-  border-top-left-radius: 28rpx;
+  padding: 0 24rpx;
+  border-top-left-radius: 18rpx;
   border-bottom-right-radius: 18rpx;
   background: #3d6afb;
   display: flex;
@@ -159,9 +198,9 @@ function share() {
 }
 
 .code-number {
-  font-size: 68rpx;
+  font-size: 64rpx;
   font-weight: 900;
-  color: #3d6afb;
+  color: #406DFF;
   letter-spacing: 2rpx;
 }
 
@@ -171,6 +210,9 @@ function share() {
   gap: 16rpx;
 }
 
+.bordered {
+  border: 2rpx solid #D9D9D9;
+}
 .btn-icon {
   width: 32rpx;
   height: 32rpx;
@@ -178,75 +220,82 @@ function share() {
 }
 
 .code-hint {
-  margin-top: 10rpx;
-  font-size: 24rpx;
-  font-weight: 600;
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  color: #999999;
+  font-weight: 500;
 }
 
 .steps-card {
-  margin-top: 18rpx;
+  margin-top: 28rpx;
+  background: linear-gradient( 180deg, #EBF2FF 0%, #FFFFFF 100%);
+  padding: 30rpx 24rpx 26rpx;
+  border-radius: 24rpx;
+  box-shadow: none;
 }
 
 .steps-title {
   display: block;
   text-align: center;
   font-size: 32rpx;
-  font-weight: 900;
-  margin-bottom: 20rpx;
+  font-weight: bold;
+  color: #333333;
+  line-height: 42rpx;
 }
 
 .steps {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  margin-top: 26rpx;
   gap: 0;
 }
 
 .step {
   flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12rpx;
-  padding: 0 10rpx;
+  gap: 14rpx;
+  padding: 0 4rpx;
 }
 
 .step-icon {
-  width: 124rpx;
-  height: 124rpx;
-  border-radius: 34rpx;
+  width: 74rpx;
+  height: 74rpx;
+  border-radius: 20rpx;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  box-shadow: 0 6rpx 18rpx rgba(61, 106, 251, 0.08);
 }
 
 .step-icon-img {
-  width: 72rpx;
-  height: 72rpx;
+  width: 64rpx;
+  height: 64rpx;
 }
 
 .step-text {
   text-align: center;
-  font-size: 24rpx;
-  font-weight: 700;
-  color: rgba(17, 17, 17, 0.75);
-  line-height: 34rpx;
-  min-height: 68rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: rgba(17, 17, 17, 0.72);
+  line-height: 30rpx;
+  min-height: 30rpx;
+  white-space: nowrap;
 }
 
 .step-dots {
-  flex: 0 0 72rpx;
+  flex: 0 0 64rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 52rpx;
+  margin-top: 26rpx;
 }
 
 .step-dots-img {
-  width: 68rpx;
-  height: 20rpx;
+  width: 64rpx;
+  height: 32rpx;
 }
 </style>
