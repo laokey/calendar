@@ -22,11 +22,41 @@ const config = {
   showErrorToast: true,
   onUnauthorized: () => {
     clearToken()
+    try {
+      uni.removeStorageSync('auth_logged_in')
+    } catch (e) {}
   },
 }
 
 const requestInterceptors = []
 const responseInterceptors = []
+let redirectingToLogin = false
+
+function goLoginPage() {
+  if (redirectingToLogin) return
+  redirectingToLogin = true
+  try {
+    clearToken()
+    uni.removeStorageSync('auth_logged_in')
+  } catch (e) {}
+  try {
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+    const current = pages && pages.length ? pages[pages.length - 1] : null
+    if (current && current.route === 'pages/login/index') {
+      redirectingToLogin = false
+      return
+    }
+  } catch (e) {}
+  setTimeout(() => {
+    try {
+      uni.reLaunch({ url: '/pages/login/index' })
+    } finally {
+      setTimeout(() => {
+        redirectingToLogin = false
+      }, 300)
+    }
+  }, 0)
+}
 
 export function setRequestConfig(patch) {
   if (!patch || typeof patch !== 'object') return getRequestConfig()
@@ -167,6 +197,7 @@ export async function request(options) {
       try {
         if (typeof config.onUnauthorized === 'function') config.onUnauthorized()
       } catch (e) {}
+      goLoginPage()
     }
 
     if (statusCode < 200 || statusCode >= 300) {
@@ -178,6 +209,9 @@ export async function request(options) {
 
     const parsed = parseBusinessResponse(body)
     if (!parsed.ok) {
+      if (parsed.code === 201 || parsed.code === '201') {
+        goLoginPage()
+      }
       const err = new HttpError(parsed.message || '请求失败', {
         statusCode,
         code: parsed.code,
