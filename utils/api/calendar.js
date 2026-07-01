@@ -337,6 +337,42 @@ export async function addMatterInfo(payload = {}) {
   })
 }
 
+export async function updateMatterInfo(payload = {}) {
+  const token = getToken()
+  const p = payload && typeof payload === 'object' ? payload : {}
+  const matterId = p.matterId === undefined || p.matterId === null ? '' : String(p.matterId).trim()
+  return postForm('/calendar/app/updateMatterInfo', {
+    token,
+    matterId,
+    matterid: matterId,
+    matterTitle: p.matterTitle,
+    mattertitle: p.matterTitle,
+    isAllDay: p.isAllDay,
+    isallday: p.isAllDay,
+    startDate: p.startDate,
+    startdate: p.startDate,
+    endDate: p.endDate,
+    enddate: p.endDate,
+    startTime: p.startTime,
+    starttime: p.startTime,
+    endTime: p.endTime,
+    endtime: p.endTime,
+    isRepeat: p.isRepeat,
+    isrepeat: p.isRepeat,
+    repeatType: p.repeatType,
+    repeattype: p.repeatType,
+    isDeadline: p.isDeadline,
+    isdeadline: p.isDeadline,
+    deadlineDate: p.deadlineDate,
+    deadlinedate: p.deadlineDate,
+    description: p.description,
+    weather: p.weather,
+    weeks: p.weeks,
+    days: p.days,
+    members: p.members,
+  })
+}
+
 export async function deleteMatterInfo({ matterId } = {}) {
   const token = getToken()
   const id = String(matterId || '').trim()

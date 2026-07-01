@@ -29,15 +29,17 @@
       </view>
     </view>
 
-    <view class="block row-between">
-      <view class="row-left">
-        <text class="label">全天</text>
+    <view class="block">
+      <view class="row-between">
+        <view class="row-left">
+          <text class="label">全天</text>
+        </view>
+        <switch
+          :checked="allDay"
+          color="#3d6afb"
+          @change="allDay = !!$event.detail.value"
+        />
       </view>
-      <switch
-        :checked="allDay"
-        color="#3d6afb"
-        @change="allDay = !!$event.detail.value"
-      />
     </view>
 
     <view v-if="!allDay" class="time-grid">
@@ -88,8 +90,8 @@
       </view>
     </view>
 
-    <view v-else class="block">
-      <view class="row-between" @click="openDate('start')">
+    <view v-else>
+      <view class="block" @click="openDate('start')">
         <view class="row-left">
           <image
             class="field-icon is-clock"
@@ -98,10 +100,11 @@
           />
           <text class="label">开始时间</text>
         </view>
-        <text class="val">{{ startDateText }}</text>
+        <view style="margin-top: 14rpx;">
+          <text class="val">{{ startDateText }}</text>
+        </view>
       </view>
-      <view class="divider" />
-      <view class="row-between" @click="openDate('end')">
+      <view class="block" @click="openDate('end')">
         <view class="row-left">
           <image
             class="field-icon is-clock"
@@ -110,7 +113,9 @@
           />
           <text class="label">结束时间</text>
         </view>
-        <text class="val">{{ endDateText }}</text>
+        <view style="margin-top: 14rpx;">
+          <text class="val">{{ endDateText }}</text>
+        </view>
       </view>
     </view>
 
@@ -170,7 +175,7 @@
     </view>
 
     <view class="block">
-      <view class="row-between" @click="toggleSync">
+      <view class="row-between" style="padding: 20rpx 20rpx 20rpx 0;" @click="toggleSync">
         <view class="row-left">
           <image
             class="field-icon"
@@ -449,19 +454,19 @@ onShow(() => {
     await syncRemoteMembers();
     state.value = ensureCalendarState();
     members.value = listMembers(state.value);
+    try {
+      const raw = uni.getStorageSync("calendar_member_select_tmp");
+      if (raw) {
+        const ids = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (Array.isArray(ids)) selectedMemberIds.value = ids.slice();
+        uni.removeStorageSync("calendar_member_select_tmp");
+        return;
+      }
+    } catch (e) {}
     if (eventId.value) {
       const ev = findEvent(state.value, eventId.value);
       if (ev && Array.isArray(ev.memberIds))
         selectedMemberIds.value = ev.memberIds.slice();
-    } else {
-      try {
-        const raw = uni.getStorageSync("calendar_member_select_tmp");
-        if (raw) {
-          const ids = typeof raw === "string" ? JSON.parse(raw) : raw;
-          if (Array.isArray(ids)) selectedMemberIds.value = ids.slice();
-          uni.removeStorageSync("calendar_member_select_tmp");
-        }
-      } catch (e) {}
     }
   })();
 });
@@ -495,8 +500,19 @@ function onTimePicked(t) {
 
 function openMemberSelect() {
   const ids = encodeURIComponent(JSON.stringify(selectedMemberIds.value || []));
+  if (isEdit.value && eventId.value) {
+    try {
+      uni.setStorageSync(
+        "calendar_event_member_select_ctx_v1",
+        JSON.stringify({
+          eventId: eventId.value,
+          payload: buildPayload(),
+        }),
+      );
+    } catch (e) {}
+  }
   uni.navigateTo({
-    url: `/pages/members/members-select?ids=${ids}&from=${encodeURIComponent(isEdit.value ? "edit" : "add")}`,
+    url: `/pages/members/members-select?ids=${ids}&from=${encodeURIComponent(isEdit.value ? "edit" : "add")}&eventId=${encodeURIComponent(isEdit.value ? eventId.value : "")}`,
   });
 }
 
@@ -532,7 +548,9 @@ function buildPayload() {
           until: repeatUntilOn.value ? repeatUntil.value : "",
           monthRule: repeatUnit.value === "month" ? monthRule.value : null,
           weekdays:
-            repeatUnit.value === "week" ? normalizeWeekdays(repeatWeekdays.value) : null,
+            repeatUnit.value === "week"
+              ? normalizeWeekdays(repeatWeekdays.value)
+              : null,
         }
       : null,
   };
@@ -575,6 +593,74 @@ function validate() {
   return true;
 }
 
+function buildRemoteMatterPayload(payload, matterId = "") {
+  const repeatType =
+    payload.repeat && payload.repeat.unit === "year"
+      ? 4
+      : payload.repeat && payload.repeat.unit === "month"
+        ? 3
+        : payload.repeat && payload.repeat.unit === "week"
+          ? 2
+          : payload.repeat
+            ? 1
+            : 0;
+  const isAllDay = payload.allDay ? 1 : 0;
+  const isRepeat = payload.repeat ? 1 : 0;
+  const weeks =
+    payload.repeat && payload.repeat.unit === "week" && payload.repeat.weekdays
+      ? JSON.stringify(payload.repeat.weekdays)
+      : "";
+  const members = JSON.stringify(payload.memberIds || []);
+  return {
+    matterId: matterId || "",
+    matterTitle: payload.title,
+    isAllDay,
+    startDate: payload.startDate,
+    endDate: payload.endDate,
+    startTime: payload.allDay ? "" : payload.startTime,
+    endTime: payload.allDay ? "" : payload.endTime,
+    isRepeat,
+    repeatType,
+    isDeadline: 0,
+    deadlineDate: "",
+    description: payload.desc || "",
+    weather: payload.location || "",
+    weeks,
+    days: "",
+    members,
+  };
+}
+
+async function saveRemoteEdit(payload) {
+  uni.showLoading({ title: "保存中" });
+  try {
+    const res = await calendarApi.updateMatterInfo(
+      buildRemoteMatterPayload(payload, eventId.value),
+    );
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 200 &&
+      res.code !== "200"
+    ) {
+      uni.showToast({ title: "保存失败", icon: "none" });
+      return false;
+    }
+    return true;
+  } catch (e) {
+    uni.showToast({
+      title: String((e && e.message) || "保存失败"),
+      icon: "none",
+    });
+    return false;
+  } finally {
+    try {
+      uni.hideLoading();
+    } catch (e) {}
+  }
+}
+
 async function save() {
   if (!validate()) return;
   const payload = buildPayload();
@@ -583,6 +669,11 @@ async function save() {
       pendingSave.value = payload;
       repeatSheetOpen.value = true;
       return;
+    }
+    const logged = !!uni.getStorageSync("auth_logged_in");
+    if (logged) {
+      const ok = await saveRemoteEdit(payload);
+      if (!ok) return;
     }
     updateEvent(state.value, eventId.value, payload);
     uni.$emit && uni.$emit("calendar:refresh");
@@ -593,40 +684,9 @@ async function save() {
   if (logged) {
     uni.showLoading({ title: "保存中" });
     try {
-      const repeatType =
-        payload.repeat && payload.repeat.unit === "year"
-          ? 4
-          : payload.repeat && payload.repeat.unit === "month"
-            ? 3
-            : payload.repeat && payload.repeat.unit === "week"
-              ? 2
-              : payload.repeat
-                ? 1
-                : 0;
-      const isAllDay = payload.allDay ? 1 : 0;
-      const isRepeat = payload.repeat ? 1 : 0;
-      const weeks =
-        payload.repeat && payload.repeat.unit === "week" && payload.repeat.weekdays
-          ? JSON.stringify(payload.repeat.weekdays)
-          : "";
-      const members = JSON.stringify(payload.memberIds || []);
-      const res = await calendarApi.addMatterInfo({
-        matterTitle: payload.title,
-        isAllDay,
-        startDate: payload.startDate,
-        endDate: payload.endDate,
-        startTime: payload.allDay ? "" : payload.startTime,
-        endTime: payload.allDay ? "" : payload.endTime,
-        isRepeat,
-        repeatType,
-        isDeadline: 0,
-        deadlineDate: "",
-        description: payload.desc || "",
-        weather: "",
-        weeks,
-        days: "",
-        members,
-      });
+      const res = await calendarApi.addMatterInfo(
+        buildRemoteMatterPayload(payload),
+      );
       if (
         res &&
         typeof res === "object" &&
@@ -661,10 +721,16 @@ async function save() {
   uni.navigateBack();
 }
 
-function applyRepeatEdit(scope) {
+async function applyRepeatEdit(scope) {
   repeatSheetOpen.value = false;
   if (!pendingSave.value) return;
-  updateEvent(state.value, eventId.value, pendingSave.value);
+  const payload = pendingSave.value;
+  const logged = !!uni.getStorageSync("auth_logged_in");
+  if (logged) {
+    const ok = await saveRemoteEdit(payload);
+    if (!ok) return;
+  }
+  updateEvent(state.value, eventId.value, payload);
   pendingSave.value = null;
   uni.$emit && uni.$emit("calendar:refresh");
   if (scope === "this") {
@@ -755,6 +821,7 @@ function applyRepeatEdit(scope) {
 .row-between {
   display: flex;
   align-items: center;
+  // padding: 20rpx 20rpx 20rpx 0;
   justify-content: space-between;
 }
 

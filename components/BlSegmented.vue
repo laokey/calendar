@@ -29,26 +29,28 @@ function select(v) {
 
 <style scoped lang="scss">
 .segmented {
-  background: #f2f4f7;
-  border-radius: 999rpx;
+  background: #fafafa;
   padding: 8rpx;
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: 24rpx;
 }
 
 .seg-item {
   flex: 1;
-  height: 72rpx;
-  border-radius: 999rpx;
+  // padding: 34rpx;
+  width: 92rpx;
+  height: 92rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .seg-text {
-  font-size: 30rpx;
-  font-weight: 700;
+  font-size: 24rpx;
+  font-weight: 400;
   color: #1d1d1f;
 }
 

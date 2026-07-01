@@ -14,7 +14,7 @@
     </BlHeader>
 
     <view class="hero" @click="goEdit">
-      <view class="hero-bg" />
+      <image class="hero-bg" src="/static/calendar/bg_event_detail.png" mode="aspectFill" />
       <view class="hero-content">
         <text class="hero-title">{{ event.title }}</text>
         <text class="hero-sub">{{ dateText }}</text>
@@ -198,6 +198,7 @@ function confirmDelete() {
 
 <style scoped lang="scss">
 .detail-page {
+  background: #ffffff;
   padding-bottom: 240rpx;
 }
 
@@ -211,7 +212,7 @@ function confirmDelete() {
   height: 64rpx;
   padding: 0 18rpx;
   border-radius: 16rpx;
-  background: rgba(17, 17, 17, 0.04);
+  // background: rgba(17, 17, 17, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -231,7 +232,7 @@ function confirmDelete() {
 }
 
 .action.del {
-  background: rgba(255, 59, 48, 0.1);
+  // background: rgba(255, 59, 48, 0.1);
 }
 
 .del-text {
@@ -244,13 +245,15 @@ function confirmDelete() {
   border-radius: 28rpx;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  // box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .hero-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #4c8dff 0%, #1b2b76 100%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-content {
@@ -273,11 +276,10 @@ function confirmDelete() {
 }
 
 .block {
-  background: #ffffff;
+  background: #fafafa;
   border-radius: 28rpx;
   padding: 20rpx 22rpx;
   margin-top: 16rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
 .repeat-row {
@@ -301,6 +303,7 @@ function confirmDelete() {
 
 .member-row {
   display: flex;
+  background: #fafafa;
   align-items: center;
   justify-content: space-between;
 }

@@ -61,10 +61,10 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
-import { deleteMember, ensureCalendarState, findMember, listMembers, reassignEventsByMember, setMembers, updateEvent } from '../../utils/calendarStore'
+import { deleteMember, ensureCalendarState, findEvent, findMember, listMembers, reassignEventsByMember, setMembers, updateEvent } from '../../utils/calendarStore'
 import { ensureTaskState, reassignTasksByMember } from '../../utils/taskStore'
 import { ensureRewardState, reassignRewardsByMember } from '../../utils/rewardStore'
-import { membersApi } from '../../utils/api'
+import { calendarApi, membersApi } from '../../utils/api'
 
 const state = ref(ensureCalendarState())
 const members = ref([])
@@ -75,6 +75,7 @@ const fromId = ref('')
 const pickedId = ref('')
 
 const isReassign = computed(() => mode.value === 'reassign')
+const from = ref('')
 const fromName = computed(() => {
   const m = fromId.value ? findMember(state.value, fromId.value) : null
   return m && m.name ? m.name : '该成员'
@@ -126,8 +127,98 @@ function refresh() {
   members.value = list.filter((m) => m.enabled !== false)
 }
 
+function normalizeWeekdays(list) {
+  const src = Array.isArray(list) ? list : []
+  const out = []
+  for (const x of src) {
+    const n = Number(x)
+    if (!Number.isFinite(n)) continue
+    const v = Math.floor(n)
+    if (v < 0 || v > 6) continue
+    if (!out.includes(v)) out.push(v)
+  }
+  return out.sort((a, b) => a - b)
+}
+
+function buildRemoteMatterPayload(payload, matterId = '') {
+  const repeatType =
+    payload.repeat && payload.repeat.unit === 'year'
+      ? 4
+      : payload.repeat && payload.repeat.unit === 'month'
+        ? 3
+        : payload.repeat && payload.repeat.unit === 'week'
+          ? 2
+          : payload.repeat
+            ? 1
+            : 0
+  const isAllDay = payload.allDay ? 1 : 0
+  const isRepeat = payload.repeat ? 1 : 0
+  const weeks =
+    payload.repeat && payload.repeat.unit === 'week' && payload.repeat.weekdays
+      ? JSON.stringify(normalizeWeekdays(payload.repeat.weekdays))
+      : ''
+  const members = JSON.stringify(payload.memberIds || [])
+  return {
+    matterId: matterId || '',
+    matterTitle: payload.title || '',
+    isAllDay,
+    startDate: payload.startDate || '',
+    endDate: payload.endDate || payload.startDate || '',
+    startTime: payload.allDay ? '' : payload.startTime || '',
+    endTime: payload.allDay ? '' : payload.endTime || '',
+    isRepeat,
+    repeatType,
+    isDeadline: 0,
+    deadlineDate: '',
+    description: payload.desc || '',
+    weather: payload.location || '',
+    weeks,
+    days: '',
+    members,
+  }
+}
+
+function eventToPayload(ev) {
+  const e = ev && typeof ev === 'object' ? ev : {}
+  return {
+    title: e.title || '',
+    allDay: !!e.allDay,
+    startDate: e.startDate || '',
+    startTime: e.startTime || '',
+    endDate: e.endDate || e.startDate || '',
+    endTime: e.endTime || '',
+    memberIds: Array.isArray(e.memberIds) ? e.memberIds.slice() : [],
+    desc: e.desc || '',
+    location: e.location || '',
+    color: e.color || '#ffffff',
+    tagColor: e.tagColor || '#3d6afb',
+    repeat: e.repeat
+      ? {
+          every: Number(e.repeat.every || 1) || 1,
+          unit: e.repeat.unit || 'day',
+          until: e.repeat.until || '',
+          monthRule: e.repeat.monthRule || null,
+          weekdays: Array.isArray(e.repeat.weekdays) ? e.repeat.weekdays.slice() : null,
+        }
+      : null,
+  }
+}
+
+function loadEventUpdateContext() {
+  try {
+    const raw = uni.getStorageSync('calendar_event_member_select_ctx_v1')
+    if (!raw) return null
+    const ctx = typeof raw === 'string' ? JSON.parse(raw) : raw
+    if (!ctx || String(ctx.eventId || '') !== String(eventId.value || '')) return null
+    return ctx && ctx.payload && typeof ctx.payload === 'object' ? ctx.payload : null
+  } catch (e) {
+    return null
+  }
+}
+
 onLoad((options) => {
   mode.value = options && options.mode ? String(options.mode) : ''
+  from.value = options && options.from ? String(options.from) : ''
   fromId.value = options && options.fromId ? String(options.fromId) : ''
   eventId.value = options && options.eventId ? String(options.eventId) : ''
   const idsRaw = options && options.ids ? String(options.ids) : '[]'
@@ -162,10 +253,36 @@ function onPick(id) {
   }
 }
 
-function save() {
+async function save() {
   const ids = selectedIds.value.slice()
   if (eventId.value) {
-    updateEvent(state.value, eventId.value, { memberIds: ids })
+    const logged = !!uni.getStorageSync('auth_logged_in')
+    const basePayload = loadEventUpdateContext() || eventToPayload(findEvent(state.value, eventId.value))
+    const nextPayload = { ...(basePayload || {}), memberIds: ids }
+    if (logged) {
+      uni.showLoading({ title: '保存中' })
+      try {
+        const res = await calendarApi.updateMatterInfo(buildRemoteMatterPayload(nextPayload, eventId.value))
+        if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+          uni.showToast({ title: '保存失败', icon: 'none' })
+          return
+        }
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+        return
+      } finally {
+        try {
+          uni.hideLoading()
+        } catch (e) {}
+      }
+    }
+    updateEvent(state.value, eventId.value, nextPayload)
+    if (from.value === 'edit') {
+      uni.setStorageSync('calendar_member_select_tmp', JSON.stringify(ids))
+    }
+    try {
+      uni.removeStorageSync('calendar_event_member_select_ctx_v1')
+    } catch (e) {}
     uni.$emit && uni.$emit('calendar:refresh')
     uni.navigateBack()
     return
