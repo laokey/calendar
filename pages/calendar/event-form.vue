@@ -287,7 +287,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import BlAvatar from "../../components/BlAvatar.vue";
 import BlHeader from "../../components/BlHeader.vue";
@@ -329,7 +329,7 @@ const repeatEvery = ref("1");
 const repeatUnit = ref("day");
 const repeatUntilOn = ref(false);
 const repeatUntil = ref("");
-const monthRule = ref({ type: "day", day: 27, nth: 4, weekday: 5 });
+const monthRule = ref(monthRuleFromDateKey(""));
 const repeatWeekdays = ref([]);
 
 const selectedMemberIds = ref([]);
@@ -377,6 +377,34 @@ function normalizeWeekdays(list) {
   return out.sort((a, b) => a - b);
 }
 
+function weekdayFromDateKey(key) {
+  const parts = String(key || "").split("-");
+  if (parts.length !== 3) return 0;
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return 0;
+  const date = new Date(y, m - 1, d);
+  const w = date.getDay();
+  return Number.isFinite(w) ? w : 0;
+}
+
+function monthRuleFromDateKey(key, type = "day") {
+  const parts = String(key || "").split("-");
+  if (parts.length !== 3) {
+    return { type, day: 1, nth: 1, weekday: 0 };
+  }
+  const day = Number(parts[2]);
+  const weekday = weekdayFromDateKey(key);
+  const safeDay = Number.isFinite(day) && day > 0 ? Math.floor(day) : 1;
+  return {
+    type: type === "weekday" ? "weekday" : "day",
+    day: safeDay,
+    nth: Math.floor((safeDay - 1) / 7) + 1,
+    weekday,
+  };
+}
+
 const startDateText = computed(() => toCnDateText(startDate.value));
 const endDateText = computed(() => toCnDateText(endDate.value));
 
@@ -394,6 +422,20 @@ const activeDateValue = computed(() => {
 
 const activeTimeValue = computed(() =>
   timeKind.value === "end" ? endTime.value : startTime.value,
+);
+
+watch(
+  startDate,
+  (next, prev) => {
+    monthRule.value = monthRuleFromDateKey(next, monthRule.value && monthRule.value.type);
+    const nextWeekday = weekdayFromDateKey(next);
+    const prevWeekday = weekdayFromDateKey(prev);
+    const current = normalizeWeekdays(repeatWeekdays.value);
+    if (!current.length || (current.length === 1 && current[0] === prevWeekday)) {
+      repeatWeekdays.value = [nextWeekday];
+    }
+  },
+  { immediate: true },
 );
 
 onLoad((options) => {

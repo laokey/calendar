@@ -57,9 +57,19 @@
 
     <BlRepeatSection
       v-model="repeatEnabled"
-      mode="toggle"
+      mode="full"
       theme="task"
       :repeat-icon-src="'/static/task/icon_repeat.png'"
+      v-model:every="repeatEvery"
+      v-model:unit="repeatUnit"
+      :unit-options="repeatUnits"
+      v-model:monthRule="repeatMonthRule"
+      v-model:weekdays="repeatWeekdays"
+      v-model:untilOn="repeatUntilOn"
+      v-model:until="repeatUntil"
+      :start-date="date"
+      :default-until="date"
+      @request-until-pick="openRepeatUntilDate"
     />
 
     <view class="block row-between">
@@ -169,7 +179,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
@@ -194,6 +204,12 @@ const date = ref('')
 const timeEnabled = ref(false)
 const time = ref('17:25')
 const repeatEnabled = ref(false)
+const repeatEvery = ref('1')
+const repeatUnit = ref('day')
+const repeatUntilOn = ref(false)
+const repeatUntil = ref('')
+const repeatMonthRule = ref(monthRuleFromDateKey(''))
+const repeatWeekdays = ref([])
 const hearts = ref(10)
 const memberId = ref('me')
 const priority = ref('none')
@@ -217,10 +233,17 @@ const heartsText = computed({
 
 const emojiSheetOpen = ref(false)
 const dateSheetOpen = ref(false)
+const dateKind = ref('task')
 const timeSheetOpen = ref(false)
 const prioritySheetOpen = ref(false)
 
 const emojiOptions = ['笑', '酷', '赞', '爱', '星', '书', '钢', '跑', '洗', '吃', '球', '家']
+const repeatUnits = [
+  { label: '天', value: 'day' },
+  { label: '周', value: 'week' },
+  { label: '月', value: 'month' },
+  { label: '年', value: 'year' },
+]
 
 function isRemoteTaskMode() {
   return !!uni.getStorageSync('auth_logged_in')
@@ -230,6 +253,32 @@ function toCnDateText(key) {
   const parts = String(key || '').split('-')
   if (parts.length !== 3) return ''
   return `${parts[0]}年${Number(parts[1])}月${Number(parts[2])}日`
+}
+
+function weekdayFromDateKey(key) {
+  const parts = String(key || '').split('-')
+  if (parts.length !== 3) return 0
+  const y = Number(parts[0])
+  const m = Number(parts[1])
+  const d = Number(parts[2])
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return 0
+  const dateObj = new Date(y, m - 1, d)
+  const w = dateObj.getDay()
+  return Number.isFinite(w) ? w : 0
+}
+
+function monthRuleFromDateKey(key, type = 'day') {
+  const parts = String(key || '').split('-')
+  if (parts.length !== 3) return { type, day: 1, nth: 1, weekday: 0 }
+  const day = Number(parts[2])
+  const weekday = weekdayFromDateKey(key)
+  const safeDay = Number.isFinite(day) && day > 0 ? Math.floor(day) : 1
+  return {
+    type: type === 'weekday' ? 'weekday' : 'day',
+    day: safeDay,
+    nth: Math.floor((safeDay - 1) / 7) + 1,
+    weekday,
+  }
 }
 
 const dateText = computed(() => toCnDateText(date.value))
@@ -258,6 +307,20 @@ const priorityIconSrc = computed(() => {
   return opt ? opt.icon : '/static/task/icon_bolt_black_small.png'
 })
 
+watch(
+  date,
+  (next, prev) => {
+    repeatMonthRule.value = monthRuleFromDateKey(next, repeatMonthRule.value && repeatMonthRule.value.type)
+    const nextWeekday = weekdayFromDateKey(next)
+    const prevWeekday = weekdayFromDateKey(prev)
+    const current = Array.isArray(repeatWeekdays.value) ? repeatWeekdays.value.map((x) => Number(x)).filter((x) => Number.isFinite(x)) : []
+    if (!current.length || (current.length === 1 && current[0] === prevWeekday)) {
+      repeatWeekdays.value = [nextWeekday]
+    }
+  },
+  { immediate: true },
+)
+
 onLoad((options) => {
   taskState.value = ensureTaskState()
   calendarState.value = ensureCalendarState()
@@ -278,6 +341,16 @@ onLoad((options) => {
       timeEnabled.value = !!t.timeEnabled
       time.value = t.time || time.value
       repeatEnabled.value = !!t.repeat
+      repeatEvery.value = t && t.repeat && t.repeat.every ? String(t.repeat.every) : '1'
+      repeatUnit.value = t && t.repeat && t.repeat.unit ? String(t.repeat.unit) : 'day'
+      repeatUntilOn.value = !!(t && t.repeat && t.repeat.until)
+      repeatUntil.value = t && t.repeat && t.repeat.until ? String(t.repeat.until) : ''
+      repeatMonthRule.value =
+        t && t.repeat && t.repeat.monthRule
+          ? { ...repeatMonthRule.value, ...t.repeat.monthRule }
+          : repeatMonthRule.value
+      repeatWeekdays.value =
+        t && t.repeat && Array.isArray(t.repeat.weekdays) ? t.repeat.weekdays.slice() : []
       hearts.value = Number(t.hearts || 0) || 0
       memberId.value = t.memberId || 'me'
       priority.value = t.priority || 'none'
@@ -303,11 +376,21 @@ function selectEmoji(e) {
 }
 
 function openDate() {
+  dateKind.value = 'task'
   dateSheetOpen.value = true
 }
 
 function onDatePicked(key) {
+  if (dateKind.value === 'until') {
+    repeatUntil.value = key
+    return
+  }
   date.value = key
+}
+
+function openRepeatUntilDate() {
+  dateKind.value = 'until'
+  dateSheetOpen.value = true
 }
 
 function openTime() {
@@ -361,7 +444,16 @@ async function save() {
     date: date.value,
     timeEnabled: timeEnabled.value,
     time: time.value,
-    repeat: repeatEnabled.value ? { unit: 'day', every: 1, id: `rp_${Date.now()}` } : null,
+    repeat: repeatEnabled.value
+      ? {
+          unit: repeatUnit.value,
+          every: Number(repeatEvery.value || 1) || 1,
+          until: repeatUntilOn.value ? repeatUntil.value : '',
+          monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
+          weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
+          id: `rp_${Date.now()}`,
+        }
+      : null,
     hearts: hearts.value,
     priority: priority.value,
     memberId: memberId.value,
@@ -380,7 +472,15 @@ async function save() {
         date: date.value,
         timeEnabled: timeEnabled.value,
         time: time.value,
-        repeat: repeatEnabled.value ? { unit: 'day', every: 1 } : null,
+        repeat: repeatEnabled.value
+          ? {
+              unit: repeatUnit.value,
+              every: Number(repeatEvery.value || 1) || 1,
+              until: repeatUntilOn.value ? repeatUntil.value : '',
+              monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
+              weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
+            }
+          : null,
         priority: priority.value,
         memberId: memberId.value,
       })

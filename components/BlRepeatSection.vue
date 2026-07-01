@@ -137,7 +137,7 @@ const props = defineProps({
   repeatIconSrc: { type: String, default: "/static/calendar/icon_refresh.png" },
   whenIconSrc: {
     type: String,
-    default: "/static/calendar/icon_form_title_edit.png",
+    default: "/static/common/icon_calendar.png",
   },
   untilIconSrc: {
     type: String,
