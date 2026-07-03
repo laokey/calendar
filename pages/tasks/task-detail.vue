@@ -19,7 +19,7 @@
         <text class="hero-sub">{{ dateText }}</text>
       </view>
       <view class="hero-right">
-        <view class="prio" :style="{ background: prioColor(task.priority) }" />
+        <image class="prio-img" :src="priorityIconSrc" mode="aspectFit" />
       </view>
     </view>
 
@@ -82,7 +82,7 @@ import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
 import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
 import { deleteTask, ensureTaskState, findTask, markTaskDone, markTaskUndone, taskDetailDateText } from '../../utils/taskStore'
-import { membersApi, tasksApi } from '../../utils/api'
+import { membersApi } from '../../utils/api'
 
 const taskState = ref(ensureTaskState())
 const calendarState = ref(ensureCalendarState())
@@ -97,9 +97,10 @@ const task = ref({
   time: '',
   repeat: null,
   hearts: 0,
-  priority: 'none',
-  memberId: 'me',
-  completedAtTs: 0,
+  priority: 0,
+  memberId: [],
+  finishTime: '',
+  completeTime: null
 })
 
 const deleteSheetOpen = ref(false)
@@ -108,9 +109,6 @@ function isRemoteTaskMode() {
   return !!uni.getStorageSync('auth_logged_in')
 }
 
-function isRemoteTaskItem() {
-  return !!(task.value && task.value.remote && isRemoteTaskMode())
-}
 
 function refresh(id) {
   taskState.value = ensureTaskState()
@@ -144,24 +142,16 @@ onShow(() => {
 
 const dateText = computed(() => taskDetailDateText(task.value))
 const isDone = computed(() => !!task.value.completedAtTs)
+const priorityIconSrc = computed(() => prioIconSrc(task.value && task.value.priority))
 
-function doneAtText() {
-  const ts = Number(task.value.completedAtTs || 0)
-  if (!Number.isFinite(ts) || ts < 100000000000) return ''
-  const d = new Date(task.value.completedAtTs)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${y}.${m}.${day} ${hh}:${mm}`
-}
-
-const doneAtTextVal = computed(() => doneAtText())
-const doneStatusText = computed(() => (doneAtTextVal.value ? `完成于 ${doneAtTextVal.value}` : '已完成'))
+ 
+const doneStatusText = computed(() => {
+  const ct = task.value && task.value.completeTime !== undefined && task.value.completeTime !== null ? String(task.value.completeTime).trim() : ''
+  return ct ? `完成于 ${ct}` : '已完成'
+})
 
 function memberList() {
-  return [{ id: 'me', name: '我的', glyph: '我', color: '#4cc38a' }, ...listMembers(calendarState.value).filter((m) => m.enabled !== false)]
+  return [ ...listMembers(calendarState.value).filter((m) => m.enabled !== false)]
 }
 
 function memberGlyph(id) {
@@ -184,36 +174,29 @@ function memberName(id) {
   return m ? m.name : ''
 }
 
-function prioColor(p) {
-  if (p === 'high') return '#ff3b30'
-  if (p === 'mid') return '#ffb020'
-  if (p === 'low') return '#3d6afb'
-  return 'rgba(17, 17, 17, 0.2)'
+function prioKey(p) {
+  if (p === 1 || p === '1') return 'high'
+  if (p === 2 || p === '2') return 'mid'
+  if (p === 3 || p === '3') return 'low'
+  const s = String(p || '').trim()
+  if (s === 'high' || s === 'mid' || s === 'low' || s === 'none') return s
+  return 'none'
+}
+
+function prioIconSrc(p) {
+  const k = prioKey(p)
+  if (k === 'high') return '/static/task/icon_bolt_red.png'
+  if (k === 'mid') return '/static/task/icon_bolt_yellow.png'
+  if (k === 'low') return '/static/task/icon_bolt_blue.png'
+  return '/static/task/icon_bolt_black_small.png'
 }
 
 function goEdit() {
-  if (isRemoteTaskItem()) {
-    uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
-    return
-  }
   uni.navigateTo({ url: `/pages/tasks/task-form?id=${task.value.id}` })
 }
 
 function askDelete() {
-  if (isRemoteTaskItem()) {
-    uni.showModal({
-      title: '',
-      content: '您确定要删除吗？',
-      confirmText: '删除',
-      cancelText: '取消',
-      confirmColor: '#3d6afb',
-      success(res) {
-        if (!res.confirm) return
-        doDelete('one')
-      },
-    })
-    return
-  }
+
   if (task.value.repeat && task.value.repeat.id) {
     deleteSheetOpen.value = true
     return
@@ -233,39 +216,12 @@ function askDelete() {
 
 async function doDelete(scope) {
   deleteSheetOpen.value = false
-  if (isRemoteTaskItem()) {
-    try {
-      await tasksApi.deleteTaskInfo({ taskId: task.value.id })
-      deleteTask(taskState.value, task.value.id, 'one')
-      uni.$emit && uni.$emit('task:refresh')
-      uni.navigateBack()
-    } catch (e) {}
-    return
-  }
   deleteTask(taskState.value, task.value.id, scope)
   uni.$emit && uni.$emit('task:refresh')
   uni.navigateBack()
 }
 
 async function toggleDone() {
-  if (isRemoteTaskItem()) {
-    if (isDone.value) {
-      uni.showToast({ title: '接口文档暂未提供撤销完成接口', icon: 'none' })
-      return
-    }
-    try {
-      await tasksApi.completeTask({
-        taskId: task.value.id,
-        memberId: task.value.memberId,
-        updateReason: task.value.title ? `完成任务:${task.value.title}` : '完成任务',
-        starNumber: Number(task.value.hearts || 0) || 0,
-      })
-      markTaskDone(taskState.value, task.value.id)
-      refresh(task.value.id)
-      uni.$emit && uni.$emit('task:refresh')
-    } catch (e) {}
-    return
-  }
   if (isDone.value) {
     markTaskUndone(taskState.value, task.value.id)
   } else {
@@ -279,6 +235,8 @@ async function toggleDone() {
 <style scoped lang="scss">
 .detail-page {
   padding-bottom: 240rpx;
+  padding-top: 40rpx;
+  background: #ffffff;
 }
 
 .actions {
@@ -319,9 +277,9 @@ async function toggleDone() {
 }
 
 .hero {
-  margin-top: 10rpx;
-  background: #eaf2ff;
-  border-radius: 28rpx;
+  margin-top: 40rpx;
+  background: #EDF3FF;
+  border-radius: 24rpx;
   padding: 26rpx 24rpx;
   display: flex;
   align-items: center;
@@ -330,30 +288,29 @@ async function toggleDone() {
 
 .hero-title {
   font-size: 36rpx;
-  font-weight: 900;
-  color: rgba(17, 17, 17, 0.95);
+  font-weight: bold;
+  color: #000000;
 }
 
 .hero-sub {
   margin-top: 10rpx;
   display: block;
   font-size: 26rpx;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.6);
+  font-weight: 400;
+  color: #000000;
 }
 
-.prio {
-  width: 26rpx;
-  height: 26rpx;
-  border-radius: 8rpx;
+.prio-img {
+  width: 32rpx;
+  height: 32rpx;
+  display: block;
 }
 
 .block {
-  background: #ffffff;
-  border-radius: 28rpx;
+  background: #fafafa;
+  border-radius: 24rpx;
   padding: 20rpx 22rpx;
-  margin-top: 16rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
+  margin-top: 24rpx;
 }
 
 .row {
@@ -397,7 +354,7 @@ async function toggleDone() {
 }
 
 .assign-row {
-  margin-top: 16rpx;
+  margin-top: 24rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -421,6 +378,7 @@ async function toggleDone() {
   background: #eaf2ff;
   display: flex;
   align-items: center;
+  padding: 28rpx 20rpx;
   gap: 12rpx;
 }
 

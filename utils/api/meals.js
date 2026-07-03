@@ -1,5 +1,6 @@
-import { request } from '../request'
-import { getToken, getUserId } from '../authToken'
+import { getApiBaseUrl } from '../apiConfig'
+import { clearToken, getToken, getUserId } from '../authToken'
+import { HttpError, request } from '../request'
 import { getCalendarDeviceList } from './device'
 
 function buildQuery(params) {
@@ -19,6 +20,80 @@ function safeJsonParse(raw) {
   } catch (e) {
     return null
   }
+}
+
+function pickMessage(payload) {
+  if (!payload) return ''
+  if (typeof payload === 'string') return payload
+  if (typeof payload === 'object') {
+    if (payload.message) return String(payload.message)
+    if (payload.msg) return String(payload.msg)
+    if (payload.error) return String(payload.error)
+  }
+  return ''
+}
+
+let redirectingToLogin = false
+
+function goLoginPage() {
+  if (redirectingToLogin) return
+  redirectingToLogin = true
+  try {
+    clearToken()
+    uni.removeStorageSync('auth_logged_in')
+  } catch (e) {}
+  setTimeout(() => {
+    try {
+      uni.reLaunch({ url: '/pages/login/index' })
+    } finally {
+      setTimeout(() => {
+        redirectingToLogin = false
+      }, 300)
+    }
+  }, 0)
+}
+
+function normalizeText(value) {
+  return value === undefined || value === null ? '' : String(value).trim()
+}
+
+function isObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function normalizeMediaUrl(value) {
+  const raw = normalizeText(value)
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw) || /^data:/i.test(raw) || /^blob:/i.test(raw) || /^file:/i.test(raw)) return raw
+  const normalized = raw.replace(/\\/g, '/').replace(/^\.?\/*/, '')
+  if (!normalized) return ''
+  const baseURL = String(getApiBaseUrl() || '').replace(/\/+$/, '')
+  return `${baseURL}/${normalized}`
+}
+
+function parseUploadResponse(res, url) {
+  const statusCode = res && Number.isFinite(res.statusCode) ? res.statusCode : 0
+  const bodyRaw = res && res.data !== undefined ? res.data : undefined
+  const body = typeof bodyRaw === 'string' ? safeJsonParse(bodyRaw) || bodyRaw : bodyRaw
+  if (statusCode < 200 || statusCode >= 300) {
+    throw new HttpError(pickMessage(body) || `HTTP ${statusCode || 'Error'}`, {
+      statusCode,
+      data: body,
+      url,
+      method: 'POST',
+    })
+  }
+  if (isObject(body) && Object.prototype.hasOwnProperty.call(body, 'code')) {
+    const code = body.code
+    const ok = code === 0 || code === 200 || code === '0' || code === '200'
+    if (!ok) {
+      const msg = pickMessage(body) || '上传失败'
+      if ((code === 201 || code === '201') && /用户不存在/.test(String(msg || ''))) goLoginPage()
+      throw new HttpError(msg, { statusCode, code, data: body, url, method: 'POST' })
+    }
+  }
+  if (isObject(body) && Object.prototype.hasOwnProperty.call(body, 'data')) return body.data
+  return body
 }
 
 async function resolveDeviceEmail(passed) {
@@ -317,4 +392,51 @@ export async function deleteRecipeInfo({ recipeId } = {}) {
   const token = getToken()
   const id = String(recipeId || '').trim()
   return postForm('/calendar/app/deleteRecipeInfo', { token, recipeId: id, recipeid: id })
+}
+
+export async function uploadRecipeFile({ recipeId, filePath, onProgress } = {}) {
+  const token = getToken()
+  const rid = normalizeText(recipeId)
+  const baseURL = String(getApiBaseUrl() || '').replace(/\/+$/, '')
+  const url = `${baseURL}/calendar/app/uploadRecipeFile`
+
+  return new Promise((resolve, reject) => {
+    const formData = {
+      token,
+      recipeId: rid,
+      recipeid: rid,
+    }
+    const task = uni.uploadFile({
+      url,
+      filePath: normalizeText(filePath),
+      name: 'file',
+      formData,
+      success: (res) => {
+        try {
+          const out = parseUploadResponse(res, url)
+          if (typeof out === 'string') resolve(normalizeMediaUrl(out))
+          else resolve(out)
+        } catch (e) {
+          reject(e)
+        }
+      },
+      fail: (err) => {
+        reject(
+          new HttpError(pickMessage(err) || '上传失败', {
+            statusCode: 0,
+            data: err,
+            url,
+            method: 'POST',
+          }),
+        )
+      },
+    })
+    if (task && typeof task.onProgressUpdate === 'function' && typeof onProgress === 'function') {
+      task.onProgressUpdate((res) => {
+        try {
+          onProgress(res)
+        } catch (e) {}
+      })
+    }
+  })
 }

@@ -110,6 +110,22 @@ const categoryName = computed(() => {
 const pageTitle = computed(() => (recipeId.value ? '编辑食谱' : '添加食谱'))
 const canSave = computed(() => !!String(title.value || '').trim())
 
+function isRemoteUrl(value) {
+  return /^https?:\/\//i.test(String(value || '').trim())
+}
+
+function extractRecipeId(res) {
+  if (res && typeof res === 'object') {
+    if (res.recipeId !== undefined && res.recipeId !== null) return String(res.recipeId).trim()
+    if (res.recipeid !== undefined && res.recipeid !== null) return String(res.recipeid).trim()
+    if (res.id !== undefined && res.id !== null) return String(res.id).trim()
+    if (res.data !== undefined && res.data !== null) return extractRecipeId(res.data)
+  }
+  const s = String(res || '').trim()
+  if (/^\d+$/.test(s)) return s
+  return ''
+}
+
 function selectCat(id) {
   categoryId.value = id
   catOpen.value = false
@@ -169,16 +185,38 @@ async function save() {
   const recipeName = String(title.value || '').trim()
   const recipeType = mealTypeFromCategoryId(categoryId.value)
   const description = String(note.value || '')
-  const imageUrl = String(photoPath.value || '')
+  const pickedPhoto = String(photoPath.value || '').trim()
+  const hasLocalPhoto = !!pickedPhoto && !isRemoteUrl(pickedPhoto)
+  const imageUrl = hasLocalPhoto ? '' : pickedPhoto
   uni.showLoading({ title: '保存中' })
   try {
     if (recipeId.value) {
       await mealsApi.deleteRecipeInfo({ recipeId: recipeId.value })
     }
     const res = await mealsApi.addRecipeInfo({ recipeName, recipeType, description, imageUrl })
-    if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '保存失败', icon: 'none' })
-      return
+    let nextId = extractRecipeId(res)
+    if (!nextId) {
+      try {
+        const list = await mealsApi.getRecipeList()
+        const candidates = (list || [])
+          .filter((x) => String(x.recipeName || '').trim() === recipeName && Number(x.recipeType) === Number(recipeType))
+          .filter((x) => String(x.description || '') === String(description || ''))
+        const preferred = candidates.find((x) => (imageUrl ? String(x.imageUrl || '') === imageUrl : !String(x.imageUrl || '').trim()))
+        nextId = preferred ? String(preferred.recipeId || '').trim() : candidates[0] ? String(candidates[0].recipeId || '').trim() : ''
+      } catch (e) {}
+    }
+    if (nextId) recipeId.value = nextId
+
+    if (hasLocalPhoto) {
+      if (!recipeId.value) {
+        uni.showToast({ title: '图片上传失败', icon: 'none' })
+        return
+      }
+      try {
+        uni.showLoading({ title: '上传中' })
+      } catch (e) {}
+      const uploaded = await mealsApi.uploadRecipeFile({ recipeId: recipeId.value, filePath: pickedPhoto })
+      if (typeof uploaded === 'string' && uploaded.trim()) photoPath.value = uploaded.trim()
     }
     uni.navigateBack()
   } catch (e) {

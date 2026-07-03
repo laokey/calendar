@@ -23,7 +23,7 @@
     </view>
 
     <view class="card">
-      <text class="title">{{ title }}</text>
+      <text class="title">{{ decodeURIComponent(title) }}</text>
       <text class="sub">{{ dateText }}</text>
 
       <view class="divider" />

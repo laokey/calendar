@@ -147,6 +147,23 @@ function priorityToRemote(raw) {
   return 0
 }
 
+function parseDateTimeToTs(raw) {
+  const text = normalizeText(raw)
+  if (!text) return 0
+  const m = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/)
+  if (!m) return 0
+  const y = Number(m[1])
+  const mo = Number(m[2])
+  const d = Number(m[3])
+  const hh = m[4] !== undefined ? Number(m[4]) : 0
+  const mm = m[5] !== undefined ? Number(m[5]) : 0
+  const ss = m[6] !== undefined ? Number(m[6]) : 0
+  if (![y, mo, d, hh, mm, ss].every((n) => Number.isFinite(n))) return 0
+  const dt = new Date(y, mo - 1, d, hh, mm, ss, 0)
+  const ts = dt.getTime()
+  return Number.isFinite(ts) ? ts : 0
+}
+
 function normalizeTask(it) {
   const x = it && typeof it === 'object' ? it : {}
   const idRaw = x.taskId !== undefined ? x.taskId : x.taskid !== undefined ? x.taskid : x.id !== undefined ? x.id : ''
@@ -175,10 +192,20 @@ function normalizeTask(it) {
   const isTimeRaw = x.isTime !== undefined ? x.isTime : x.istime !== undefined ? x.istime : 1
   const isRepeatRaw = x.isRepeat !== undefined ? x.isRepeat : x.isrepeat !== undefined ? x.isrepeat : 0
   const statusRaw = x.status !== undefined ? x.status : x.taskStatus !== undefined ? x.taskStatus : 0
+  const completeTimeRaw =
+    x.completeTime !== undefined
+      ? x.completeTime
+      : x.completetime !== undefined
+        ? x.completetime
+        : x.complete_time !== undefined
+          ? x.complete_time
+          : ''
   const members = normalizeTaskMembers(x.members !== undefined ? x.members : x.memberList !== undefined ? x.memberList : x.memberIds)
   const dateTime = extractDateTime(finishTimeRaw)
   const isAllDay = Number(isTimeRaw) === 1 || String(isTimeRaw) === '1'
   const isDone = Number(statusRaw) === 1 || String(statusRaw) === '1'
+  const completeTime = normalizeText(completeTimeRaw)
+  const completeAtTs = isDone ? parseDateTimeToTs(completeTime) : 0
 
   return {
     id: idRaw === undefined || idRaw === null ? '' : String(idRaw),
@@ -193,7 +220,8 @@ function normalizeTask(it) {
     priority: priorityFromRemote(x.priority),
     memberId: members[0] && members[0].id ? members[0].id : 'me',
     members,
-    completedAtTs: isDone ? 1 : 0,
+    completeTime,
+    completedAtTs: isDone ? (completeAtTs || 1) : 0,
     createdAtTs: Date.now(),
     remote: true,
   }
@@ -484,6 +512,7 @@ export async function addTaskInfo(payload = {}) {
   const taskDate = normalizeDateKey(
     (payload && (payload.taskDate !== undefined ? payload.taskDate : payload.date)) || finishTimeFromPayload(payload),
   )
+  const starNumber = Number(payload && (payload.starNumber !== undefined ? payload.starNumber : payload.hearts)) || 0
   return postForm('/calendar/app/addTaskInfo', {
     token,
     deviceEmail: email,
@@ -500,6 +529,40 @@ export async function addTaskInfo(payload = {}) {
     isRepeat: payload.repeat ? 1 : 0,
     isrepeat: payload.repeat ? 1 : 0,
     priority: priorityToRemote(payload.priority),
+    starNumber,
+    starnumber: starNumber,
+    members,
+  })
+}
+
+export async function updateTaskInfo(payload = {}) {
+  const token = getToken()
+  const p = payload && typeof payload === 'object' ? payload : {}
+  const taskId = normalizeText(p.taskId !== undefined ? p.taskId : p.taskid !== undefined ? p.taskid : p.id)
+  const members = membersToRemoteValue(p)
+  const taskDate = normalizeDateKey(
+    (p && (p.taskDate !== undefined ? p.taskDate : p.date)) || finishTimeFromPayload(p),
+  )
+  const finishTime = finishTimeFromPayload(p)
+  const starNumber = Number(p && (p.starNumber !== undefined ? p.starNumber : p.hearts)) || 0
+  return postForm('/calendar/app/updateTaskInfo', {
+    token,
+    taskId,
+    taskid: taskId,
+    taskTitle: p.taskTitle !== undefined ? p.taskTitle : p.title,
+    tasktitle: p.taskTitle !== undefined ? p.taskTitle : p.title,
+    emoji: p.emoji || '',
+    taskDate,
+    taskdate: taskDate,
+    isTime: p.timeEnabled ? 0 : 1,
+    istime: p.timeEnabled ? 0 : 1,
+    finishTime,
+    finishtime: finishTime,
+    isRepeat: p.repeat ? 1 : 0,
+    isrepeat: p.repeat ? 1 : 0,
+    priority: priorityToRemote(p.priority),
+    starNumber,
+    starnumber: starNumber,
     members,
   })
 }
@@ -609,9 +672,7 @@ export async function updateItemInfo({ itemId, itemName, status } = {}) {
   return postForm('/calendar/app/updateItemInfo', {
     token,
     itemId: id,
-    itemid: id,
     itemName: name,
-    itemname: name,
     status: nextStatus,
   })
 }

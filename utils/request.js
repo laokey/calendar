@@ -209,7 +209,7 @@ export async function request(options) {
 
     const parsed = parseBusinessResponse(body)
     if (!parsed.ok) {
-      if (parsed.code === 201 || parsed.code === '201') {
+      if ((parsed.code === 201 || parsed.code === '201') && /用户不存在/.test(String(parsed.message || ''))) {
         goLoginPage()
       }
       const err = new HttpError(parsed.message || '请求失败', {

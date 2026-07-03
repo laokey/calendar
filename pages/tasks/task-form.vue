@@ -460,7 +460,44 @@ async function save() {
   }
   if (isRemoteTaskMode()) {
     if (isEdit.value && taskId.value) {
-      uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
+      uni.showLoading({ title: '保存中' })
+      try {
+        const res = await tasksApi.updateTaskInfo({
+          taskId: taskId.value,
+          taskDate: date.value,
+          taskTitle: title.value,
+          emoji: emoji.value,
+          dateEnabled: dateEnabled.value,
+          date: date.value,
+          timeEnabled: timeEnabled.value,
+          time: time.value,
+          repeat: repeatEnabled.value
+            ? {
+                unit: repeatUnit.value,
+                every: Number(repeatEvery.value || 1) || 1,
+                until: repeatUntilOn.value ? repeatUntil.value : '',
+                monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
+                weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
+              }
+            : null,
+          priority: priority.value,
+          hearts: hearts.value,
+          memberId: memberId.value,
+        })
+        if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
+          uni.showToast({ title: '保存失败', icon: 'none' })
+          return
+        }
+        updateTask(taskState.value, taskId.value, payload)
+        uni.$emit && uni.$emit('task:refresh')
+        uni.navigateBack()
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+      } finally {
+        try {
+          uni.hideLoading()
+        } catch (e) {}
+      }
       return
     }
     try {
@@ -482,11 +519,14 @@ async function save() {
             }
           : null,
         priority: priority.value,
+        starNumber: hearts.value,
         memberId: memberId.value,
       })
       uni.$emit && uni.$emit('task:refresh')
       uni.navigateBack()
-    } catch (e) {}
+    } catch (e) {
+      uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    }
     return
   }
   if (isEdit.value && taskId.value) {
