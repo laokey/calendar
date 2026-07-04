@@ -559,7 +559,7 @@ async function fetchWeekMeals() {
 .add-card {
   margin-top: 14rpx;
   height: 96rpx;
-  border-radius: 24rpx;
+  border-radius: 16rpx;
   background: #ffffff;
   display: flex;
   align-items: center;

@@ -118,9 +118,9 @@ function hexToRgb(hex) {
 }
 
 .add-text {
-  color: #3d6afb;
-  font-size: 28rpx;
-  font-weight: 900;
+  color: #406DFF;
+  font-size: 32rpx;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -134,7 +134,6 @@ function hexToRgb(hex) {
 .tile {
   border-radius: 24rpx;
   padding: 24rpx;
-  min-height: 190rpx;
 }
 
 .tile-icon {
@@ -174,7 +173,7 @@ function hexToRgb(hex) {
 }
 
 .tile-title {
-  margin-top: 16rpx;
+  margin-top: 24rpx;
   display: block;
   font-size: 34rpx;
   font-weight: 900;
@@ -182,7 +181,7 @@ function hexToRgb(hex) {
 }
 
 .tile-sub {
-  margin-top: 10rpx;
+  margin-top: 24rpx;
   display: block;
   font-size: 26rpx;
   font-weight: 800;

@@ -327,16 +327,17 @@ async function createAlbum() {
 }
 
 .empty-hero {
-  width: 240rpx;
-  height: 240rpx;
+  width: 340rpx;
+  height: 340rpx;
+  margin-top: 30%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .empty-icon {
-  width: 200rpx;
-  height: 200rpx;
+  width: 320rpx;
+  height: 320rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,8 +345,8 @@ async function createAlbum() {
 }
 
 .empty-pic {
-  width: 200rpx;
-  height: 200rpx;
+  width: 320rpx;
+  height: 320rpx;
 }
 
 .empty-text {

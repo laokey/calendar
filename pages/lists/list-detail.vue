@@ -6,7 +6,7 @@
           <view class="hdr-btn" @click="goEdit">
             <image
               class="hdr-icon"
-              src="/static/common/icon_edit_pencil.png"
+              src="/static/common/icon_edit.png"
               mode="aspectFit"
             />
           </view>
@@ -347,7 +347,7 @@ async function deleteThisList() {
 
 .add-row {
   margin-top: 10rpx;
-  height: 104rpx;
+  height: 98rpx;
   border-radius: 24rpx;
   background: #eef4ff;
   display: flex;
@@ -378,9 +378,8 @@ async function deleteThisList() {
 .item {
   height: 96rpx;
   border-radius: 22rpx;
-  background: #ffffff;
+  background: #fafafa;
   padding: 0 22rpx;
-  box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -451,8 +450,8 @@ async function deleteThisList() {
 }
 
 .empty-img {
-  width: 140rpx;
-  height: 140rpx;
+  width: 210rpx;
+  height: 210rpx;
   display: block;
 }
 
@@ -485,7 +484,7 @@ async function deleteThisList() {
 }
 
 .done {
-  margin-top: 18rpx;
+  margin-top: 24rpx;
 }
 
 .done-title {
@@ -496,7 +495,7 @@ async function deleteThisList() {
 }
 
 .done-items {
-  margin-top: 12rpx;
+  margin-top: 24rpx;
   display: flex;
   flex-direction: column;
   gap: 14rpx;

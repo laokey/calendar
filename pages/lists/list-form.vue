@@ -109,7 +109,7 @@ async function save() {
 }
 
 .title-card {
-  padding: 28rpx;
+  // padding: 28rpx;
   background: #fafafa;
   box-shadow: none;
 }

@@ -207,7 +207,7 @@ async function del() {
 }
 
 .hero {
-  margin-top: 10rpx;
+    margin: 42rpx auto 24rpx;
   width: 280rpx;
   height: 280rpx;
   border-radius: 32rpx;

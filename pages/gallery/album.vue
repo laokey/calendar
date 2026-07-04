@@ -34,8 +34,8 @@
             />
           </view>
         </view>
-        <text class="sub">数量:{{ photos.length }}</text>
-        <text class="sub">创建:{{ album?.createdAt }}</text>
+        <text class="sub">数量: {{ photos.length }}</text>
+        <text class="sub">创建: {{ album?.createdAt }}</text>
       </view>
     </view>
 
@@ -44,7 +44,7 @@
         <view class="play">
           <image
             class="play-icon"
-            src="/static/gallery/icon_play_dark.png"
+            src="/static/gallery/icon_video.png"
             mode="aspectFit"
           />
         </view>
@@ -460,9 +460,9 @@ async function submitRename() {
 }
 
 .cover-ph-icon {
-  width: 110rpx;
-  height: 90rpx;
-  opacity: 0.38;
+  width: 100%;
+  height: 100%;
+  // opacity: 0.38;
 }
 
 .cover-info {
@@ -471,7 +471,8 @@ async function submitRename() {
   right: 0;
   bottom: 0;
   padding: 18rpx 18rpx 16rpx;
-  background: rgba(0, 0, 0, 0.45);
+  border-radius: 24rpx;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .cover-line {
@@ -527,16 +528,14 @@ async function submitRename() {
   width: 44rpx;
   height: 44rpx;
   border-radius: 10rpx;
-  border: 2rpx solid rgba(17, 17, 17, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .play-icon {
-  width: 20rpx;
-  height: 20rpx;
-  opacity: 0.65;
+  width: 44rpx;
+  height: 44rpx;
 }
 
 .tool-text {
