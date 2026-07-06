@@ -1,4 +1,4 @@
-import { post } from '../request'
+import { get, post } from '../request'
 import { getToken } from '../authToken'
 import { getApiBaseUrl } from '../apiConfig'
 
@@ -25,6 +25,10 @@ function normalizeInt(value, fallback = 0) {
 async function postForm(path, query) {
   const header = { 'Content-Type': 'application/x-www-form-urlencoded' }
   return post(`${path}${buildQuery(query)}`, undefined, { withAuth: false, showErrorToast: false, header })
+}
+
+async function getForm(path, query) {
+  return get(`${path}${buildQuery(query)}`, undefined, { withAuth: false, showErrorToast: false })
 }
 
 function extractList(res, keys) {
@@ -226,13 +230,19 @@ export async function setFriendAuthority({ friendEmail, authority } = {}) {
   })
 }
 
-export async function resetPassword({ oldPassword, newPassword } = {}) {
+export async function resetPassword({ oldPassword, newPassword, verifyCode } = {}) {
   const token = getToken()
   return postForm('/calendar/app/resetPassword', {
     token,
     oldPassword: normalizeText(oldPassword),
     newPassword: normalizeText(newPassword),
+    verifyCode: normalizeText(verifyCode),
   })
+}
+
+export async function sendResetPasswordVerifyCode() {
+  const token = getToken()
+  return postForm('/calendar/app/sendVerifityCode', { token })
 }
 
 export async function updateUserNickname({ nickName } = {}) {

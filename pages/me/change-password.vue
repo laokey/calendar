@@ -9,6 +9,12 @@
           <image class="eye-img" :src="showOld ? '/static/my/icon_eye_open.png' : '/static/my/icon_eye_closed.png'" mode="aspectFit" />
         </view>
       </view>
+      <view class="input-wrap code-wrap">
+        <input v-model="code" class="input" placeholder="邮箱验证码" placeholder-class="ph" confirm-type="next" />
+        <view class="code-btn" :class="{ disabled: !canSendCode }" @click="sendCode">
+          <text class="code-btn-text">{{ codeBtnText }}</text>
+        </view>
+      </view>
       <view class="input-wrap">
         <input v-model="newPwd" class="input" :password="!showNew" placeholder="新密码" placeholder-class="ph" confirm-type="next" />
         <view class="eye" @click="showNew = !showNew">
@@ -31,20 +37,98 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { onUnload } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { usersApi } from '../../utils/api'
 
 const oldPwd = ref('')
+const code = ref('')
 const newPwd = ref('')
 const newPwd2 = ref('')
 
 const showOld = ref(false)
 const showNew = ref(false)
 const showNew2 = ref(false)
+const codeSeconds = ref(0)
+const codeSending = ref(false)
+let codeTimer = 0
 
 const canSubmit = computed(() => {
-  return oldPwd.value.trim() && newPwd.value.trim() && newPwd2.value.trim()
+  return oldPwd.value.trim() && code.value.trim() && newPwd.value.trim() && newPwd2.value.trim()
 })
+
+function getCurrentEmail() {
+  try {
+    return String(uni.getStorageSync('auth_email') || '').trim()
+  } catch (e) {
+    return ''
+  }
+}
+
+function isSupportedEmail(value) {
+  return /@163\.com$/i.test(String(value || '').trim())
+}
+
+const canSendCode = computed(() => {
+  if (codeSending.value) return false
+  if (codeSeconds.value > 0) return false
+  return isSupportedEmail(getCurrentEmail())
+})
+
+const codeBtnText = computed(() => {
+  if (codeSeconds.value > 0) return `${codeSeconds.value}s`
+  return '获取验证码'
+})
+
+function clearCodeTimer() {
+  if (!codeTimer) return
+  clearInterval(codeTimer)
+  codeTimer = 0
+}
+
+function startCodeCountdown(seconds = 60) {
+  clearCodeTimer()
+  codeSeconds.value = seconds
+  codeTimer = setInterval(() => {
+    if (codeSeconds.value <= 1) {
+      codeSeconds.value = 0
+      clearCodeTimer()
+      return
+    }
+    codeSeconds.value -= 1
+  }, 1000)
+}
+
+onUnload(() => {
+  clearCodeTimer()
+})
+
+async function sendCode() {
+  const email = getCurrentEmail()
+  if (!email) {
+    uni.showToast({ title: '未获取到当前邮箱', icon: 'none' })
+    return
+  }
+  if (!isSupportedEmail(email)) {
+    uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+    return
+  }
+  if (!canSendCode.value) return
+  codeSending.value = true
+  uni.showLoading({ title: '发送中' })
+  try {
+    await usersApi.sendResetPasswordVerifyCode()
+    uni.showToast({ title: '验证码已发送', icon: 'none' })
+    startCodeCountdown(60)
+  } catch (e) {
+    uni.showToast({ title: String((e && e.message) || '发送失败'), icon: 'none' })
+  } finally {
+    codeSending.value = false
+    try {
+      uni.hideLoading()
+    } catch (e) {}
+  }
+}
 
 async function submit() {
   if (!canSubmit.value) {
@@ -57,7 +141,7 @@ async function submit() {
   }
   uni.showLoading({ title: '修改中' })
   try {
-    await usersApi.resetPassword({ oldPassword: oldPwd.value.trim(), newPassword: newPwd.value.trim() })
+    await usersApi.resetPassword({ oldPassword: oldPwd.value.trim(), newPassword: newPwd.value.trim(), verifyCode: code.value.trim() })
     uni.showToast({ title: '修改成功', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
   } catch (e) {
@@ -104,6 +188,10 @@ async function submit() {
   gap: 10rpx;
 }
 
+.code-wrap {
+  gap: 12rpx;
+}
+
 .input {
   flex: 1;
   font-size: 34rpx;
@@ -130,6 +218,32 @@ async function submit() {
   width: 34rpx;
   height: 34rpx;
   opacity: 0.7;
+}
+
+.code-btn {
+  min-width: 168rpx;
+  height: 60rpx;
+  border-radius: 9999rpx;
+  background: rgba(61, 106, 251, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18rpx;
+}
+
+.code-btn.disabled {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.code-btn-text {
+  color: #3d6afb;
+  font-size: 26rpx;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.code-btn.disabled .code-btn-text {
+  color: rgba(17, 17, 17, 0.35);
 }
 
 .btn {
