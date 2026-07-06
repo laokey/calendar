@@ -1,6 +1,12 @@
 <template>
   <BlSheet v-model="open" :title="title" :confirm-text="confirmText" @confirm="confirm">
-    <picker-view class="pv" :value="indices" indicator-style="height: 84rpx;" @change="onChange">
+    <picker-view
+      class="pv"
+      :value="indices"
+      indicator-class="pv-indicator"
+      indicator-style="height: 84rpx;"
+      @change="onChange"
+    >
       <picker-view-column class="col">
         <view v-for="h in hours" :key="h" class="pv-item"><text class="pv-text">{{ h }}</text></view>
       </picker-view-column>
@@ -84,14 +90,21 @@ function confirm() {
 
 .pv-item {
   height: 84rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  line-height: 84rpx;
+  text-align: center;
+  overflow: hidden;
 }
 
 .pv-text {
+  display: block;
+  height: 84rpx;
+  line-height: 84rpx;
   font-size: 34rpx;
   font-weight: 900;
   color: rgba(17, 17, 17, 0.88);
+}
+
+.pv-indicator {
+  height: 84rpx;
 }
 </style>

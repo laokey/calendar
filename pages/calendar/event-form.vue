@@ -666,7 +666,7 @@ function buildRemoteMatterPayload(payload, matterId = "") {
     isDeadline: 0,
     deadlineDate: "",
     description: payload.desc || "",
-    weather: payload.location || "",
+    weather: "",
     weeks,
     days: "",
     members,
