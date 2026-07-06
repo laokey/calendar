@@ -8,7 +8,7 @@
       <view class="head-right" />
     </view>
 
-    <text class="hint">请输入您的个人电子邮箱</text>
+    <text class="hint">请输入您的163电子邮箱</text>
 
     <view class="panel">
       <view class="field">
@@ -54,7 +54,7 @@
         </view>
       </view>
 
-      <text class="tip">请使用您日常使用的邮箱注册，否则可能影响部分功能的使用。</text>
+      <text class="tip">当前注册仅支持163邮箱。</text>
     </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
@@ -107,12 +107,22 @@ function isEmail(value) {
   return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)
 }
 
+function isSupportedEmail(value) {
+  return /@163\.com$/i.test(String(value || '').trim())
+}
+
 function validateEmail() {
   const v = email.value.trim()
   if (!v) return true
-  if (isEmail(v)) return true
-  uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
-  return false
+  if (!isEmail(v)) {
+    uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+    return false
+  }
+  if (!isSupportedEmail(v)) {
+    uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+    return false
+  }
+  return true
 }
 
 function onEmailBlur() {

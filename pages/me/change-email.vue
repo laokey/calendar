@@ -63,10 +63,14 @@ function isEmail(value) {
   return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)
 }
 
+function isSupportedEmail(value) {
+  return /@163\.com$/i.test(String(value || '').trim())
+}
+
 const canSendCode = computed(() => {
   if (codeSending.value) return false
   if (codeSeconds.value > 0) return false
-  return isEmail(email.value.trim())
+  return isEmail(email.value.trim()) && isSupportedEmail(email.value.trim())
 })
 
 const codeBtnText = computed(() => {
@@ -107,6 +111,10 @@ async function sendCode() {
       uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
       return
     }
+    if (!isSupportedEmail(email.value.trim())) {
+      uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+      return
+    }
     return
   }
   codeSending.value = true
@@ -131,6 +139,14 @@ async function submit() {
     return
   }
   const v = email.value.trim()
+  if (!isEmail(v)) {
+    uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+    return
+  }
+  if (!isSupportedEmail(v)) {
+    uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+    return
+  }
   uni.showLoading({ title: '修改中' })
   try {
     await usersApi.updateUserEmailAddress({ newEmail: v, verifyCode: code.value.trim(), password: password.value.trim() })
