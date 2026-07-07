@@ -138,7 +138,7 @@ async function getCode(d) {
       return
     }
     uni.navigateTo({
-      url: `/pages/device/activate?code=${encodeURIComponent(code)}`,
+      url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(deviceEmail)}`,
     })
   } catch (e) {
     uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })

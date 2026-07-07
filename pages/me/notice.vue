@@ -10,13 +10,13 @@
       </view>
 
       <view v-if="!systemNotifyEnabled" class="permission-card">
-        <text class="permission-text">开启推送通知，即可使用相关设置功能</text>
+        <text class="permission-text">系统推送通知未开启，当前仍可保存通知设置，开启后才会实际收到提醒。</text>
         <view class="permission-btn" @click="openSystemNotificationSettings">
           <text class="permission-btn-text">打开推送通知</text>
         </view>
       </view>
 
-      <view v-else class="list">
+      <view v-if="systemNotifyEnabled" class="list">
         <view class="item">
           <view class="item-head">
             <text class="item-title">{{ eventNotify.notifyTitle || '事件发生时' }}</text>
@@ -86,6 +86,7 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { noticeApi } from '../../utils/api'
+import { getSystemNotificationEnabled, openSystemNotificationSettings as openNativeNotificationSettings } from '../../utils/notificationPermission'
 
 const minuteOptions = [5, 10, 15, 30, 60, 120]
 const saving = ref(false)
@@ -112,7 +113,7 @@ onLoad((options) => {
 onShow(async () => {
   readPageContext()
   await refreshSystemNotificationPermission()
-  if (systemNotifyEnabled.value) loadNotifyList()
+  loadNotifyList()
 })
 
 function createDefaultNotifyList() {
@@ -262,128 +263,10 @@ async function refreshSystemNotificationPermission() {
   }
 }
 
-async function getSystemNotificationEnabled() {
-  const fromUni = await getStatusFromUniApi()
-  if (typeof fromUni === 'boolean') return fromUni
-  const fromNative = getStatusFromNativeApi()
-  if (typeof fromNative === 'boolean') return fromNative
-  return true
-}
-
-function getStatusFromUniApi() {
-  return new Promise((resolve) => {
-    if (typeof uni.getAppAuthorizeSetting !== 'function') {
-      resolve(null)
-      return
-    }
-    uni.getAppAuthorizeSetting({
-      success: (res) => {
-        const status = pickNotificationStatus(res)
-        if (!status) {
-          resolve(null)
-          return
-        }
-        resolve(status === 'authorized')
-      },
-      fail: () => resolve(null),
-    })
-  })
-}
-
-function pickNotificationStatus(res) {
-  if (!res || typeof res !== 'object') return ''
-  const candidates = [
-    res.notificationAuthorized,
-    res.notificationAlertAuthorized,
-    res.notificationBadgeAuthorized,
-    res.notificationSoundAuthorized,
-  ]
-  return candidates.find((item) => typeof item === 'string' && item) || ''
-}
-
-function getStatusFromNativeApi() {
-  if (typeof plus === 'undefined' || !plus.os) return null
-  try {
-    if (plus.os.name === 'Android') return getAndroidNotificationEnabled()
-    if (plus.os.name === 'iOS') return getIosNotificationEnabled()
-  } catch (e) {
-    return null
-  }
-  return null
-}
-
-function getAndroidNotificationEnabled() {
-  const main = plus.android.runtimeMainActivity()
-  let NotificationManagerCompat = null
-  try {
-    NotificationManagerCompat = plus.android.importClass('androidx.core.app.NotificationManagerCompat')
-  } catch (e) {
-    NotificationManagerCompat = plus.android.importClass('android.support.v4.app.NotificationManagerCompat')
-  }
-  return !!NotificationManagerCompat.from(main).areNotificationsEnabled()
-}
-
-function getIosNotificationEnabled() {
-  const app = plus.ios.invoke('UIApplication', 'sharedApplication')
-  let types = 0
-  const settings = plus.ios.invoke(app, 'currentUserNotificationSettings')
-  if (settings) {
-    types = settings.plusGetAttribute('types')
-    plus.ios.deleteObject(settings)
-  } else {
-    types = plus.ios.invoke(app, 'enabledRemoteNotificationTypes')
-  }
-  plus.ios.deleteObject(app)
-  return Number(types) !== 0
-}
-
 function openSystemNotificationSettings() {
-  if (typeof uni.openAppAuthorizeSetting === 'function') {
-    uni.openAppAuthorizeSetting({
-      success: () => {},
-      fail: () => {
-        openSystemNotificationSettingsFallback()
-      },
-    })
-    return
-  }
-  openSystemNotificationSettingsFallback()
-}
-
-function openSystemNotificationSettingsFallback() {
-  if (typeof plus === 'undefined' || !plus.os) {
-    uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
-    return
-  }
-  try {
-    if (plus.os.name === 'iOS') {
-      const app = plus.ios.invoke('UIApplication', 'sharedApplication')
-      const setting = plus.ios.invoke('NSURL', 'URLWithString:', 'app-settings:')
-      plus.ios.invoke(app, 'openURL:', setting)
-      plus.ios.deleteObject(setting)
-      plus.ios.deleteObject(app)
-      return
-    }
-
-    if (plus.os.name === 'Android') {
-      const main = plus.android.runtimeMainActivity()
-      const Intent = plus.android.importClass('android.content.Intent')
-      const Build = plus.android.importClass('android.os.Build')
-      const intent = new Intent('android.settings.APP_NOTIFICATION_SETTINGS')
-      const packageName = main.getPackageName()
-      const uid = main.getApplicationInfo().plusGetAttribute('uid')
-      if (Build.VERSION.SDK_INT >= 26) {
-        intent.putExtra('android.provider.extra.APP_PACKAGE', packageName)
-      } else {
-        intent.putExtra('app_package', packageName)
-        intent.putExtra('app_uid', uid)
-      }
-      main.startActivity(intent)
-      return
-    }
-  } catch (e) {
-    uni.showToast({ title: '打开系统设置失败', icon: 'none' })
-  }
+  openNativeNotificationSettings().then((opened) => {
+    if (!opened) uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+  })
 }
 </script>
 

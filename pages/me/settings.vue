@@ -69,13 +69,17 @@ import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { clearCache, ensureMeState } from '../../utils/meStore'
 import { authApi } from '../../utils/api'
+import { getSystemNotificationEnabled, openSystemNotificationSettings } from '../../utils/notificationPermission'
 
 const state = ref(ensureMeState())
 const restoreVisible = ref(false)
 const logoutVisible = ref(false)
+const openingNotice = ref(false)
+const waitingForNotificationEnable = ref(false)
 
-onShow(() => {
+onShow(async () => {
   state.value = ensureMeState()
+  if (waitingForNotificationEnable.value) await continueNoticeAfterPermission()
 })
 
 const cacheText = computed(() => {
@@ -101,8 +105,36 @@ function goAgreement() {
   uni.navigateTo({ url: '/pages/me/agreement' })
 }
 
-function goNotice() {
-  uni.navigateTo({ url: '/pages/me/push-notice' })
+async function goNotice() {
+  if (openingNotice.value) return
+  openingNotice.value = true
+  try {
+    if (await getSystemNotificationEnabled()) {
+      waitingForNotificationEnable.value = false
+      uni.navigateTo({ url: '/pages/me/push-notice' })
+      return
+    }
+
+    waitingForNotificationEnable.value = true
+    const opened = await openSystemNotificationSettings()
+    if (!opened) {
+      waitingForNotificationEnable.value = false
+      uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+    }
+  } catch (e) {
+    waitingForNotificationEnable.value = false
+    uni.showToast({ title: '检查通知权限失败', icon: 'none' })
+  } finally {
+    openingNotice.value = false
+  }
+}
+
+async function continueNoticeAfterPermission() {
+  try {
+    if (!(await getSystemNotificationEnabled())) return
+    waitingForNotificationEnable.value = false
+    uni.navigateTo({ url: '/pages/me/push-notice' })
+  } catch (e) {}
 }
 
 function restore() {

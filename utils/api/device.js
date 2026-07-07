@@ -44,12 +44,55 @@ async function postForm(path, query) {
 function normalizeDevice(item) {
   const it = item && typeof item === 'object' ? item : {}
   const linkIdRaw = it.linkId !== undefined ? it.linkId : it.linkid !== undefined ? it.linkid : it.id !== undefined ? it.id : ''
-  const deviceEmail = it.deviceEmail !== undefined ? String(it.deviceEmail) : ''
-  const activationCode = it.activationCode !== undefined ? String(it.activationCode) : ''
-  const deviceName = it.deviceName !== undefined ? String(it.deviceName) : ''
+  const deviceEmail =
+    it.deviceEmail !== undefined
+      ? String(it.deviceEmail)
+      : it.deviceemail !== undefined
+        ? String(it.deviceemail)
+        : it.email !== undefined
+          ? String(it.email)
+          : ''
+  const activationCode =
+    it.activationCode !== undefined
+      ? String(it.activationCode)
+      : it.activationcode !== undefined
+        ? String(it.activationcode)
+        : it.codeValue !== undefined
+          ? String(it.codeValue)
+          : it.code !== undefined
+            ? String(it.code)
+            : ''
+  const deviceName =
+    it.deviceName !== undefined
+      ? String(it.deviceName)
+      : it.devicename !== undefined
+        ? String(it.devicename)
+        : it.name !== undefined
+          ? String(it.name)
+          : ''
   const statusRaw = it.status !== undefined ? Number(it.status) : NaN
   const status = Number.isFinite(statusRaw) ? statusRaw : 0
   return { linkId: normalizeText(linkIdRaw), deviceEmail, activationCode, deviceName, status }
+}
+
+function extractActivationCode(payload) {
+  if (payload === undefined || payload === null) return ''
+  if (typeof payload === 'string' || typeof payload === 'number') return normalizeText(payload)
+  if (typeof payload !== 'object') return ''
+  const direct =
+    payload.activationCode !== undefined
+      ? payload.activationCode
+      : payload.activationcode !== undefined
+        ? payload.activationcode
+        : payload.codeValue !== undefined
+          ? payload.codeValue
+          : payload.activation_code !== undefined
+            ? payload.activation_code
+            : undefined
+  const text = normalizeText(direct)
+  if (text) return text
+  if (payload.data !== undefined) return extractActivationCode(payload.data)
+  return ''
 }
 
 function normalizeLinkDevice(item) {
@@ -185,13 +228,7 @@ export async function getDeviceActivationCode({ deviceEmail } = {}) {
     token,
     deviceEmail: email,
   })
-  if (typeof res === 'string') return res
-  if (res && typeof res === 'object') {
-    if (res.data !== undefined && res.data !== null) return String(res.data)
-    if (res.activationCode !== undefined && res.activationCode !== null) return String(res.activationCode)
-    if (res.codeValue !== undefined && res.codeValue !== null) return String(res.codeValue)
-  }
-  return ''
+  return extractActivationCode(res)
 }
 
 export async function deleteLinkDevice({ linkId } = {}) {

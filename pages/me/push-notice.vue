@@ -50,11 +50,16 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateSettings } from '../../utils/meStore'
+import { getSystemNotificationEnabled, openSystemNotificationSettings } from '../../utils/notificationPermission'
 
 const state = ref(ensureMeState())
+const systemNotifyEnabled = ref(true)
+const waitingForSystemNotificationEnable = ref(false)
 
-onShow(() => {
+onShow(async () => {
   state.value = ensureMeState()
+  await refreshSystemNotificationPermission()
+  if (waitingForSystemNotificationEnable.value) await continueSystemNotificationAfterPermission()
 })
 
 const notice = computed(() => {
@@ -62,19 +67,63 @@ const notice = computed(() => {
   const notifications = settings.notifications || {}
   return {
     email: !!notifications.email,
-    system: !!notifications.system,
+    system: !!notifications.system && systemNotifyEnabled.value,
     taskDone: !!notifications.taskDone,
   }
 })
 
-function onToggle(key, e) {
+async function onToggle(key, e) {
   const next = !!(e && e.detail ? e.detail.value : false)
+  if (key === 'system') {
+    await onSystemToggle(next)
+    return
+  }
+  updateNotificationSetting(key, next)
+}
+
+function updateNotificationSetting(key, next) {
   const settings = state.value.settings || {}
   const notifications = settings.notifications || {}
   const nextNotifications = { ...notifications, [key]: next }
   const current = ensureMeState()
   updateSettings(current, { notifications: nextNotifications })
   state.value = ensureMeState()
+}
+
+async function onSystemToggle(next) {
+  if (!next) {
+    waitingForSystemNotificationEnable.value = false
+    updateNotificationSetting('system', false)
+    return
+  }
+
+  await refreshSystemNotificationPermission()
+  if (systemNotifyEnabled.value) {
+    updateNotificationSetting('system', true)
+    return
+  }
+
+  waitingForSystemNotificationEnable.value = true
+  const opened = await openSystemNotificationSettings()
+  if (!opened) {
+    waitingForSystemNotificationEnable.value = false
+    uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+  }
+}
+
+async function refreshSystemNotificationPermission() {
+  try {
+    systemNotifyEnabled.value = await getSystemNotificationEnabled()
+  } catch (e) {
+    systemNotifyEnabled.value = true
+  }
+}
+
+async function continueSystemNotificationAfterPermission() {
+  await refreshSystemNotificationPermission()
+  if (!systemNotifyEnabled.value) return
+  waitingForSystemNotificationEnable.value = false
+  updateNotificationSetting('system', true)
 }
 </script>
 

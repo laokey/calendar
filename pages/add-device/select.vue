@@ -85,7 +85,7 @@ async function submit() {
       }
       const code = res && typeof res === 'object' ? String(res.activationCode || res.codeValue || res.activation_code || '') : ''
       if (code) {
-        uni.redirectTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
+        uni.redirectTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(email)}` })
         return
       }
       uni.showToast({ title: '创建成功', icon: 'none' })

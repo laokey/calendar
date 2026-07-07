@@ -94,7 +94,7 @@ async function goActivate(d) {
       uni.showToast({ title: '获取激活码失败', icon: 'none' })
       return
     }
-    uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}` })
+    uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(deviceEmail)}` })
   } catch (e) {
     uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
   } finally {
