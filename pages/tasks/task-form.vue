@@ -211,7 +211,7 @@ const repeatUntil = ref('')
 const repeatMonthRule = ref(monthRuleFromDateKey(''))
 const repeatWeekdays = ref([])
 const hearts = ref(10)
-const memberId = ref('me')
+const memberId = ref('')
 const priority = ref('none')
 
 const tipOpen = ref(true)
@@ -288,6 +288,29 @@ const members = computed(() => [
   ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
 ])
 
+function pickDefaultMemberId(list) {
+  const src = Array.isArray(list) ? list : []
+  const first = src.find((m) => m && m.id && m.enabled !== false)
+  return first && first.id ? String(first.id) : ''
+}
+
+function resolveSelectedMemberId() {
+  const list = members.value
+  const current = String(memberId.value || '').trim()
+  if (!current || current === 'me') return pickDefaultMemberId(list)
+  if (Array.isArray(list) && list.some((m) => m && String(m.id) === current)) return current
+  return pickDefaultMemberId(list)
+}
+
+watch(
+  members,
+  () => {
+    const next = resolveSelectedMemberId()
+    if (next && next !== memberId.value) memberId.value = next
+  },
+  { immediate: true },
+)
+
 const priorityOptions = [
   { label: '高优先级', value: 'high', icon: '/static/task/icon_bolt_red.png' },
   { label: '中优先级', value: 'mid', icon: '/static/task/icon_bolt_yellow.png' },
@@ -352,7 +375,7 @@ onLoad((options) => {
       repeatWeekdays.value =
         t && t.repeat && Array.isArray(t.repeat.weekdays) ? t.repeat.weekdays.slice() : []
       hearts.value = Number(t.hearts || 0) || 0
-      memberId.value = t.memberId || 'me'
+      memberId.value = t.memberId ? String(t.memberId) : ''
       priority.value = t.priority || 'none'
     }
   }
@@ -420,7 +443,8 @@ function validate() {
     uni.showToast({ title: '请输入标题', icon: 'none' })
     return false
   }
-  if (!memberId.value) {
+  const mid = resolveSelectedMemberId()
+  if (!mid) {
     uni.showToast({ title: '请选择成员', icon: 'none' })
     return false
   }
@@ -437,6 +461,7 @@ function validate() {
 
 async function save() {
   if (!validate()) return
+  const resolvedMemberId = resolveSelectedMemberId()
   const payload = {
     title: title.value,
     emoji: emoji.value,
@@ -456,7 +481,7 @@ async function save() {
       : null,
     hearts: hearts.value,
     priority: priority.value,
-    memberId: memberId.value,
+    memberId: resolvedMemberId,
   }
   if (isRemoteTaskMode()) {
     if (isEdit.value && taskId.value) {
@@ -482,7 +507,7 @@ async function save() {
             : null,
           priority: priority.value,
           hearts: hearts.value,
-          memberId: memberId.value,
+          memberId: resolvedMemberId,
         })
         if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
           uni.showToast({ title: '保存失败', icon: 'none' })
@@ -520,7 +545,7 @@ async function save() {
           : null,
         priority: priority.value,
         starNumber: hearts.value,
-        memberId: memberId.value,
+        memberId: resolvedMemberId,
       })
       uni.$emit && uni.$emit('task:refresh')
       uni.navigateBack()

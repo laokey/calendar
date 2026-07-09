@@ -114,7 +114,7 @@
           v-for="m in memberItems"
           :key="m.id"
           class="mem"
-          @click="memberId = m.id"
+          @click="toggleMember(m.id)"
         >
           <BlAvatar
             :glyph="m.glyph"
@@ -122,7 +122,7 @@
             :color="m.color"
             :size="72"
           />
-          <view v-if="memberId === m.id" class="mem-check"
+          <view v-if="selectedMemberIdSet.has(String(m.id))" class="mem-check"
             ><text class="check">✓</text></view
           >
           <text class="mem-name">{{ m.name }}</text>
@@ -235,7 +235,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { onLoad, onShow } from "@dcloudio/uni-app";
 import BlAvatar from "../../components/BlAvatar.vue";
 import BlHeader from "../../components/BlHeader.vue";
@@ -252,7 +252,7 @@ const title = ref("");
 const emoji = ref("");
 const resetAfter = ref(false);
 const hearts = ref("10");
-const memberId = ref("me");
+const memberIds = ref([]);
 const type = ref("reward");
 const desc = ref("");
 
@@ -302,6 +302,54 @@ const memberItems = computed(() => {
   return listMembers(calendarState.value).filter((m) => m.enabled !== false);
 });
 
+const selectedMemberIdSet = computed(() => {
+  const ids = Array.isArray(memberIds.value) ? memberIds.value : [];
+  const set = new Set();
+  for (const id of ids) {
+    const s = String(id || "").trim();
+    if (s) set.add(s);
+  }
+  return set;
+});
+
+function pickDefaultMemberId() {
+  const first = memberItems.value.find((m) => m && m.id);
+  return first && first.id ? String(first.id) : "";
+}
+
+function ensureMemberSelection() {
+  const list = Array.isArray(memberItems.value) ? memberItems.value : [];
+  const valid = new Set(list.map((m) => String(m && m.id ? m.id : "")).filter((x) => x));
+  const current = Array.isArray(memberIds.value) ? memberIds.value : [];
+  const next = current.map((x) => String(x || "").trim()).filter((x) => x && valid.has(x));
+  if (next.length) {
+    memberIds.value = next;
+    return;
+  }
+  const fallback = pickDefaultMemberId();
+  memberIds.value = fallback ? [fallback] : [];
+}
+
+function toggleMember(id) {
+  const key = String(id || "").trim();
+  if (!key) return;
+  const current = Array.isArray(memberIds.value) ? memberIds.value.map((x) => String(x || "").trim()).filter((x) => x) : [];
+  if (current.includes(key)) {
+    const next = current.filter((x) => x !== key);
+    memberIds.value = next;
+    return;
+  }
+  memberIds.value = [...current, key];
+}
+
+watch(
+  memberItems,
+  () => {
+    ensureMemberSelection();
+  },
+  { immediate: true },
+);
+
 onLoad((options) => {
   ;(async () => {
     refresh();
@@ -310,9 +358,9 @@ onLoad((options) => {
     const t = options && options.type ? decodeQueryValue(options.type) : "";
     const mid = options && options.memberId ? decodeQueryValue(options.memberId) : "";
 
-    if (mid) memberId.value = mid;
+    if (mid) memberIds.value = [mid];
     if (t) type.value = t === "punish" ? "punish" : "reward";
-    if (!memberId.value && memberItems.value[0]) memberId.value = String(memberItems.value[0].id || "");
+    ensureMemberSelection();
 
     if (!id) return;
     itemId.value = id;
@@ -337,7 +385,8 @@ async function loadRewardDetail(id) {
     emoji.value = it.emoji || "";
     resetAfter.value = Number(it.isReset) === 1;
     hearts.value = String(it.starNumber || 0);
-    memberId.value = it.members && it.members[0] ? String(it.members[0].memberId || memberId.value) : memberId.value;
+    memberIds.value = Array.isArray(it.members) ? it.members.map((m) => String(m && m.memberId ? m.memberId : "")).filter((x) => x) : memberIds.value;
+    ensureMemberSelection();
     type.value = Number(it.rewardType) === 1 ? "punish" : "reward";
     desc.value = it.description || "";
   } catch (e) {
@@ -364,7 +413,7 @@ function validate() {
     uni.showToast({ title: "请输入心心", icon: "none" });
     return false;
   }
-  if (!memberId.value) {
+  if (!Array.isArray(memberIds.value) || !memberIds.value.length) {
     uni.showToast({ title: "请选择成员", icon: "none" });
     return false;
   }
@@ -379,7 +428,7 @@ async function save() {
     emoji: emoji.value,
     isReset: resetAfter.value ? 1 : 0,
     starNumber: Number(hearts.value || 0) || 0,
-    members: [memberId.value],
+    members: memberIds.value.slice(),
     rewardType: type.value === "punish" ? 1 : 0,
     description: desc.value,
   };

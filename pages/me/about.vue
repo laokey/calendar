@@ -5,7 +5,7 @@
     <view class="hero">
       <image class="logo" src="/static/logo.png" mode="aspectFit" />
       <view class="pill">
-        <text class="pill-text">当前版本:V1.7.1</text>
+        <text class="pill-text">当前版本:V1.0.0</text>
       </view>
     </view>
 
