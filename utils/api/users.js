@@ -1,4 +1,4 @@
-import { get, post } from '../request'
+import { post } from '../request'
 import { getToken } from '../authToken'
 import { getApiBaseUrl } from '../apiConfig'
 
@@ -25,10 +25,6 @@ function normalizeInt(value, fallback = 0) {
 async function postForm(path, query) {
   const header = { 'Content-Type': 'application/x-www-form-urlencoded' }
   return post(`${path}${buildQuery(query)}`, undefined, { withAuth: false, showErrorToast: false, header })
-}
-
-async function getForm(path, query) {
-  return get(`${path}${buildQuery(query)}`, undefined, { withAuth: false, showErrorToast: false })
 }
 
 function extractList(res, keys) {
@@ -172,6 +168,52 @@ function normalizeUserInfo(item) {
   }
 }
 
+function normalizeVersionInfo(item) {
+  const it = item && typeof item === 'object' ? item : {}
+  const latestVersion =
+    it.latestVersion !== undefined
+      ? it.latestVersion
+      : it.latestversion !== undefined
+        ? it.latestversion
+        : it.versionName !== undefined
+          ? it.versionName
+          : it.version !== undefined
+            ? it.version
+            : ''
+  const updateLog =
+    it.updateLog !== undefined
+      ? it.updateLog
+      : it.updatelog !== undefined
+        ? it.updatelog
+        : it.content !== undefined
+          ? it.content
+          : it.description !== undefined
+            ? it.description
+            : ''
+  const downloadUrl =
+    it.downloadUrl !== undefined
+      ? it.downloadUrl
+      : it.downloadurl !== undefined
+        ? it.downloadurl
+        : it.url !== undefined
+          ? it.url
+          : ''
+  const forceRaw =
+    it.isForce !== undefined
+      ? it.isForce
+      : it.isforce !== undefined
+        ? it.isforce
+        : it.force !== undefined
+          ? it.force
+          : 0
+  return {
+    latestVersion: normalizeText(latestVersion),
+    updateLog: normalizeText(updateLog),
+    downloadUrl: normalizeText(downloadUrl),
+    isForce: normalizeInt(forceRaw, 0) === 1,
+  }
+}
+
 export async function inviteNewFriend({ inviteeEmail } = {}) {
   const token = getToken()
   const email = normalizeText(inviteeEmail)
@@ -260,6 +302,11 @@ export async function getUserInfo() {
   const token = getToken()
   const res = await postForm('/calendar/app/getUserInfo', { token })
   return normalizeUserInfo(res)
+}
+
+export async function getAppVersion() {
+  const res = await postForm('/calendar/app/getAppVersion', {})
+  return normalizeVersionInfo(res)
 }
 
 export async function updateUserBrithDate({ brithDate } = {}) {
