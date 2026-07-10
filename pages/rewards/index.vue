@@ -474,7 +474,7 @@ async function deleteItem() {
   const item = allRemoteItems.value.find((x) => (x.rewardId || x.id) === id)
   if (!item) return
   try {
-    await rewardsApi.deleteRewardInfo({ rewardId: id, rewardType: item.type === 'punish' ? 1 : 0 })
+    await rewardsApi.deleteRewardInfo({ rewardId: id })
     await refreshRemoteRewards()
   } catch (e) {
     uni.showToast({ title: String((e && e.message) || '删除奖励失败'), icon: 'none' })

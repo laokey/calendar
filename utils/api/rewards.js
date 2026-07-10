@@ -372,15 +372,12 @@ export async function updateRewardInfo({ deviceEmail, rewardId, rewardTitle, emo
   })
 }
 
-export async function deleteRewardInfo({ rewardId, rewardType, typeId } = {}) {
+export async function deleteRewardInfo({ rewardId } = {}) {
   const token = getToken()
   const id = normalizeText(rewardId)
-  const type = typeId !== undefined ? normalizeRewardType(typeId) : normalizeRewardType(rewardType)
   return postForm('/calendar/app/deleteRewardInfo', {
     token,
     rewardId: id,
-    rewardType: type,
-    typeId: type,
   })
 }
 
