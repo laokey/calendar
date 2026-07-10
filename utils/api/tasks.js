@@ -206,6 +206,16 @@ function normalizeTask(it) {
   const isDone = Number(statusRaw) === 1 || String(statusRaw) === '1'
   const completeTime = normalizeText(completeTimeRaw)
   const completeAtTs = isDone ? parseDateTimeToTs(completeTime) : 0
+  const heartsRaw =
+    x.starNumber !== undefined
+      ? x.starNumber
+      : x.starnumber !== undefined
+        ? x.starnumber
+        : x.totalNumber !== undefined
+          ? x.totalNumber
+          : x.totalnumber !== undefined
+            ? x.totalnumber
+            : x.points
 
   return {
     id: idRaw === undefined || idRaw === null ? '' : String(idRaw),
@@ -216,7 +226,7 @@ function normalizeTask(it) {
     timeEnabled: !isAllDay && !!dateTime.time,
     time: !isAllDay ? dateTime.time : '',
     repeat: Number(isRepeatRaw) === 1 || String(isRepeatRaw) === '1' ? { unit: 'day', every: 1, id: `rp_${idRaw || Date.now()}` } : null,
-    hearts: 0,
+    hearts: Number(heartsRaw || 0) || 0,
     priority: priorityFromRemote(x.priority),
     memberId: members[0] && members[0].id ? members[0].id : 'me',
     members,

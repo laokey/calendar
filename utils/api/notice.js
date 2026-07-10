@@ -140,6 +140,19 @@ function taskIconFromText(value) {
 function normalizeDynamicItem(item) {
   const it = item && typeof item === 'object' ? item : {}
   const id = normalizeText(it.dynamicId || it.updateId || it.rewardId || it.taskId || it.id)
+  const taskId = normalizeText(it.taskId !== undefined ? it.taskId : it.taskid)
+  const memberId = normalizeText(it.memberId !== undefined ? it.memberId : it.memberid)
+  const taskDate = normalizeText(
+    it.taskDate !== undefined
+      ? it.taskDate
+      : it.taskdate !== undefined
+        ? it.taskdate
+        : it.date !== undefined
+          ? it.date
+          : it.timedDate !== undefined
+            ? it.timedDate
+            : it.timeddate,
+  )
   const rawName = normalizeText(it.memberName || it.userName || it.nickName || it.nickname || it.inviterName || it.name)
   const email = normalizeText(it.userEmail || it.email || it.inviterEmail)
   const name = rawName || localNameFromEmail(email) || '成员'
@@ -161,6 +174,9 @@ function normalizeDynamicItem(item) {
   const color = colorFromSeed(name || email || id)
   return {
     id: id || `${name}|${title}|${updateTime}`,
+    taskId,
+    memberId,
+    taskDate,
     who: { name, glyph: glyphFromName(name), color },
     whenText: formatTimeText(updateTime),
     action,

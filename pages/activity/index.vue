@@ -116,12 +116,15 @@
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlBottomNav from '../../components/BlBottomNav.vue'
-import { ensureActivityState, removeInvite, replaceActivityCollections } from '../../utils/activityStore'
-import { noticeApi, usersApi } from '../../utils/api'
+import { ensureActivityState, replaceActivityCollections, removeInvite, updateDynamic } from '../../utils/activityStore'
+import { ensureCalendarState, findMember } from '../../utils/calendarStore'
+import { ensureTaskState, findTask, replaceTaskList, setTaskCursorDate } from '../../utils/taskStore'
+import { noticeApi, tasksApi, usersApi } from '../../utils/api'
 
 const tab = ref('dynamic')
 const state = ref(ensureActivityState())
 const submitting = ref(false)
+const syncingDynamics = ref(false)
 
 onLoad((options) => {
   if (options && options.tab) {
@@ -131,7 +134,10 @@ onLoad((options) => {
 })
 
 onShow(() => {
-  refresh()
+  ;(async () => {
+    await refresh()
+    await syncDynamicTasks()
+  })()
 })
 
 const safeTop = computed(() => {
@@ -152,6 +158,150 @@ function showError(error, fallback, map = {}) {
   const code = Number(error && error.code)
   const msg = map[code] || String((error && error.message) || fallback || '操作失败')
   uni.showToast({ title: msg, icon: 'none' })
+}
+
+function pad(n) {
+  return String(n).padStart(2, '0')
+}
+
+function formatDateTime(ts) {
+  const d = new Date(ts)
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function taskIconFromTitle(value) {
+  const text = String(value || '').trim()
+  if (/跑|步|walk|run/i.test(text)) return 'run'
+  return 'bowl'
+}
+
+function resolveDateKey(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  const m1 = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (m1) return `${m1[1]}-${String(Number(m1[2])).padStart(2, '0')}-${String(Number(m1[3])).padStart(2, '0')}`
+  const m2 = raw.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})/)
+  if (m2) return `${m2[1]}-${String(Number(m2[2])).padStart(2, '0')}-${String(Number(m2[3])).padStart(2, '0')}`
+  const m3 = raw.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/)
+  if (m3) return `${m3[1]}-${String(Number(m3[2])).padStart(2, '0')}-${String(Number(m3[3])).padStart(2, '0')}`
+  const ts = Date.parse(raw.replace(/\./g, '-').replace('T', ' '))
+  if (Number.isFinite(ts)) return resolveDateKey(new Date(ts).toISOString().slice(0, 10))
+  return ''
+}
+
+function formatCnDate(key) {
+  const dateKey = resolveDateKey(key)
+  if (!dateKey) return ''
+  const parts = dateKey.split('-')
+  return `${parts[0]}年${Number(parts[1])}月${Number(parts[2])}日`
+}
+
+function formatTaskDateText(task, fallback) {
+  if (!task || !task.dateEnabled || !task.date) return String(fallback || '')
+  const dateText = formatCnDate(task.date)
+  if (!dateText) return String(fallback || '')
+  if (task.timeEnabled && task.time) return `${dateText} ${task.time}`
+  return dateText
+}
+
+function formatRepeatText(task, fallback) {
+  if (!task) return String(fallback || '')
+  if (!task.repeat) return '不重复'
+  const unit = task.repeat.unit || 'day'
+  const every = Number(task.repeat.every || 1) || 1
+  if (unit === 'week') return every > 1 ? `每${every}周` : '每周'
+  if (unit === 'month') return every > 1 ? `每${every}月` : '每月'
+  if (unit === 'year') return every > 1 ? `每${every}年` : '每年'
+  return every > 1 ? `每${every}天` : '每日'
+}
+
+function resolveAssignee(task, fallback) {
+  const current = fallback && typeof fallback === 'object' ? fallback : {}
+  const memberId = task && task.memberId ? String(task.memberId) : ''
+  const calendarState = ensureCalendarState()
+  const member = memberId ? findMember(calendarState, memberId) : null
+  if (member) {
+    return {
+      name: member.name || current.name || '',
+      glyph: member.glyph || current.glyph || '',
+      color: member.color || current.color || '#3d6afb',
+    }
+  }
+  const first = task && Array.isArray(task.members) && task.members[0] ? task.members[0] : null
+  const name = first && first.name ? String(first.name) : current.name || ''
+  return {
+    name,
+    glyph: name ? name.slice(0, 1) : current.glyph || '',
+    color: current.color || '#3d6afb',
+  }
+}
+
+async function syncDynamicTasks() {
+  if (syncingDynamics.value) return
+  const list = Array.isArray(state.value.dynamics) ? state.value.dynamics.slice() : []
+  if (!list.length) return
+
+  syncingDynamics.value = true
+  try {
+    const taskState = ensureTaskState()
+    const logged = !!uni.getStorageSync('auth_logged_in')
+    const dateKeys = Array.from(
+      new Set(
+        list
+          .map((item) => resolveDateKey(item.taskDate || (item.detail && item.detail.dateText) || item.createdAt))
+          .filter(Boolean),
+      ),
+    )
+
+    if (logged && dateKeys.length) {
+      for (const key of dateKeys) {
+        try {
+          const remoteTasks = await tasksApi.getTaskInfoList({ startDate: key, endDate: key })
+          setTaskCursorDate(taskState, key)
+          replaceTaskList(taskState, remoteTasks)
+        } catch (e) {}
+      }
+    }
+
+    const latestState = ensureTaskState()
+    const activityState = ensureActivityState()
+
+    for (const dynamic of list) {
+      const taskId = dynamic && dynamic.taskId ? String(dynamic.taskId).trim() : String((dynamic && dynamic.id) || '').trim()
+      if (!taskId) continue
+      const task = findTask(latestState, taskId)
+      if (!task) continue
+      const baseStars = Math.abs(Number(task.hearts || (dynamic.detail && dynamic.detail.starText) || 0))
+      const action = task.completedAtTs ? 'done' : dynamic.action
+      updateDynamic(activityState, dynamic.id, {
+        taskId,
+        taskDate: task.date || dynamic.taskDate || '',
+        action,
+        task: {
+          ...(dynamic.task || {}),
+          title: task.title || (dynamic.task && dynamic.task.title) || '',
+          points: action === 'done' ? baseStars : -baseStars,
+          icon: taskIconFromTitle(task.title || (dynamic.task && dynamic.task.title) || ''),
+        },
+        detail: {
+          ...(dynamic.detail || {}),
+          dateText: formatTaskDateText(task, dynamic.detail && dynamic.detail.dateText),
+          repeatText: formatRepeatText(task, dynamic.detail && dynamic.detail.repeatText),
+          starText: String(baseStars),
+          assignTo: resolveAssignee(task, dynamic.detail && dynamic.detail.assignTo),
+          doneAtText: task.completedAtTs
+            ? `完成于 ${formatDateTime(task.completedAtTs === 1 ? Date.now() : task.completedAtTs)}`
+            : dynamic.detail && dynamic.detail.doneAtText
+              ? dynamic.detail.doneAtText
+              : '未完成',
+        },
+      })
+    }
+
+    state.value = ensureActivityState()
+  } finally {
+    syncingDynamics.value = false
+  }
 }
 
 async function refresh() {
@@ -227,7 +377,7 @@ async function reject(id) {
   padding: 18rpx 28rpx 12rpx;
   display: flex;
   align-items: center;
-  gap: 52rpx;
+  gap: 60rpx;
 }
 
 .tab {
@@ -250,8 +400,9 @@ async function reject(id) {
 }
 
 .underline {
-  width: 36rpx;
+  width: 40rpx;
   height: 8rpx;
+  align-self: center;
   border-radius: 9999rpx;
   background: #3d6afb;
 }
