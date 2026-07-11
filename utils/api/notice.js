@@ -316,6 +316,16 @@ export async function getDynamicList() {
   return extractListByKeys(res, ['dynamicList', 'dynamics', 'activityList', 'updateList']).map(normalizeDynamicItem).filter((x) => x && x.id)
 }
 
+export async function deleteTaskDynamic({ dynamicId } = {}) {
+  const token = getToken()
+  const id = normalizeText(dynamicId)
+  return postForm('/calendar/app/deleteTaskDynamic', {
+    token,
+    dynamicId: id,
+    dynamicid: id,
+  })
+}
+
 export async function getNoticeList() {
   const token = getToken()
   const res = await postForm('/calendar/app/getNoticeInfoList', { token })

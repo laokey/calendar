@@ -82,7 +82,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ensureActivityState, findDynamic, removeDynamic, updateDynamic } from '../../utils/activityStore'
 import { ensureCalendarState, findMember } from '../../utils/calendarStore'
 import { ensureTaskState, findTask, replaceTaskList, setTaskCursorDate } from '../../utils/taskStore'
-import { tasksApi } from '../../utils/api'
+import { noticeApi, tasksApi } from '../../utils/api'
 
 const id = ref('')
 const state = ref(ensureActivityState())
@@ -305,11 +305,29 @@ function remove() {
     content: '删除该动态？',
     cancelText: '取消',
     confirmText: '确定',
-    success: (res) => {
+    success: async (res) => {
       if (!res.confirm) return
-      const s = ensureActivityState()
-      removeDynamic(s, id.value)
-      uni.navigateBack()
+      if (submitting.value) return
+      submitting.value = true
+      try {
+        const dynamicId = item.value && item.value.id ? String(item.value.id).trim() : String(id.value || '').trim()
+        if (!dynamicId) {
+          uni.showToast({ title: '缺少动态ID', icon: 'none' })
+          return
+        }
+        await noticeApi.deleteTaskDynamic({ dynamicId })
+        const s = ensureActivityState()
+        removeDynamic(s, dynamicId)
+        state.value = ensureActivityState()
+        uni.showToast({ title: '删除成功', icon: 'none' })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 200)
+      } catch (e) {
+        uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+      } finally {
+        submitting.value = false
+      }
     },
   })
 }
