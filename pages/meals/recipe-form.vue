@@ -191,21 +191,22 @@ async function save() {
   uni.showLoading({ title: '保存中' })
   try {
     if (recipeId.value) {
-      await mealsApi.deleteRecipeInfo({ recipeId: recipeId.value })
+      await mealsApi.updateRecipeInfo({ recipeId: recipeId.value, recipeName, recipeType, description })
+    } else {
+      const res = await mealsApi.addRecipeInfo({ recipeName, recipeType, description, imageUrl })
+      let nextId = extractRecipeId(res)
+      if (!nextId) {
+        try {
+          const list = await mealsApi.getRecipeList()
+          const candidates = (list || [])
+            .filter((x) => String(x.recipeName || '').trim() === recipeName && Number(x.recipeType) === Number(recipeType))
+            .filter((x) => String(x.description || '') === String(description || ''))
+          const preferred = candidates.find((x) => (imageUrl ? String(x.imageUrl || '') === imageUrl : !String(x.imageUrl || '').trim()))
+          nextId = preferred ? String(preferred.recipeId || '').trim() : candidates[0] ? String(candidates[0].recipeId || '').trim() : ''
+        } catch (e) {}
+      }
+      if (nextId) recipeId.value = nextId
     }
-    const res = await mealsApi.addRecipeInfo({ recipeName, recipeType, description, imageUrl })
-    let nextId = extractRecipeId(res)
-    if (!nextId) {
-      try {
-        const list = await mealsApi.getRecipeList()
-        const candidates = (list || [])
-          .filter((x) => String(x.recipeName || '').trim() === recipeName && Number(x.recipeType) === Number(recipeType))
-          .filter((x) => String(x.description || '') === String(description || ''))
-        const preferred = candidates.find((x) => (imageUrl ? String(x.imageUrl || '') === imageUrl : !String(x.imageUrl || '').trim()))
-        nextId = preferred ? String(preferred.recipeId || '').trim() : candidates[0] ? String(candidates[0].recipeId || '').trim() : ''
-      } catch (e) {}
-    }
-    if (nextId) recipeId.value = nextId
 
     if (hasLocalPhoto) {
       if (!recipeId.value) {

@@ -101,10 +101,10 @@
         </view>
       </view>
       <view class="members">
-        <view v-for="m in members" :key="m.id" class="mem" @click="memberId = m.id">
+        <view v-for="m in members" :key="m.id" class="mem" @click="toggleMember(m.id)">
           <view class="avatar-wrap">
             <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.color" :size="84" />
-            <view v-if="memberId === m.id" class="mem-check-badge">
+            <view v-if="isMemberSelected(m.id)" class="mem-check-badge">
               <image class="badge-check-img" src="/static/task/icon_check_circle_green.png" mode="aspectFit" />
             </view>
           </view>
@@ -211,7 +211,7 @@ const repeatUntil = ref('')
 const repeatMonthRule = ref(monthRuleFromDateKey(''))
 const repeatWeekdays = ref([])
 const hearts = ref(10)
-const memberId = ref('')
+const memberIds = ref([])
 const priority = ref('none')
 
 const tipOpen = ref(true)
@@ -294,19 +294,21 @@ function pickDefaultMemberId(list) {
   return first && first.id ? String(first.id) : ''
 }
 
-function resolveSelectedMemberId() {
+function resolveSelectedMemberIds() {
   const list = members.value
-  const current = String(memberId.value || '').trim()
-  if (!current || current === 'me') return pickDefaultMemberId(list)
-  if (Array.isArray(list) && list.some((m) => m && String(m.id) === current)) return current
-  return pickDefaultMemberId(list)
+  const current = Array.isArray(memberIds.value) ? memberIds.value.map((x) => String(x || '').trim()).filter(Boolean) : []
+  const valid = current.filter((id) => id !== 'me' && Array.isArray(list) && list.some((m) => m && String(m.id) === id))
+  if (valid.length) return valid
+  const fallback = pickDefaultMemberId(list)
+  return fallback ? [fallback] : []
 }
 
 watch(
   members,
   () => {
-    const next = resolveSelectedMemberId()
-    if (next && next !== memberId.value) memberId.value = next
+    const next = resolveSelectedMemberIds()
+    const current = Array.isArray(memberIds.value) ? memberIds.value.map((x) => String(x || '').trim()).filter(Boolean) : []
+    if (next.join(',') !== current.join(',')) memberIds.value = next
   },
   { immediate: true },
 )
@@ -375,7 +377,7 @@ onLoad((options) => {
       repeatWeekdays.value =
         t && t.repeat && Array.isArray(t.repeat.weekdays) ? t.repeat.weekdays.slice() : []
       hearts.value = Number(t.hearts || 0) || 0
-      memberId.value = t.memberId ? String(t.memberId) : ''
+      memberIds.value = t.memberId ? [String(t.memberId)] : []
       priority.value = t.priority || 'none'
     }
   }
@@ -443,8 +445,8 @@ function validate() {
     uni.showToast({ title: '请输入标题', icon: 'none' })
     return false
   }
-  const mid = resolveSelectedMemberId()
-  if (!mid) {
+  const mids = resolveSelectedMemberIds()
+  if (!mids.length) {
     uni.showToast({ title: '请选择成员', icon: 'none' })
     return false
   }
@@ -459,34 +461,55 @@ function validate() {
   return true
 }
 
+function isMemberSelected(id) {
+  const key = String(id || '').trim()
+  if (!key) return false
+  return Array.isArray(memberIds.value) && memberIds.value.some((x) => String(x) === key)
+}
+
+function toggleMember(id) {
+  const key = String(id || '').trim()
+  if (!key) return
+  const current = Array.isArray(memberIds.value) ? memberIds.value.map((x) => String(x || '').trim()).filter(Boolean) : []
+  const idx = current.indexOf(key)
+  if (idx >= 0) current.splice(idx, 1)
+  else current.push(key)
+  memberIds.value = current
+  const next = resolveSelectedMemberIds()
+  if (next.join(',') !== current.join(',')) memberIds.value = next
+}
+
+function buildRepeat(seed) {
+  if (!repeatEnabled.value) return null
+  return {
+    unit: repeatUnit.value,
+    every: Number(repeatEvery.value || 1) || 1,
+    until: repeatUntilOn.value ? repeatUntil.value : '',
+    monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
+    weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
+    id: `rp_${seed}`,
+  }
+}
+
 async function save() {
   if (!validate()) return
-  const resolvedMemberId = resolveSelectedMemberId()
-  const payload = {
+  const resolvedMemberIds = resolveSelectedMemberIds()
+  const basePayload = {
     title: title.value,
     emoji: emoji.value,
     dateEnabled: dateEnabled.value,
     date: date.value,
     timeEnabled: timeEnabled.value,
     time: time.value,
-    repeat: repeatEnabled.value
-      ? {
-          unit: repeatUnit.value,
-          every: Number(repeatEvery.value || 1) || 1,
-          until: repeatUntilOn.value ? repeatUntil.value : '',
-          monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
-          weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
-          id: `rp_${Date.now()}`,
-        }
-      : null,
     hearts: hearts.value,
     priority: priority.value,
-    memberId: resolvedMemberId,
   }
   if (isRemoteTaskMode()) {
     if (isEdit.value && taskId.value) {
       uni.showLoading({ title: '保存中' })
       try {
+        const primaryMemberId = resolvedMemberIds[0]
+        const repeatValue = buildRepeat(Date.now())
         const res = await tasksApi.updateTaskInfo({
           taskId: taskId.value,
           taskDate: date.value,
@@ -496,24 +519,36 @@ async function save() {
           date: date.value,
           timeEnabled: timeEnabled.value,
           time: time.value,
-          repeat: repeatEnabled.value
-            ? {
-                unit: repeatUnit.value,
-                every: Number(repeatEvery.value || 1) || 1,
-                until: repeatUntilOn.value ? repeatUntil.value : '',
-                monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
-                weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
-              }
-            : null,
+          repeat: repeatValue,
           priority: priority.value,
           hearts: hearts.value,
-          memberId: resolvedMemberId,
+          memberId: primaryMemberId,
         })
         if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
           uni.showToast({ title: '保存失败', icon: 'none' })
           return
         }
-        updateTask(taskState.value, taskId.value, payload)
+        updateTask(taskState.value, taskId.value, { ...basePayload, repeat: repeatValue, memberId: primaryMemberId })
+
+        if (resolvedMemberIds.length > 1) {
+          for (let i = 1; i < resolvedMemberIds.length; i += 1) {
+            const mid = resolvedMemberIds[i]
+            await tasksApi.addTaskInfo({
+              taskDate: date.value,
+              taskTitle: title.value,
+              emoji: emoji.value,
+              dateEnabled: dateEnabled.value,
+              date: date.value,
+              timeEnabled: timeEnabled.value,
+              time: time.value,
+              repeat: buildRepeat(`${Date.now()}_${i}`),
+              priority: priority.value,
+              starNumber: hearts.value,
+              memberId: mid,
+            })
+          }
+        }
+
         uni.$emit && uni.$emit('task:refresh')
         uni.navigateBack()
       } catch (e) {
@@ -526,38 +561,48 @@ async function save() {
       return
     }
     try {
-      await tasksApi.addTaskInfo({
-        taskDate: date.value,
-        taskTitle: title.value,
-        emoji: emoji.value,
-        dateEnabled: dateEnabled.value,
-        date: date.value,
-        timeEnabled: timeEnabled.value,
-        time: time.value,
-        repeat: repeatEnabled.value
-          ? {
-              unit: repeatUnit.value,
-              every: Number(repeatEvery.value || 1) || 1,
-              until: repeatUntilOn.value ? repeatUntil.value : '',
-              monthRule: repeatUnit.value === 'month' ? repeatMonthRule.value : null,
-              weekdays: repeatUnit.value === 'week' ? repeatWeekdays.value.slice() : null,
-            }
-          : null,
-        priority: priority.value,
-        starNumber: hearts.value,
-        memberId: resolvedMemberId,
-      })
+      uni.showLoading({ title: '保存中' })
+      for (let i = 0; i < resolvedMemberIds.length; i += 1) {
+        const mid = resolvedMemberIds[i]
+        await tasksApi.addTaskInfo({
+          taskDate: date.value,
+          taskTitle: title.value,
+          emoji: emoji.value,
+          dateEnabled: dateEnabled.value,
+          date: date.value,
+          timeEnabled: timeEnabled.value,
+          time: time.value,
+          repeat: buildRepeat(`${Date.now()}_${i}`),
+          priority: priority.value,
+          starNumber: hearts.value,
+          memberId: mid,
+        })
+      }
       uni.$emit && uni.$emit('task:refresh')
       uni.navigateBack()
     } catch (e) {
       uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    } finally {
+      try {
+        uni.hideLoading()
+      } catch (e) {}
     }
     return
   }
   if (isEdit.value && taskId.value) {
-    updateTask(taskState.value, taskId.value, payload)
+    const primaryMemberId = resolvedMemberIds[0]
+    updateTask(taskState.value, taskId.value, { ...basePayload, repeat: buildRepeat(Date.now()), memberId: primaryMemberId })
+    if (resolvedMemberIds.length > 1) {
+      for (let i = 1; i < resolvedMemberIds.length; i += 1) {
+        const mid = resolvedMemberIds[i]
+        addTask(taskState.value, { ...basePayload, repeat: buildRepeat(`${Date.now()}_${i}`), memberId: mid })
+      }
+    }
   } else {
-    addTask(taskState.value, payload)
+    for (let i = 0; i < resolvedMemberIds.length; i += 1) {
+      const mid = resolvedMemberIds[i]
+      addTask(taskState.value, { ...basePayload, repeat: buildRepeat(`${Date.now()}_${i}`), memberId: mid })
+    }
   }
   uni.$emit && uni.$emit('task:refresh')
   uni.navigateBack()

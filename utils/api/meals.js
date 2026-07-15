@@ -388,6 +388,21 @@ export async function addRecipeInfo({ deviceEmail, recipeName, recipeType, descr
   })
 }
 
+export async function updateRecipeInfo({ recipeId, recipeType, description, recipeName } = {}) {
+  const token = getToken()
+  const id = String(recipeId || '').trim()
+  return postForm('/calendar/app/updateRecipeInfo', {
+    token,
+    recipeId: id,
+    recipeid: id,
+    recipeType,
+    recipetype: recipeType,
+    description,
+    recipeName,
+    recipename: recipeName,
+  })
+}
+
 export async function deleteRecipeInfo({ recipeId } = {}) {
   const token = getToken()
   const id = String(recipeId || '').trim()
