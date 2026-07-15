@@ -56,7 +56,7 @@
           src="/static/task/icon_repeat.png"
           mode="aspectFit"
         />
-        <text class="label">兑换后重置</text>
+        <text class="label">执行后重置</text>
       </view>
       <switch
         :checked="resetAfter"
@@ -88,7 +88,7 @@
 
     <view v-if="tipOpen" class="tip">
       <text class="tip-text"
-        >请输入兑换该奖励所需收集的心心数量。完成任务可赚取心心。</text
+        >请输入本次奖励或惩罚变更的星星数量。奖励会增加星星，惩罚会减少星星。</text
       >
       <view class="tip-close" @click="tipOpen = false">
         <image
@@ -217,14 +217,14 @@
           </view>
         </view>
         <text class="info-text">
-          健康成长不仅需要掌声，也需要温柔的提醒。现在除了用心心兑换奖励，您还可以通过“行为约定”，让孩子直观地看到不当行为带来的后果与惩罚。
+          健康成长不仅需要掌声，也需要温柔的提醒。现在您可以直接配置奖励与惩罚，让孩子直观地看到行为带来的正向激励和结果反馈。
         </text>
         <text class="info-subtitle">奖励与惩罚</text>
         <text class="info-text"
-          >1.无论是兑换奖励还是接受惩罚，均需扣减心心。</text
+          >1.奖励会增加星星，惩罚会减少星星。</text
         >
         <text class="info-text"
-          >2.区别在于：兑换奖励时，需确保心心数量充足才可兑换；而惩罚扣减不受心心数量限制，以便心力不足也会执行扣减。</text
+          >2.保存的星星数量表示单次执行的变化值；奖励执行后增加对应数量，惩罚执行后扣减对应数量。</text
         >
         <view class="info-btn" @click="infoOpen = false"
           ><text class="info-btn-text">立即体验</text></view

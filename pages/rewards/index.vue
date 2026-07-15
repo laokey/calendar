@@ -67,7 +67,7 @@
             </view>
             <view class="item-right">
               <view v-if="buttonMode(it) === 'today'" class="btn disabled">
-                <text class="btn-text">{{ it.type === 'punish' ? '今天惩罚' : '今天兑换' }}</text>
+                <text class="btn-text">{{ it.type === 'punish' ? '今天惩罚' : '今天奖励' }}</text>
               </view>
               <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
                 <view class="progress-fill" :style="{ width: progressWidth(it) }" />
@@ -80,11 +80,11 @@
                 <template v-if="it.type !== 'punish'">
                   <text class="btn-text">兑换</text>
                   <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
-                  <text class="btn-text">{{ it.hearts }}</text>
+                  <text class="btn-text">+{{ it.hearts }}</text>
                 </template>
                 <template v-else>
                   <image class="heart-img is-small" src="/static/reward/icon_heart_black.png" mode="aspectFit" />
-                  <text class="btn-text">{{ it.hearts }}</text>
+                  <text class="btn-text">-{{ it.hearts }}</text>
                 </template>
               </view>
             </view>
@@ -134,16 +134,16 @@
 
     <BlSheet v-model="resultSheetOpen" title="" :confirm-text="''">
       <view class="result">
-        <text class="result-title">{{ celebrateType === 'punish' ? '受到惩罚！' : '恭喜您！' }}</text>
+        <text class="result-title">{{ celebrateType === 'punish' ? '受到惩罚！' : '奖励已发放！' }}</text>
         <text class="result-sub">
-          {{ celebrateType === 'punish' ? '今天没有完成 ' : '今天完成了 ' }}
+          {{ celebrateType === 'punish' ? '今天没有完成 ' : '今天已奖励 ' }}
           <text class="result-link">{{ celebrateTitle }}</text>
         </text>
         <view class="result-btn" :class="{ punish: celebrateType === 'punish' }" @click="closeResult">
           <text class="result-btn-text">确定</text>
         </view>
         <view class="result-cancel" @click="cancelAction">
-          <text class="result-cancel-text">{{ celebrateType === 'punish' ? '取消惩罚' : '取消兑换' }}</text>
+          <text class="result-cancel-text">{{ celebrateType === 'punish' ? '取消惩罚' : '取消奖励' }}</text>
         </view>
       </view>
     </BlSheet>
@@ -378,14 +378,12 @@ function isDoneToday(it) {
   return !!todayDoneMap.value[String(it.rewardId)]
 }
 
-function canAfford(it) {
-  if (it && it.type === 'punish') return true
-  return balance(activeMemberId.value) >= (Number(it && it.hearts ? it.hearts : 0) || 0)
+function canAfford() {
+  return true
 }
 
 function buttonMode(it) {
   if (isDoneToday(it)) return 'today'
-  if (it && it.type !== 'punish' && it.resetAfter) return 'progress'
   return 'button'
 }
 
@@ -400,14 +398,14 @@ function progressWidth(it) {
 async function tryRedeem(it) {
   if (!it || pendingAction.value) return
   if (buttonMode(it) === 'today') return
-  if (it.type !== 'punish' && !canAfford(it)) return
   pendingAction.value = true
+  const delta = Number(it.hearts || 0) || 0
   try {
     await rewardsApi.addStarNumberInfo({
       memberId: it.memberId,
       rewardId: it.rewardId || it.id,
-      updateReason: it.type === 'punish' ? `惩罚:${it.title}` : `兑换:${it.title}`,
-      starNumber: -(Number(it.hearts || 0) || 0),
+      updateReason: it.type === 'punish' ? `惩罚:${it.title}` : `奖励:${it.title}`,
+      starNumber: it.type === 'punish' ? -delta : delta,
     })
     celebrateType.value = it.type
     celebrateTitle.value = it.title
@@ -434,17 +432,18 @@ async function cancelAction() {
   const it = allRemoteItems.value.find((x) => x.rewardId === id && x.memberId === activeMemberId.value)
   if (!it || pendingAction.value) return
   pendingAction.value = true
+  const delta = Number(it.hearts || 0) || 0
   try {
     await rewardsApi.addStarNumberInfo({
       memberId: it.memberId,
       rewardId: it.rewardId,
-      updateReason: `取消:${it.title}`,
-      starNumber: Number(it.hearts || 0) || 0,
+      updateReason: celebrateType.value === 'punish' ? `取消惩罚:${it.title}` : `取消奖励:${it.title}`,
+      starNumber: celebrateType.value === 'punish' ? delta : -delta,
     })
     resultSheetOpen.value = false
     await refreshRemoteRewards()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '取消兑换失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || '取消操作失败'), icon: 'none' })
   } finally {
     pendingAction.value = false
   }
