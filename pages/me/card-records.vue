@@ -38,6 +38,7 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { cardsApi } from '../../utils/api'
 
+const CARD_PREVIEW_STORAGE_KEY = 'card_record_preview_v1'
 const onlineItems = ref([])
 
 onShow(() => {
@@ -64,14 +65,13 @@ function back() {
 
 function preview(it) {
   if (!it) return
-  const url = String(it.imageUrl || '').trim()
-  if (url) {
-    uni.previewImage({ urls: [url] })
-  }
-  const msg = String(it.message || '').trim()
-  if (msg) {
-    uni.showModal({ title: '祝福语', content: msg, showCancel: false })
-  }
+  try {
+    uni.setStorageSync(CARD_PREVIEW_STORAGE_KEY, {
+      ...it,
+      id: String(it.id || '').trim(),
+    })
+  } catch (e) {}
+  uni.navigateTo({ url: `/pages/me/card-preview?id=${encodeURIComponent(String(it.id || '').trim())}` })
 }
 
 async function refreshOnline() {
@@ -93,6 +93,10 @@ async function refreshOnline() {
         status: 'read',
         message: String(c.greetings || ''),
         imageUrl: String(c.imageUrl || ''),
+        doodle: c && c.doodle ? c.doodle : null,
+        hasDoodle: !!(c && c.hasDoodle),
+        contentText: String(c && c.contentText ? c.contentText : ''),
+        playMode: Number(c.playMode || 0) || 0,
       }
     })
   } catch (e) {

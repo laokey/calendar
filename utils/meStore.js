@@ -58,6 +58,9 @@ function seedState() {
         status: 'unread',
         message: '👍👍👍你最近非常的棒！你最近非常的棒！',
         mode: 'auto',
+        imageUrl: '',
+        contentText: '',
+        doodle: null,
       },
       {
         id: uid('card'),
@@ -67,6 +70,9 @@ function seedState() {
         status: 'read',
         message: '继续保持，坚持每天进步一点点。',
         mode: 'auto',
+        imageUrl: '',
+        contentText: '',
+        doodle: null,
       },
       {
         id: uid('card'),
@@ -76,6 +82,9 @@ function seedState() {
         status: 'read',
         message: '看到你的成长，我很开心。',
         mode: 'auto',
+        imageUrl: '',
+        contentText: '',
+        doodle: null,
       },
     ],
   }
@@ -89,6 +98,12 @@ export function loadMeState() {
     if (!state || typeof state !== 'object') return seedState()
     if (!state.profile || !state.settings) return seedState()
     if (!Array.isArray(state.cardRecords)) state.cardRecords = []
+    state.cardRecords = state.cardRecords.map((item) => ({
+      ...item,
+      imageUrl: String(item && item.imageUrl ? item.imageUrl : ''),
+      contentText: String(item && item.contentText ? item.contentText : ''),
+      doodle: item && item.doodle && typeof item.doodle === 'object' ? item.doodle : null,
+    }))
     if (!state.settings.notifications || typeof state.settings.notifications !== 'object') {
       state.settings.notifications = { email: false, system: true, taskDone: true }
     } else {
@@ -162,6 +177,9 @@ export function addCardRecord(state, payload) {
     status: 'unread',
     message: String(payload && payload.message ? payload.message : ''),
     mode: payload && payload.mode === 'manual' ? 'manual' : 'auto',
+    imageUrl: String(payload && payload.imageUrl ? payload.imageUrl : ''),
+    contentText: String(payload && payload.contentText ? payload.contentText : ''),
+    doodle: payload && payload.doodle && typeof payload.doodle === 'object' ? payload.doodle : null,
   }
   state.cardRecords = [item, ...(state.cardRecords || [])]
   saveMeState(state)

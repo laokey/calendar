@@ -25,6 +25,49 @@ function normalizeText(value) {
   return value === undefined || value === null ? '' : String(value).trim()
 }
 
+function normalizeDoodle(raw) {
+  const seed = {
+    strokes: [],
+    stickers: [],
+    texts: [],
+    brushColor: '#111111',
+    textColor: '#111111',
+    canvasWidthPx: 0,
+    canvasHeightPx: 0,
+  }
+  if (!raw) return seed
+  let payload = raw
+  if (typeof payload === 'string') {
+    const text = payload.trim()
+    if (!text) return seed
+    try {
+      payload = JSON.parse(text)
+    } catch (e) {
+      return seed
+    }
+  }
+  if (!payload || typeof payload !== 'object') return seed
+  const out = { ...seed, ...payload }
+  out.strokes = Array.isArray(out.strokes) ? out.strokes : []
+  out.stickers = Array.isArray(out.stickers) ? out.stickers : []
+  out.texts = Array.isArray(out.texts) ? out.texts : []
+  out.brushColor = normalizeText(out.brushColor) || '#111111'
+  out.textColor = normalizeText(out.textColor) || '#111111'
+  out.canvasWidthPx = Number(out.canvasWidthPx) || 0
+  out.canvasHeightPx = Number(out.canvasHeightPx) || 0
+  return out
+}
+
+function hasDoodleContent(doodle) {
+  const d = doodle && typeof doodle === 'object' ? doodle : null
+  if (!d) return false
+  return !!(
+    (Array.isArray(d.strokes) && d.strokes.length) ||
+    (Array.isArray(d.stickers) && d.stickers.length) ||
+    (Array.isArray(d.texts) && d.texts.length)
+  )
+}
+
 function normalizeInt(value, fallback = 0) {
   const n = Number(value)
   return Number.isFinite(n) ? Math.round(n) : fallback
@@ -90,11 +133,46 @@ function normalizeCard(item) {
     it.timedTime !== undefined ? it.timedTime : it.timedtime !== undefined ? it.timedtime : it.time !== undefined ? it.time : ''
   const playMode = normalizeInt(playModeRaw, 0)
   const isTimer = normalizeInt(isTimerRaw, 0)
+  const doodle = normalizeDoodle(
+    it.doodle !== undefined
+      ? it.doodle
+      : it.cardDoodle !== undefined
+        ? it.cardDoodle
+        : it.carddoodle !== undefined
+          ? it.carddoodle
+          : it.drawContent !== undefined
+            ? it.drawContent
+            : it.drawcontent !== undefined
+              ? it.drawcontent
+              : it.contentJson !== undefined
+                ? it.contentJson
+                : it.contentjson !== undefined
+                  ? it.contentjson
+                  : it.cardContent !== undefined
+                    ? it.cardContent
+                    : '',
+  )
+  const contentText = normalizeText(
+    it.cardText !== undefined
+      ? it.cardText
+      : it.cardtext !== undefined
+        ? it.cardtext
+        : it.contentText !== undefined
+          ? it.contentText
+          : it.contenttext !== undefined
+            ? it.contenttext
+            : it.content !== undefined
+              ? it.content
+              : '',
+  )
   return {
     cardId: normalizeText(cardId),
     deviceEmail: normalizeText(deviceEmail),
     imageUrl: normalizeText(imageUrl),
     greetings: normalizeText(greetings),
+    doodle,
+    hasDoodle: hasDoodleContent(doodle),
+    contentText,
     playMode,
     isTimer,
     timedDate: normalizeText(timedDate),

@@ -115,6 +115,9 @@ async function confirmSend() {
     device: dev.name,
     message: draft.value.message || '',
     mode: draft.value.playMode || 'auto',
+    imageUrl: imageUrl || '',
+    contentText: '',
+    doodle: draft.value && draft.value.doodle ? draft.value.doodle : null,
   })
   clearCardDraft()
   uni.navigateBack({ delta: 3 })
