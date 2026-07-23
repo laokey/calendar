@@ -265,6 +265,8 @@ const commonFrFR = {
   "食谱盒": "Caja de recetas",
   "删除食谱": "Supprimer la recette",
   "搜索": "Rechercher",
+  "最近使用": "RÉCENTS",
+  "表情与人物": "SMILEYS & PERSONNES",
   "说明或配料": "Description ou ingrédients",
   "此食谱": "Cette recette",
   "此食谱和计划的餐点": "Cette recette et les repas planifiés",

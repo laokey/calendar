@@ -265,6 +265,8 @@ const commonEsES = {
   "添加到计划": "Agregar a planificación",
   "食谱盒": "Caja de recetas",
   "搜索": "Buscar",
+  "最近使用": "RECIENTES",
+  "表情与人物": "CARITAS Y PERSONAS",
   "说明或配料": "Descripción o ingredientes",
   "此食谱": "Esta receta",
   "此食谱和计划的餐点": "Esta receta y las comidas planificadas",

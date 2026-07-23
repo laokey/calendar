@@ -136,17 +136,7 @@
       <button class="save-btn" @click="save">{{ $t('保存') }}</button>
     </view>
 
-    <BlSheet v-model="emojiSheetOpen" :title="$t('选择表情')" :confirm-text="''">
-      <view class="emoji-grid">
-        <view v-for="e in emojiOptions" :key="e" class="emoji-item" @click="selectEmoji(e)">
-          <text class="emoji-text">{{ e }}</text>
-        </view>
-        <view class="emoji-item clear" @click="selectEmoji('')">
-          <text class="emoji-text">{{ $t('清除') }}</text>
-        </view>
-      </view>
-      <view class="sheet-cancel" @click="emojiSheetOpen = false"><text class="sheet-cancel-text">{{ $t('取消') }}</text></view>
-    </BlSheet>
+    <BlEmojiPickerSheet v-model="emojiSheetOpen" :value="emoji" @pick="selectEmoji" />
 
     <BlDatePickerSheet v-model="dateSheetOpen" :title="$t('日期')" :value="date" @confirm="onDatePicked" />
 
@@ -184,6 +174,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlAvatar from '../../components/BlAvatar.vue'
 import BlHeader from '../../components/BlHeader.vue'
 import BlSheet from '../../components/BlSheet.vue'
+import BlEmojiPickerSheet from '../../components/BlEmojiPickerSheet.vue'
 import BlDatePickerSheet from '../../components/BlDatePickerSheet.vue'
 import BlTimePickerSheet from '../../components/BlTimePickerSheet.vue'
 import BlRepeatSection from '../../components/BlRepeatSection.vue'
@@ -236,8 +227,6 @@ const dateSheetOpen = ref(false)
 const dateKind = ref('task')
 const timeSheetOpen = ref(false)
 const prioritySheetOpen = ref(false)
-
-const emojiOptions = [uni.$t('笑'), uni.$t('酷'), uni.$t('赞'), uni.$t('爱'), uni.$t('星'), uni.$t('书'), uni.$t('钢'), uni.$t('跑'), uni.$t('洗'), uni.$t('吃'), uni.$t('球'), uni.$t('家')]
 const repeatUnits = [
   { label: uni.$t('天'), value: 'day' },
   { label: uni.$t('周'), value: 'week' },

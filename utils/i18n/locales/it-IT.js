@@ -265,6 +265,8 @@ const commonItIT = {
   "添加到计划": "Aggiungi a la planifica",
   "食谱盒": "Album delle recette",
   "搜索": "Cerca",
+  "最近使用": "RECENTI",
+  "表情与人物": "FACCINE E PERSONE",
   "说明或配料": "Descrizione o ingredienti",
   "此食谱": "Questo recette",
   "此食谱和计划的餐点": "Questo recette e i pasti pianificati",

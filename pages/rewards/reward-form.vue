@@ -185,24 +185,7 @@
       <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
 
-    <BlSheet v-model="emojiSheetOpen" :title="$t('选择表情')" :confirm-text="''">
-      <view class="emoji-grid">
-        <view
-          v-for="e in emojiOptions"
-          :key="e"
-          class="emoji-item"
-          @click="selectEmoji(e)"
-        >
-          <text class="emoji-text">{{ e }}</text>
-        </view>
-        <view class="emoji-item clear" @click="selectEmoji('')">
-          <text class="emoji-text">{{ $t('清除') }}</text>
-        </view>
-      </view>
-      <view class="sheet-cancel" @click="emojiSheetOpen = false"
-        ><text class="sheet-cancel-text">{{ $t('取消') }}</text></view
-      >
-    </BlSheet>
+    <BlEmojiPickerSheet v-model="emojiSheetOpen" :value="emoji" @pick="selectEmoji" />
 
     <BlSheet v-model="infoOpen" title="" :confirm-text="''">
       <view class="info">
@@ -240,6 +223,7 @@ import { onLoad, onShow } from "@dcloudio/uni-app";
 import BlAvatar from "../../components/BlAvatar.vue";
 import BlHeader from "../../components/BlHeader.vue";
 import BlSheet from "../../components/BlSheet.vue";
+import BlEmojiPickerSheet from "../../components/BlEmojiPickerSheet.vue";
 import { ensureCalendarState, listMembers, setMembers } from "../../utils/calendarStore";
 import { membersApi, rewardsApi } from "../../utils/api";
 
@@ -259,21 +243,6 @@ const desc = ref("");
 const tipOpen = ref(true);
 const emojiSheetOpen = ref(false);
 const infoOpen = ref(false);
-
-const emojiOptions = [
-  uni.$t('跑'),
-  uni.$t('力'),
-  uni.$t('书'),
-  uni.$t('星'),
-  uni.$t('笑'),
-  uni.$t('家'),
-  uni.$t('球'),
-  uni.$t('心'),
-  uni.$t('乐'),
-  uni.$t('奖'),
-  uni.$t('黑'),
-  uni.$t('白'),
-];
 
 function refresh() {
   calendarState.value = ensureCalendarState();

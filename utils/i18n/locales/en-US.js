@@ -264,6 +264,8 @@ const commonEnUS = {
   "添加到计划": "Add to plan",
   "食谱盒": "Recipe Box",
   "搜索": "Search",
+  "最近使用": "RECENTS",
+  "表情与人物": "SMILEYS & PEOPLE",
   "说明或配料": "Recipe Description or Ingredients",
   "此食谱": "This Recipe",
   "此食谱和计划的餐点": "This Recipe and Planned Meals",

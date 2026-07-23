@@ -264,6 +264,8 @@ const commonDeDE = {
   "添加到计划": "Zu Plan hinzufügen",
   "食谱盒": "Rezeptbox",
   "搜索": "Suchen",
+  "最近使用": "ZULETZT VERWENDET",
+  "表情与人物": "SMILEYS & PERSONEN",
   "说明或配料": "Rezeptbeschreibung oder Zutaten",
   "此食谱": "Dieses Rezept",
   "此食谱和计划的餐点": "Dieses Rezept und die geplanten Mahlzeiten",
