@@ -4,9 +4,9 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">相片详情</text>
+      <text class="head-title">{{ $t('相片详情') }}</text>
       <view class="head-right" @click="confirmDelete">
-        <text class="danger-text">删除</text>
+        <text class="danger-text">{{ $t('删除') }}</text>
       </view>
     </view>
 
@@ -54,7 +54,7 @@
         <input
           v-model="titleDraft"
           class="title-input"
-          placeholder="添加标题..."
+          :placeholder="$t('添加标题...')"
           placeholder-class="ph"
           confirm-type="done"
           @confirm="saveTitle"
@@ -73,7 +73,7 @@
       </view>
 
       <view class="comments">
-        <text class="c-title">评论({{ comments.length }})</text>
+        <text class="c-title">{{ $t('评论') }}({{ comments.length }})</text>
         <view v-for="c in comments" :key="c.id" class="c-item">
           <view class="c-line">
             <text class="c-user">{{ c.user }}</text>
@@ -81,12 +81,12 @@
           </view>
           <text class="c-time">{{ formatRelativeTime(c.createdAt) }}</text>
         </view>
-        <text v-if="!comments.length" class="c-empty">暂无评论</text>
+        <text v-if="!comments.length" class="c-empty">{{ $t('暂无评论') }}</text>
       </view>
     </view>
 
     <view class="composer">
-      <input v-model="commentDraft" class="composer-input" placeholder="添加评论" placeholder-class="ph" confirm-type="send" @confirm="send" />
+      <input v-model="commentDraft" class="composer-input" :placeholder="$t('添加评论')" placeholder-class="ph" confirm-type="send" @confirm="send" />
       <view class="send" :class="{ disabled: !commentDraft.trim() }" @click="send">
         <image class="send-icon" src="/static/gallery/icon_send.png" mode="aspectFit" />
       </view>
@@ -161,7 +161,7 @@ const deviceName = computed(() => {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
     if (parsed && parsed.email && String(parsed.email).trim() === active) return String(parsed.name || active)
   } catch (e) {}
-  return '当前设备'
+  return uni.$t('当前设备')
 })
 
 const uploadTime = computed(() => {
@@ -200,12 +200,12 @@ async function refresh() {
   } catch (e) {
     rawAlbums.value = []
     comments.value = []
-    uni.showToast({ title: String((e && e.message) || '获取相片失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相片失败')), icon: 'none' })
   }
 }
 
 function noopAction() {
-  uni.showToast({ title: '当前接口暂不支持', icon: 'none' })
+  uni.showToast({ title: uni.$t('当前接口暂不支持'), icon: 'none' })
 }
 
 async function toggleLike() {
@@ -219,7 +219,7 @@ async function toggleLike() {
     await refresh()
   } catch (e) {
     likeOverrides.value = { ...(likeOverrides.value || {}), [albumId.value]: !next }
-    uni.showToast({ title: String((e && e.message) || '点赞失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('点赞失败')), icon: 'none' })
   } finally {
     liking.value = false
   }
@@ -232,13 +232,13 @@ function formatRelativeTime(input) {
   const ts = new Date(normalized).getTime()
   if (!Number.isFinite(ts)) return raw
   const diff = Date.now() - ts
-  if (diff <= 0) return '刚刚'
+  if (diff <= 0) return uni.$t('刚刚')
   const minute = 60 * 1000
   const hour = 60 * minute
   const day = 24 * hour
-  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))}分钟前`
-  if (diff < day) return `${Math.max(1, Math.floor(diff / hour))}小时前`
-  if (diff < 7 * day) return `${Math.max(1, Math.floor(diff / day))}天前`
+  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))}${uni.$t('分钟前')}`
+  if (diff < day) return `${Math.max(1, Math.floor(diff / hour))}${uni.$t('小时前')}`
+  if (diff < 7 * day) return `${Math.max(1, Math.floor(diff / day))}${uni.$t('天前')}`
   return raw
 }
 
@@ -256,10 +256,10 @@ async function saveTitle() {
     titleOverrides.value = { ...(titleOverrides.value || {}), [photoId.value]: nextTitle }
     titleDraft.value = nextTitle
     await refresh()
-    uni.showToast({ title: '标题已更新', icon: 'none' })
+    uni.showToast({ title: uni.$t('标题已更新'), icon: 'none' })
   } catch (e) {
     titleDraft.value = currentTitle
-    uni.showToast({ title: String((e && e.message) || '更新标题失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('更新标题失败')), icon: 'none' })
   } finally {
     savingTitle.value = false
   }
@@ -283,25 +283,25 @@ async function send() {
     commentDraft.value = ''
     comments.value = await getAlbumCommentList({ albumId: albumId.value })
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '发表评论失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('发表评论失败')), icon: 'none' })
   }
 }
 
 function confirmDelete() {
   if (!photo.value) return
   uni.showModal({
-    title: '删除',
-    content: '确认删除该照片？',
-    cancelText: '取消',
-    confirmText: '确定',
+    title: uni.$t('删除'),
+    content: uni.$t('确认删除该照片？'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: async (res) => {
       if (!res.confirm) return
       try {
-        uni.showLoading({ title: '删除中' })
+        uni.showLoading({ title: uni.$t('删除中') })
         await deleteAlbumPhoto({ photoId: photoId.value })
         uni.navigateBack()
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || '删除照片失败'), icon: 'none' })
+        uni.showToast({ title: String((e && e.message) || uni.$t('删除照片失败')), icon: 'none' })
       } finally {
         try {
           uni.hideLoading()

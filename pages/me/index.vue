@@ -12,11 +12,11 @@
 
     <view class="quick">
       <view class="q-card blue" @click="goCards">
-        <text class="q-title">卡片记录</text>
+        <text class="q-title">{{ t('me.cardRecords') }}</text>
         <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_card_record.png" mode="aspectFit" /></view>
       </view>
       <view class="q-card purple" @click="goDevice">
-        <text class="q-title">设备</text>
+        <text class="q-title">{{ t('me.device') }}</text>
         <view class="q-ico"><image class="q-ico-img" src="/static/my/icon_device_record.png" mode="aspectFit" /></view>
       </view>
     </view>
@@ -25,35 +25,35 @@
       <view class="m-item" @click="openSupport">
         <view class="m-left">
           <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_support.png" mode="aspectFit" /></view>
-          <text class="m-text">客服</text>
+          <text class="m-text">{{ t('me.support') }}</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="openSupport">
         <view class="m-left">
           <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_help.png" mode="aspectFit" /></view>
-          <text class="m-text">帮助中心</text>
+          <text class="m-text">{{ t('me.helpCenter') }}</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goCalendar">
         <view class="m-left">
           <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_zhima.png" mode="aspectFit" /></view>
-          <text class="m-text">芝麻日历</text>
+          <text class="m-text">{{ t('me.sesameCalendar') }}</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goAbout">
         <view class="m-left">
           <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_about.png" mode="aspectFit" /></view>
-          <text class="m-text">关于我们</text>
+          <text class="m-text">{{ t('me.about') }}</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
       <view class="m-item" @click="goSettings">
         <view class="m-left">
           <view class="m-icon"><image class="m-ico-img" src="/static/my/icon_settings.png" mode="aspectFit" /></view>
-          <text class="m-text">设置</text>
+          <text class="m-text">{{ t('me.settings') }}</text>
         </view>
         <image class="m-chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
@@ -61,14 +61,14 @@
 
     <view v-if="supportVisible" class="mask" @click="supportVisible = false">
       <view class="dialog" @click.stop>
-        <text class="d-title">专属客服一对一指导</text>
+        <text class="d-title">{{ t('me.supportTitle') }}</text>
         <view class="qr">
           <view class="qr-box">
             <text class="qr-text">QR</text>
           </view>
         </view>
         <view class="d-btn" @click="copyWechat">
-          <text class="d-btn-text">添加客服微信</text>
+          <text class="d-btn-text">{{ t('me.addSupportWechat') }}</text>
         </view>
       </view>
     </view>
@@ -80,12 +80,14 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useI18n } from 'vue-i18n'
 import BlBottomNav from '../../components/BlBottomNav.vue'
 import { ensureMeState, updateProfile } from '../../utils/meStore'
 import { usersApi } from '../../utils/api'
 
 const state = ref(ensureMeState())
 const supportVisible = ref(false)
+const { t } = useI18n()
 
 onShow(() => {
   state.value = ensureMeState()
@@ -153,9 +155,9 @@ function openSupport() {
 
 function copyWechat() {
   uni.setClipboardData({
-    data: '芝麻日历客服',
+    data: t('me.supportWechatName'),
     success: () => {
-      uni.showToast({ title: '已复制', icon: 'none' })
+      uni.showToast({ title: t('me.copied'), icon: 'none' })
       supportVisible.value = false
     },
   })

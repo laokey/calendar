@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page select-page">
-    <BlHeader :title="isReassign ? '重新分配事件' : '选择成员'" back>
+    <BlHeader :title="isReassign ? $t('重新分配事件') : $t('选择成员')" back>
       <template v-if="!isReassign" #right>
         <view class="add-btn" @click="goAdd">
           <image class="add-img" src="/static/calendar/icon_plus_circle.png" mode="aspectFit" />
@@ -10,16 +10,16 @@
 
     <view v-if="isReassign" class="reassign-top" @click="goAddEvent">
       <text class="reassign-top-plus">+</text>
-      <text class="reassign-top-text">添加事项</text>
+      <text class="reassign-top-text">{{ $t('添加事项') }}</text>
     </view>
 
     <view v-if="isReassign" class="reassign-hint">
-      <text class="reassign-hint-text">将 {{ fromName }} 的事件重新分配到</text>
+      <text class="reassign-hint-text">{{ $t('将 {name} 的事件重新分配到', { name: fromName }) }}</text>
     </view>
 
     <view v-else class="hint">
-      <text class="hint-title">成员</text>
-      <text class="hint-sub bl-muted">为家庭中的每位成员分配各自的颜色</text>
+      <text class="hint-title">{{ $t('成员') }}</text>
+      <text class="hint-sub bl-muted">{{ $t('为家庭中的每位成员分配各自的颜色') }}</text>
     </view>
 
     <view class="list">
@@ -47,11 +47,11 @@
     </view>
 
     <view v-if="isReassign" class="bottom-danger" @click="confirmReassignDelete">
-      <text class="bottom-danger-text">删除并重新分配</text>
+      <text class="bottom-danger-text">{{ $t('删除并重新分配') }}</text>
     </view>
     <view v-else class="bottom-save" @click="save">
       <image class="bottom-save-bg" src="/static/calendar/btn_primary_gradient.png" mode="scaleToFill" />
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
   </view>
 </template>
@@ -78,7 +78,7 @@ const isReassign = computed(() => mode.value === 'reassign')
 const from = ref('')
 const fromName = computed(() => {
   const m = fromId.value ? findMember(state.value, fromId.value) : null
-  return m && m.name ? m.name : '该成员'
+  return m && m.name ? m.name : uni.$t('该成员')
 })
 
 function glyphFromName(name) {
@@ -90,7 +90,7 @@ function glyphFromName(name) {
 async function syncRemoteMembers() {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (!logged) return false
-  uni.showLoading({ title: '加载中' })
+  uni.showLoading({ title: uni.$t('加载中') })
   try {
     const list = await membersApi.getMemberList()
     const mapped = (list || []).map((m) => {
@@ -260,15 +260,15 @@ async function save() {
     const basePayload = loadEventUpdateContext() || eventToPayload(findEvent(state.value, eventId.value))
     const nextPayload = { ...(basePayload || {}), memberIds: ids }
     if (logged) {
-      uni.showLoading({ title: '保存中' })
+      uni.showLoading({ title: uni.$t('保存中') })
       try {
         const res = await calendarApi.updateMatterInfo(buildRemoteMatterPayload(nextPayload, eventId.value))
         if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-          uni.showToast({ title: '保存失败', icon: 'none' })
+          uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
           return
         }
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+        uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
         return
       } finally {
         try {
@@ -305,15 +305,15 @@ async function doReassignDelete() {
 
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (logged) {
-    uni.showLoading({ title: '删除中' })
+    uni.showLoading({ title: uni.$t('删除中') })
     try {
       const res = await membersApi.deleteMemberInfo({ memberId: fromId.value })
       if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-        uni.showToast({ title: '删除失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
         return
       }
     } catch (e) {
-      uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
       return
     } finally {
       try {
@@ -340,16 +340,16 @@ async function doReassignDelete() {
 
 function confirmReassignDelete() {
   if (!pickedId.value) {
-    uni.showToast({ title: '请选择成员', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择成员'), icon: 'none' })
     return
   }
   const to = findMember(state.value, pickedId.value)
-  const toName = to && to.name ? to.name : '该成员'
+  const toName = to && to.name ? to.name : uni.$t('该成员')
   uni.showModal({
-    title: '你确定吗？',
+    title: uni.$t('你确定吗？'),
     content: `事件、任务和奖惩将重新分配给${toName}，并删除${fromName.value}。关联的日历不会被删除。删除后不可撤销！`,
-    confirmText: '是的，我确定',
-    cancelText: '取消',
+    confirmText: uni.$t('是的，我确定'),
+    cancelText: uni.$t('取消'),
     success: (r) => {
       if (r && r.confirm) doReassignDelete()
     },

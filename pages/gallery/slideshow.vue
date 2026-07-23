@@ -4,7 +4,7 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">幻灯片</text>
+      <text class="head-title">{{ $t('幻灯片') }}</text>
       <view class="head-right" />
     </view>
 
@@ -63,7 +63,7 @@ async function refresh() {
     rawAlbums.value = active ? await getAlbumList({ deviceEmail: active }) : []
   } catch (e) {
     rawAlbums.value = []
-    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相册失败')), icon: 'none' })
   }
 }
 </script>

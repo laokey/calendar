@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <BlHeader title="切换语言" back />
+    <BlHeader :title="t('language.title')" back />
 
     <view class="list">
       <view v-for="opt in options" :key="opt.value" class="item" @click="select(opt.value)">
@@ -16,22 +16,18 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useI18n } from 'vue-i18n'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateSettings } from '../../utils/meStore'
+import { LANGUAGE_OPTIONS, applyAppLanguage, normalizeLanguagePreference } from '../../utils/i18n'
 
 const state = ref(ensureMeState())
+const { t } = useI18n()
 
-const options = [
-  { value: 'system', label: '遵循系统语言' },
-  { value: 'English(US)', label: 'English(US)' },
-  { value: 'Francais', label: 'Francais' },
-  { value: 'Deutsch', label: 'Deutsch' },
-  { value: 'Italiano', label: 'Italiano' },
-  { value: 'Espanol', label: 'Espanol' },
-  { value: '日本語', label: '日本語' },
-  { value: '中文(简体)', label: '中文(简体)' },
-  { value: 'Nederlands', label: 'Nederlands' },
-]
+const options = computed(() => LANGUAGE_OPTIONS.map((item) => ({
+  ...item,
+  label: item.value === 'system' ? t('language.followSystem') : item.label,
+})))
 
 onShow(() => {
   state.value = ensureMeState()
@@ -39,14 +35,16 @@ onShow(() => {
 
 const current = computed(() => {
   const v = state.value.settings && state.value.settings.language ? state.value.settings.language : 'system'
-  return v
+  return normalizeLanguagePreference(v)
 })
 
 function select(v) {
   const s = ensureMeState()
-  updateSettings(s, { language: v })
+  const next = normalizeLanguagePreference(v)
+  updateSettings(s, { language: next })
+  applyAppLanguage(next)
   state.value = ensureMeState()
-  uni.showToast({ title: '已切换', icon: 'none' })
+  uni.showToast({ title: t('language.switched'), icon: 'none' })
 }
 </script>
 

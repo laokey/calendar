@@ -20,7 +20,7 @@
             :src="repeatIconSrc"
             mode="aspectFit"
           />
-          <text class="label">每一个</text>
+          <text class="label">{{ $t('每一个') }}</text>
         </view>
       </view>
       <view class="repeat-row m-top-12">
@@ -44,7 +44,7 @@
             :src="whenIconSrc"
             mode="aspectFit"
           />
-          <text class="label">在什么时候</text>
+          <text class="label">{{ $t('在什么时候') }}</text>
         </view>
       </view>
       <view class="repeat-month m-top-12">
@@ -77,7 +77,7 @@
               :src="whenIconSrc"
               mode="aspectFit"
             />
-            <text class="label week-when">在什么时间</text>
+            <text class="label week-when">{{ $t('在什么时间') }}</text>
           </view>
         </view>
         <view class="repeat-weekdays-row m-top-12">
@@ -106,7 +106,7 @@
             :src="untilIconSrc"
             mode="aspectFit"
           />
-          <text class="label">重复直到</text>
+          <text class="label">{{ $t('重复直到') }}</text>
         </view>
         <switch
           :checked="untilOnProxy"
@@ -132,7 +132,7 @@ import BlSegmented from "./BlSegmented.vue";
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   mode: { type: String, default: "full" },
-  label: { type: String, default: "重复" },
+  label: { type: String, default: uni.$t('重复') },
   theme: { type: String, default: "event" },
   repeatIconSrc: { type: String, default: "/static/calendar/icon_refresh.png" },
   whenIconSrc: {
@@ -204,13 +204,13 @@ const untilProxy = computed({
 });
 
 const weekdayOptions = [
-  { label: "日", value: 0 },
-  { label: "一", value: 1 },
-  { label: "二", value: 2 },
-  { label: "三", value: 3 },
-  { label: "四", value: 4 },
-  { label: "五", value: 5 },
-  { label: "六", value: 6 },
+  { label: uni.$t('日'), value: 0 },
+  { label: uni.$t('一'), value: 1 },
+  { label: uni.$t('二'), value: 2 },
+  { label: uni.$t('三'), value: 3 },
+  { label: uni.$t('四'), value: 4 },
+  { label: uni.$t('五'), value: 5 },
+  { label: uni.$t('六'), value: 6 },
 ];
 
 function toCnDateText(key) {
@@ -282,7 +282,7 @@ const monthRuleTextLeft = computed(
   () => `${Number(monthRuleProxy.value.day) || 1}号`,
 );
 const monthRuleTextRight = computed(() => {
-  const w = ["日", "一", "二", "三", "四", "五", "六"][
+  const w = [uni.$t('日'), uni.$t('一'), uni.$t('二'), uni.$t('三'), uni.$t('四'), uni.$t('五'), uni.$t('六')][
     Number(monthRuleProxy.value.weekday) || 0
   ];
   return `第${Number(monthRuleProxy.value.nth) || 1}个星期${w}`;

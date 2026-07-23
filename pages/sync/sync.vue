@@ -1,15 +1,15 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="同步新日历" back back-icon-src="/static/sync/icon_nav_back_small.png">
+    <BlHeader :title="$t('同步新日历')" back back-icon-src="/static/sync/icon_nav_back_small.png">
       <template #right>
-        <text class="skip" @click="skip">跳过</text>
+        <text class="skip" @click="skip">{{ $t('跳过') }}</text>
       </template>
     </BlHeader>
 
-    <text class="hint bl-muted">请选择要同步的日历类型:</text>
+    <text class="hint bl-muted">{{ $t('请选择要同步的日历类型:') }}</text>
 
     <view class="list">
-      <view v-for="item in items" :key="item.title" class="row" @click="open(item)">
+      <view v-for="item in items" :key="item.key" class="row" @click="open(item)">
         <view class="icon-box">
           <image class="icon-img" :src="item.iconSrc" mode="aspectFit" />
         </view>
@@ -23,13 +23,13 @@
 
     <view v-if="reminderOpen" class="mask" @click="reminderOpen = false">
       <view class="dialog" @click.stop>
-        <text class="dialog-title">提示</text>
-        <text class="dialog-desc">同步刷新需要大约15分钟。</text>
+        <text class="dialog-title">{{ $t('提示') }}</text>
+        <text class="dialog-desc">{{ $t('同步刷新需要大约15分钟') }}</text>
         <view class="dialog-check" @click="dontRemind = !dontRemind">
           <view class="dot" :class="{ on: dontRemind }"><view v-if="dontRemind" class="dot-in" /></view>
-          <text class="dialog-check-text">不再提示</text>
+          <text class="dialog-check-text">{{ $t('不再提示') }}</text>
         </view>
-        <view class="dialog-ok" @click="confirmReminder"><text class="dialog-ok-text">确定</text></view>
+        <view class="dialog-ok" @click="confirmReminder"><text class="dialog-ok-text">{{ $t('确定') }}</text></view>
       </view>
     </view>
   </view>
@@ -41,35 +41,35 @@ import BlHeader from '../../components/BlHeader.vue'
 import { ensureSyncState, setReminder15minHidden } from '../../utils/syncStore'
 
 const items = ref([
-  { title: 'Google', iconSrc: '/static/sync/logo_google_calendar.png' },
-  { title: 'Outlook', iconSrc: '/static/sync/logo_outlook.png' },
-  { title: 'iCloud', iconSrc: '/static/sync/logo_icloud_calendar.png', sub: '同步刷新需要大约15分钟' },
-  { title: 'Cozi', iconSrc: '/static/sync/logo_cozi.png', sub: '同步刷新需要大约15分钟' },
-  { title: 'TeamSnap', iconSrc: '/static/sync/logo_teamsnap.png' },
-  { title: 'Calendar URL', iconSrc: '/static/sync/icon_calendar_url.png' },
-  { title: 'Subscribed Calendar', iconSrc: '/static/sync/icon_subscribed_calendar.png', sub: '同步刷新需要大约15分钟' },
+  { key: 'google', title: 'Google', iconSrc: '/static/sync/logo_google_calendar.png' },
+  { key: 'outlook', title: 'Outlook', iconSrc: '/static/sync/logo_outlook.png' },
+  { key: 'icloud', title: 'iCloud', iconSrc: '/static/sync/logo_icloud_calendar.png', sub: uni.$t('同步刷新需要大约15分钟') },
+  { key: 'cozi', title: 'Cozi', iconSrc: '/static/sync/logo_cozi.png', sub: uni.$t('同步刷新需要大约15分钟') },
+  { key: 'teamsnap', title: 'TeamSnap', iconSrc: '/static/sync/logo_teamsnap.png' },
+  { key: 'calendar-url', title: uni.$t('日历链接'), iconSrc: '/static/sync/icon_calendar_url.png' },
+  { key: 'subscribed', title: uni.$t('同步已订阅日历'), iconSrc: '/static/sync/icon_subscribed_calendar.png', sub: uni.$t('同步刷新需要大约15分钟') },
 ])
 
 const syncState = ref(ensureSyncState())
 const reminderOpen = ref(false)
 const dontRemind = ref(false)
-const pendingTitle = ref('')
+const pendingKey = ref('')
 
-function needReminder(title) {
-  return title === 'iCloud' || title === 'Cozi' || title === 'Subscribed Calendar'
+function needReminder(key) {
+  return key === 'icloud' || key === 'cozi' || key === 'subscribed'
 }
 
 function open(item) {
-  const title = item && item.title ? item.title : ''
-  if (!title) return
+  const key = item && item.key ? String(item.key) : ''
+  if (!key) return
   syncState.value = ensureSyncState()
-  if (needReminder(title) && !syncState.value.reminder15minHidden) {
-    pendingTitle.value = title
+  if (needReminder(key) && !syncState.value.reminder15minHidden) {
+    pendingKey.value = key
     dontRemind.value = false
     reminderOpen.value = true
     return
   }
-  goNext(title)
+  goNext(key)
 }
 
 function skip() {
@@ -82,41 +82,41 @@ function confirmReminder() {
     syncState.value = ensureSyncState()
   }
   reminderOpen.value = false
-  const title = pendingTitle.value
-  pendingTitle.value = ''
-  goNext(title)
+  const key = pendingKey.value
+  pendingKey.value = ''
+  goNext(key)
 }
 
-function goNext(title) {
-  if (title === 'Google') {
+function goNext(key) {
+  if (key === 'google') {
     uni.navigateTo({ url: '/pages/sync/sync-provider?provider=google' })
     return
   }
-  if (title === 'Outlook') {
+  if (key === 'outlook') {
     uni.navigateTo({ url: '/pages/sync/sync-provider?provider=outlook' })
     return
   }
-  if (title === 'Calendar URL') {
+  if (key === 'calendar-url') {
     uni.navigateTo({ url: '/pages/sync/sync-url' })
     return
   }
-  if (title === 'TeamSnap') {
+  if (key === 'teamsnap') {
     uni.navigateTo({ url: '/pages/sync/sync-guide?type=teamsnap' })
     return
   }
-  if (title === 'iCloud') {
+  if (key === 'icloud') {
     uni.navigateTo({ url: '/pages/sync/sync-guide?type=icloud' })
     return
   }
-  if (title === 'Cozi') {
+  if (key === 'cozi') {
     uni.navigateTo({ url: '/pages/sync/sync-guide?type=cozi' })
     return
   }
-  if (title === 'Subscribed Calendar') {
+  if (key === 'subscribed') {
     uni.navigateTo({ url: '/pages/sync/sync-guide?type=subscribed' })
     return
   }
-  uni.showToast({ title, icon: 'none' })
+  uni.showToast({ title: key, icon: 'none' })
 }
 </script>
 

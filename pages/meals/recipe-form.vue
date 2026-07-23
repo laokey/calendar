@@ -6,7 +6,7 @@
       <image v-if="photoPath" class="photo-img" :src="photoPath" mode="aspectFill" />
       <view v-else class="photo-ph">
         <image class="ph-icon" src="/static/calendar/icon_plus.png" mode="aspectFit" />
-        <text class="ph-text">添加照片</text>
+        <text class="ph-text">{{ $t('添加照片') }}</text>
       </view>
       <view v-if="photoPath" class="photo-x" @click.stop="photoPath = ''"><text class="photo-x-text">×</text></view>
     </view>
@@ -15,10 +15,10 @@
       <view class="row col">
         <view class="row-title">
           <image class="row-icon" src="/static/meals/icon_fork.png" mode="aspectFit" />
-          <text class="row-title-text">我们吃什么</text>
+          <text class="row-title-text">{{ $t('我们吃什么') }}</text>
         </view>
         <view class="input-wrap">
-          <input v-model="title" class="input" placeholder="请输入" placeholder-class="ph" />
+          <input v-model="title" class="input" :placeholder="$t('请输入')" placeholder-class="ph" />
         </view>
       </view>
     </view>
@@ -27,7 +27,7 @@
       <view class="row">
         <view class="row-title">
           <image class="row-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
-          <text class="row-title-text">分类</text>
+          <text class="row-title-text">{{ $t('分类') }}</text>
         </view>
         <image class="chev-icon" src="/static/common/icon_down.png" mode="aspectFit" />
       </view>
@@ -38,19 +38,19 @@
       <view class="row col">
         <view class="row-title">
           <image class="row-icon" src="/static/meals/icon_note.png" mode="aspectFit" />
-          <text class="row-title-text">说明或配料</text>
+          <text class="row-title-text">{{ $t('说明或配料') }}</text>
         </view>
         <view class="input-wrap is-textarea">
-          <textarea v-model="note" class="textarea" placeholder="请输入" placeholder-class="ph" />
+          <textarea v-model="note" class="textarea" :placeholder="$t('请输入')" placeholder-class="ph" />
         </view>
       </view>
     </view>
 
     <view class="bottom" :class="{ disabled: !canSave }" @click="save">
-      <text class="bottom-text">保存</text>
+      <text class="bottom-text">{{ $t('保存') }}</text>
     </view>
 
-    <BlSheet v-model="catOpen" title="分类" :confirm-text="''">
+    <BlSheet v-model="catOpen" :title="$t('分类')" :confirm-text="''">
       <view class="cat-list">
         <view v-for="c in categories" :key="c.id" class="cat-item" @click="selectCat(c.id)">
           <view class="cat-left">
@@ -107,7 +107,7 @@ const categoryName = computed(() => {
   return c ? c.name : ''
 })
 
-const pageTitle = computed(() => (recipeId.value ? '编辑食谱' : '添加食谱'))
+const pageTitle = computed(() => (recipeId.value ? uni.$t('编辑食谱') : uni.$t('添加食谱')))
 const canSave = computed(() => !!String(title.value || '').trim())
 
 function isRemoteUrl(value) {
@@ -153,10 +153,10 @@ function categoryNameById(id) {
 function mealTypeFromCategoryId(id) {
   const name = categoryNameById(id)
   const n = name.replace(/\s+/g, '')
-  if (n.includes('早餐') || n === '早') return 0
-  if (n.includes('午餐') || n === '午') return 1
-  if (n.includes('晚餐') || n === '晚') return 2
-  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  if (n.includes(uni.$t('早餐')) || n === uni.$t('早')) return 0
+  if (n.includes(uni.$t('午餐')) || n === uni.$t('午')) return 1
+  if (n.includes(uni.$t('晚餐')) || n === uni.$t('晚')) return 2
+  if (n.includes(uni.$t('点心')) || n.includes(uni.$t('加餐')) || n === uni.$t('点')) return 3
   const enabled = listCategories(mealState.value, { enabledOnly: true })
   const idx = enabled.findIndex((x) => x && x.id === id)
   return idx >= 0 ? idx : 0
@@ -188,7 +188,7 @@ async function save() {
   const pickedPhoto = String(photoPath.value || '').trim()
   const hasLocalPhoto = !!pickedPhoto && !isRemoteUrl(pickedPhoto)
   const imageUrl = hasLocalPhoto ? '' : pickedPhoto
-  uni.showLoading({ title: '保存中' })
+  uni.showLoading({ title: uni.$t('保存中') })
   try {
     if (recipeId.value) {
       await mealsApi.updateRecipeInfo({ recipeId: recipeId.value, recipeName, recipeType, description })
@@ -210,18 +210,18 @@ async function save() {
 
     if (hasLocalPhoto) {
       if (!recipeId.value) {
-        uni.showToast({ title: '图片上传失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('图片上传失败'), icon: 'none' })
         return
       }
       try {
-        uni.showLoading({ title: '上传中' })
+        uni.showLoading({ title: uni.$t('上传中') })
       } catch (e) {}
       const uploaded = await mealsApi.uploadRecipeFile({ recipeId: recipeId.value, filePath: pickedPhoto })
       if (typeof uploaded === 'string' && uploaded.trim()) photoPath.value = uploaded.trim()
     }
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

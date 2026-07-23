@@ -1,37 +1,37 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="激活的日历" back />
+    <BlHeader :title="$t('激活的日历')" back />
 
     <view class="hero">
       <image class="device-img" src="/static/device/device_hero.png" mode="aspectFit" />
     </view>
 
-    <text class="desc">打开日历并连接Wi‑Fi后，输入以下代码激活日历。</text>
+    <text class="desc">{{ $t('打开日历并连接Wi‑Fi后，输入以下代码激活日历。') }}</text>
 
     <view class="code-card">
-      <view class="code-tag"><text class="tag-text">设备激活码</text></view>
+      <view class="code-tag"><text class="tag-text">{{ $t('设备激活码') }}</text></view>
       <view class="code-main">
         <text class="code-number">{{ code }}</text>
         <view class="code-actions">
-          <view class="bl-btn-secondary" @click="copy"><text>复制</text></view>
-          <view class="bl-btn-secondary is-dark" @click="share"><text>分享</text></view>
+          <view class="bl-btn-secondary" @click="copy"><text>{{ $t('复制') }}</text></view>
+          <view class="bl-btn-secondary is-dark" @click="share"><text>{{ $t('分享') }}</text></view>
         </view>
       </view>
-      <text class="code-hint bl-muted">此代码将在23小时后刷新。</text>
+      <text class="code-hint bl-muted">{{ $t('此代码将在23小时后刷新。') }}</text>
     </view>
 
     <view class="email-wrap">
-      <text class="email-desc bl-muted">输入此代码后，您可将任一事件的电子邮件邀请同步至您的JeCalendar中：</text>
+      <text class="email-desc bl-muted">{{ $t('输入此代码后，您可将任一事件的电子邮件邀请同步至您的JeCalendar中：') }}</text>
       <view class="email-card">
         <text class="email">{{ email }}</text>
       </view>
     </view>
 
     <view class="ready">
-      <text class="ready-text">准备好同步日历了吗？</text>
+      <text class="ready-text">{{ $t('准备好同步日历了吗？') }}</text>
     </view>
     <view class="bl-btn-primary" @click="goSync">
-      <text>设置同步</text>
+      <text>{{ $t('设置同步') }}</text>
     </view>
   </view>
 </template>
@@ -48,7 +48,7 @@ function copy() {
 }
 
 function share() {
-  uni.showToast({ title: '已准备分享', icon: 'none' })
+  uni.showToast({ title: uni.$t('已准备分享'), icon: 'none' })
 }
 
 function goSync() {

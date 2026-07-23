@@ -1,25 +1,25 @@
 <template>
   <view class="page">
-    <BlHeader title="通知" back />
+    <BlHeader :title="$t('通知')" back />
 
     <view class="content">
       <view class="intro">
-        <text class="intro-text">获取有关</text>
+        <text class="intro-text">{{ $t('获取有关') }}</text>
         <text class="intro-text intro-highlight">{{ currentDeviceName }}</text>
-        <text class="intro-text">的事件和任务的推送通知。</text>
+        <text class="intro-text">{{ $t('的事件和任务的推送通知。') }}</text>
       </view>
 
       <view v-if="!systemNotifyEnabled" class="permission-card">
-        <text class="permission-text">系统推送通知未开启，当前仍可保存通知设置，开启后才会实际收到提醒。</text>
+        <text class="permission-text">{{ $t('系统推送通知未开启，当前仍可保存通知设置，开启后才会实际收到提醒。') }}</text>
         <view class="permission-btn" @click="openSystemNotificationSettings">
-          <text class="permission-btn-text">打开推送通知</text>
+          <text class="permission-btn-text">{{ $t('打开推送通知') }}</text>
         </view>
       </view>
 
       <view v-if="systemNotifyEnabled" class="list">
         <view class="item">
           <view class="item-head">
-            <text class="item-title">{{ eventNotify.notifyTitle || '事件发生时' }}</text>
+            <text class="item-title">{{ $t(eventNotify.notifyTitle) || $t('事件发生时') }}</text>
             <switch
               class="item-switch"
               :checked="eventNotify.status === 1"
@@ -32,7 +32,7 @@
 
         <view class="item">
           <view class="item-head">
-            <text class="item-title">{{ advanceNotify.notifyTitle || '活动前几分钟' }}</text>
+            <text class="item-title">{{ $t(advanceNotify.notifyTitle) || $t('活动前几分钟') }}</text>
             <switch
               class="item-switch"
               :checked="advanceNotify.status === 1"
@@ -96,7 +96,7 @@ const deviceEmail = ref('')
 const systemNotifyEnabled = ref(true)
 const notifyList = ref(createDefaultNotifyList())
 
-const currentDeviceName = computed(() => deviceName.value || '当前设备')
+const currentDeviceName = computed(() => deviceName.value || uni.$t('当前设备'))
 const eventNotify = computed(() => getNotifyItem(0))
 const advanceNotify = computed(() => getNotifyItem(1))
 const advanceSliderStep = computed(() => minuteToStep(advanceNotify.value.advanceMinutes))
@@ -118,8 +118,8 @@ onShow(async () => {
 
 function createDefaultNotifyList() {
   return [
-    { notifyIndex: 0, notifyTitle: '事件发生时', advanceMinutes: 10, status: 0 },
-    { notifyIndex: 1, notifyTitle: '活动前几分钟', advanceMinutes: 10, status: 0 },
+    { notifyIndex: 0, notifyTitle: uni.$t('事件发生时'), advanceMinutes: 10, status: 0 },
+    { notifyIndex: 1, notifyTitle: uni.$t('活动前几分钟'), advanceMinutes: 10, status: 0 },
   ]
 }
 
@@ -210,7 +210,7 @@ async function loadNotifyList() {
     notifyList.value = normalizeNotifyList(list)
   } catch (e) {
     notifyList.value = normalizeNotifyList(notifyList.value)
-    uni.showToast({ title: String((e && e.message) || '获取通知设置失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取通知设置失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -239,7 +239,7 @@ async function onToggle(notifyIndex, e) {
     await submitNotifyChange(notifyIndex)
   } catch (e2) {
     notifyList.value = previous
-    uni.showToast({ title: String((e2 && e2.message) || '更新通知设置失败'), icon: 'none' })
+    uni.showToast({ title: String((e2 && e2.message) || uni.$t('更新通知设置失败')), icon: 'none' })
   }
 }
 
@@ -251,7 +251,7 @@ async function onAdvanceMinuteChange(e) {
     await submitNotifyChange(1)
   } catch (e2) {
     notifyList.value = previous
-    uni.showToast({ title: String((e2 && e2.message) || '更新提醒时间失败'), icon: 'none' })
+    uni.showToast({ title: String((e2 && e2.message) || uni.$t('更新提醒时间失败')), icon: 'none' })
   }
 }
 
@@ -265,7 +265,7 @@ async function refreshSystemNotificationPermission() {
 
 function openSystemNotificationSettings() {
   openNativeNotificationSettings().then((opened) => {
-    if (!opened) uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+    if (!opened) uni.showToast({ title: uni.$t('当前环境暂不支持打开系统设置'), icon: 'none' })
   })
 }
 </script>

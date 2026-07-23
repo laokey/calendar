@@ -1,8 +1,8 @@
 <template>
   <view class="bl-page doodle-page">
-    <BlHeader title="涂鸦" back>
+    <BlHeader :title="$t('涂鸦')" back>
       <template #right>
-        <text class="top-next" @click="goNext">下一步</text>
+        <text class="top-next" @click="goNext">{{ $t('下一步') }}</text>
       </template>
     </BlHeader>
 
@@ -48,28 +48,28 @@
 
     <view v-if="draggingSticker" class="trash" :class="{ active: overTrash }">
       <image class="trash-ico" src="/static/card/icon-card-trash.png" mode="aspectFit" />
-      <text class="trash-text">拖到此处删除</text>
+      <text class="trash-text">{{ $t('拖到此处删除') }}</text>
     </view>
 
     <view class="bottom-tabs">
       <view class="bt" :class="{ active: tool === 'sticker' }" @click="openStickerSheet">
         <image class="bt-ico-img" src="/static/card/icon-card-tab-sticker.png" mode="aspectFit" />
-        <text class="bt-text">贴纸</text>
+        <text class="bt-text">{{ $t('贴纸') }}</text>
       </view>
       <view class="bt" :class="{ active: tool === 'brush' }" @click="toggleBrushPanel">
         <image class="bt-ico-img" src="/static/card/icon-card-tab-brush.png" mode="aspectFit" />
-        <text class="bt-text">涂鸦</text>
+        <text class="bt-text">{{ $t('涂鸦') }}</text>
       </view>
       <view class="bt" :class="{ active: tool === 'text' }" @click="openTextPanel">
         <image class="bt-ico-img" src="/static/card/icon-card-tab-text.png" mode="aspectFit" />
-        <text class="bt-text">文本</text>
+        <text class="bt-text">{{ $t('文本') }}</text>
       </view>
     </view>
 
     <view v-if="stickerSheetOpen" class="sheet-mask" @click="closeStickerSheet">
       <view class="sticker-sheet" @click.stop>
         <view class="sheet-head">
-          <text class="sheet-title">贴纸</text>
+          <text class="sheet-title">{{ $t('贴纸') }}</text>
           <view class="sheet-close" @click="closeStickerSheet">
             <image class="sheet-close-img" src="/static/card/icon-card-close.png" mode="aspectFit" />
           </view>
@@ -87,8 +87,8 @@
           </view>
         </view>
         <view class="sheet-actions">
-          <view class="sheet-btn ghost" @click="closeStickerSheet"><text class="sheet-btn-text ghost-text">取消</text></view>
-          <view class="sheet-btn" @click="confirmSticker"><text class="sheet-btn-text">完成</text></view>
+          <view class="sheet-btn ghost" @click="closeStickerSheet"><text class="sheet-btn-text ghost-text">{{ $t('取消') }}</text></view>
+          <view class="sheet-btn" @click="confirmSticker"><text class="sheet-btn-text">{{ $t('完成') }}</text></view>
         </view>
       </view>
     </view>
@@ -100,15 +100,15 @@
         </view>
       </view>
       <view class="panel-actions">
-        <view class="p-btn ghost" @click="closeBrushPanel"><text class="p-text">取消</text></view>
-        <view class="p-btn" @click="closeBrushPanel"><text class="p-text">完成</text></view>
+        <view class="p-btn ghost" @click="closeBrushPanel"><text class="p-text">{{ $t('取消') }}</text></view>
+        <view class="p-btn" @click="closeBrushPanel"><text class="p-text">{{ $t('完成') }}</text></view>
       </view>
     </view>
 
     <view v-if="textPanelOpen" class="text-panel">
       <view class="text-card" @click.stop>
         <view class="text-head">
-          <text class="text-title">文本</text>
+          <text class="text-title">{{ $t('文本') }}</text>
           <view class="text-close" @click="closeTextPanel">
             <image class="text-close-img" src="/static/card/icon-card-close.png" mode="aspectFit" />
           </view>
@@ -117,7 +117,7 @@
           <textarea
             v-model="textDraft"
             class="text-input-real"
-            placeholder="输入你想表达的话"
+            :placeholder="$t('输入你想表达的话')"
             placeholder-class="ph"
             maxlength="60"
             auto-height
@@ -130,8 +130,8 @@
           </view>
         </view>
         <view class="panel-actions">
-          <view class="p-btn ghost" @click="closeTextPanel"><text class="p-text">取消</text></view>
-          <view class="p-btn" @click="confirmText"><text class="p-text">完成</text></view>
+          <view class="p-btn ghost" @click="closeTextPanel"><text class="p-text">{{ $t('取消') }}</text></view>
+          <view class="p-btn" @click="confirmText"><text class="p-text">{{ $t('完成') }}</text></view>
         </view>
       </view>
     </view>
@@ -160,12 +160,12 @@ const selectedStickerId = ref('')
 const brushPanelOpen = ref(false)
 
 const stickerOptions = [
-  { id: 'flower', src: '/static/card/sticker-card-flower.png', label: '花朵' },
-  { id: 'citrus', src: '/static/card/sticker-card-citrus.png', label: '柑橘' },
-  { id: 'rainbow', src: '/static/card/sticker-card-rainbow.png', label: '彩虹' },
-  { id: 'smile_badge', src: '/static/card/sticker-card-smile-badge.png', label: '笑脸' },
-  { id: 'sale_tag', src: '/static/card/sticker-card-sale-tag.png', label: '标签' },
-  { id: 'bright_side', src: '/static/card/sticker-card-bright-side.png', label: '卡片' },
+  { id: 'flower', src: '/static/card/sticker-card-flower.png', label: uni.$t('花朵') },
+  { id: 'citrus', src: '/static/card/sticker-card-citrus.png', label: uni.$t('柑橘') },
+  { id: 'rainbow', src: '/static/card/sticker-card-rainbow.png', label: uni.$t('彩虹') },
+  { id: 'smile_badge', src: '/static/card/sticker-card-smile-badge.png', label: uni.$t('笑脸') },
+  { id: 'sale_tag', src: '/static/card/sticker-card-sale-tag.png', label: uni.$t('标签') },
+  { id: 'bright_side', src: '/static/card/sticker-card-bright-side.png', label: uni.$t('卡片') },
 ]
 
 const palette = [

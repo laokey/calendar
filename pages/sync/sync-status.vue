@@ -37,13 +37,13 @@ onLoad((options) => {
   }
 })
 
-const titleText = computed(() => (mode.value === 'success' ? '成功!' : '同步进行中...'))
+const titleText = computed(() => (mode.value === 'success' ? uni.$t('成功!') : uni.$t('同步进行中...')))
 const descText = computed(() => {
-  if (mode.value === 'success') return `到目前为止，我们已经同步了${count.value || 101}来自此帐户的事件。`
-  return '我们已经开始同步过程，但这可能需要几分钟时间！'
+  if (mode.value === 'success') return `${uni.$t('到目前为止，我们已经同步了')}${count.value || 101}${uni.$t('来自此帐户的事件。')}`
+  return uni.$t('我们已经开始同步过程，但这可能需要几分钟时间！')
 })
-const btnText = computed(() => (mode.value === 'success' ? '查看活动' : '返回首页'))
-const bottomText = computed(() => (mode.value === 'success' ? '同步成功' : '等待同步完成'))
+const btnText = computed(() => (mode.value === 'success' ? uni.$t('查看活动') : uni.$t('返回首页')))
+const bottomText = computed(() => (mode.value === 'success' ? uni.$t('同步成功') : uni.$t('等待同步完成')))
 
 function primaryAction() {
   uni.reLaunch({ url: '/pages/activity/index' })

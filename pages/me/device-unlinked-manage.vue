@@ -4,24 +4,24 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">管理设备</text>
+      <text class="head-title">{{ $t('管理设备') }}</text>
       <view class="head-right" @click="done">
-        <text class="done">完成</text>
+        <text class="done">{{ $t('完成') }}</text>
       </view>
     </view>
 
     <view class="list">
       <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
-          <text class="status">未激活</text>
-          <text class="name">{{ d.deviceName || '日历' }}</text>
+          <text class="status">{{ $t('未激活') }}</text>
+          <text class="name">{{ d.deviceName || $t('日历') }}</text>
         </view>
         <view class="item-right">
           <view class="mini-btn ghost" @click="edit(d)">
-            <text class="mini-btn-text ghost-text">编辑</text>
+            <text class="mini-btn-text ghost-text">{{ $t('编辑') }}</text>
           </view>
           <view class="mini-btn primary" @click="goActivate(d)">
-            <text class="mini-btn-text primary-text">获取激活码</text>
+            <text class="mini-btn-text primary-text">{{ $t('获取激活码') }}</text>
           </view>
         </view>
       </view>
@@ -61,7 +61,7 @@ function done() {
 }
 
 function edit() {
-  uni.showToast({ title: '编辑', icon: 'none' })
+  uni.showToast({ title: uni.$t('编辑'), icon: 'none' })
 }
 
 async function refresh() {
@@ -76,7 +76,7 @@ async function refresh() {
     devices.value = deviceEmail.value ? inactive.filter((x) => String(x.deviceEmail) === deviceEmail.value) : inactive
   } catch (e) {
     devices.value = []
-    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取设备失败')), icon: 'none' })
   }
 }
 
@@ -87,16 +87,16 @@ onShow(() => {
 async function goActivate(d) {
   const deviceEmail = d && d.deviceEmail ? String(d.deviceEmail) : ''
   if (!deviceEmail) return
-  uni.showLoading({ title: '获取中' })
+  uni.showLoading({ title: uni.$t('获取中') })
   try {
     const code = await deviceApi.getDeviceActivationCode({ deviceEmail })
     if (!code) {
-      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('获取激活码失败'), icon: 'none' })
       return
     }
     uni.navigateTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(deviceEmail)}` })
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取激活码失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

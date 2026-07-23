@@ -1,9 +1,9 @@
 <template>
   <view class="bl-page cat-form-page">
-    <BlHeader title="编辑类别" back>
+    <BlHeader :title="$t('编辑类别')" back>
       <template #right>
         <view class="top-save" @click="save">
-          <text class="top-save-text">保存</text>
+          <text class="top-save-text">{{ $t('保存') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -11,17 +11,17 @@
     <view class="bl-card">
       <view class="row-title">
         <image class="row-icon" src="/static/meals/icon_tag.png" mode="aspectFit" />
-        <text class="row-title-text">名称</text>
+        <text class="row-title-text">{{ $t('名称') }}</text>
       </view>
       <view class="input-wrap">
-        <input v-model="name" class="input" placeholder="请输入" placeholder-class="ph" />
+        <input v-model="name" class="input" :placeholder="$t('请输入')" placeholder-class="ph" />
       </view>
     </view>
 
     <view class="bl-card colors-card">
       <view class="row-title">
         <image class="row-icon" src="/static/meals/icon_palette.png" mode="aspectFit" />
-        <text class="row-title-text">选择颜色</text>
+        <text class="row-title-text">{{ $t('选择颜色') }}</text>
       </view>
       <view class="colors">
         <view v-for="c in colors" :key="c" class="dot" :style="{ background: c }" @click="color = c">
@@ -31,7 +31,7 @@
     </view>
 
     <view class="bottom-save" @click="save">
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
   </view>
 </template>
@@ -95,21 +95,21 @@ function colorIndexOf(hex) {
 
 async function save() {
   if (!String(name.value || '').trim()) {
-    uni.showToast({ title: '请输入名称', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入名称'), icon: 'none' })
     return
   }
   const typeColor = colorIndexOf(color.value)
-  uni.showLoading({ title: '保存中' })
+  uni.showLoading({ title: uni.$t('保存中') })
   try {
     const res = await mealsApi.updateRecipeTypeInfo({ typeIndex: typeIndex.value, typeName: name.value, typeColor })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '保存失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
       return
     }
     updateCategory(mealState.value, catId.value, { name: name.value, color: color.value })
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

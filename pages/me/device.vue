@@ -8,7 +8,7 @@
           mode="aspectFit"
         />
       </view>
-      <text class="head-title">关联设备</text>
+      <text class="head-title">{{ $t('关联设备') }}</text>
       <view class="head-right">
         <view class="bl-icon-btn" @click="goAdd">
         <text class="plus">+</text>
@@ -26,25 +26,25 @@
 
     <view class="intro">
       <text class="intro-text"
-        >链接多个日历以在设备间共享相同信息。当您在一台设备上进行更改时，其他关联设备将自动更新。</text
+        >{{ $t('链接多个日历以在设备间共享相同信息。当您在一台设备上进行更改时，其他关联设备将自动更新。') }}</text
       >
       <text class="intro-text"
-        >点击下方的+号来链接全新的日历或您已激活的日历。</text
+        >{{ $t('点击下方的+号来链接全新的日历或您已激活的日历。') }}</text
       >
     </view>
 
     <view class="list">
       <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
-          <text class="status">{{ d.active ? "已激活" : "未激活" }}</text>
+          <text class="status">{{ d.active ? $t('已激活') : $t('未激活') }}</text>
           <text class="name">{{ d.name }}</text>
         </view>
         <view class="item-right">
           <view class="mini-btn ghost" @click.stop="goManage(d)">
-            <text class="mini-btn-text ghost-text">编辑</text>
+            <text class="mini-btn-text ghost-text">{{ $t('编辑') }}</text>
           </view>
           <view class="mini-btn primary" @click.stop="getCode(d)">
-            <text class="mini-btn-text primary-text">获取激活码</text>
+            <text class="mini-btn-text primary-text">{{ $t('获取激活码') }}</text>
           </view>
         </view>
       </view>
@@ -90,12 +90,12 @@ async function refresh() {
       linkId: d.linkId,
       deviceEmail: d.deviceEmail,
       activationCode: d.activationCode,
-      name: d.deviceName || '日历',
+      name: d.deviceName || uni.$t('日历'),
       active: Number(d.status) === 1,
     }))
   } catch (e) {
     devices.value = []
-    uni.showToast({ title: String((e && e.message) || '获取设备列表失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取设备列表失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -130,18 +130,18 @@ function goManage(d) {
 async function getCode(d) {
   const deviceEmail = d && d.deviceEmail ? String(d.deviceEmail) : ''
   if (!deviceEmail) return
-  uni.showLoading({ title: '获取中' })
+  uni.showLoading({ title: uni.$t('获取中') })
   try {
     const code = await deviceApi.getDeviceActivationCode({ deviceEmail })
     if (!code) {
-      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('获取激活码失败'), icon: 'none' })
       return
     }
     uni.navigateTo({
       url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(deviceEmail)}`,
     })
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取激活码失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

@@ -1,12 +1,12 @@
 <template>
   <view class="bl-page add-page">
-    <BlHeader :title="isEdit ? '编辑' : '添加'" back>
+    <BlHeader :title="isEdit ? $t('编辑') : $t('添加')" back>
       <template #right>
         <view v-if="isEdit" class="top-trash" @click="onDelete">
           <image class="top-trash-img" src="/static/calendar/icon_trash.png" mode="aspectFit" />
         </view>
         <view v-else class="top-save" @click="save">
-          <text class="top-save-text">保存</text>
+          <text class="top-save-text">{{ $t('保存') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -20,7 +20,7 @@
 
     <view class="block input-block">
       <view class="input-wrap">
-        <input v-model="name" class="input" placeholder="请输入名称" placeholder-class="ph" />
+        <input v-model="name" class="input" :placeholder="$t('请输入名称')" placeholder-class="ph" />
         <view v-if="name" class="clear-btn" @click="name = ''">
           <image class="clear-img" src="/static/calendar/icon_close.png" mode="aspectFit" />
         </view>
@@ -28,7 +28,7 @@
     </view>
 
     <view class="block color-block">
-      <text class="label">选择颜色</text>
+      <text class="label">{{ $t('选择颜色') }}</text>
       <view class="colors">
         <view
           v-for="c in palette"
@@ -43,19 +43,19 @@
     </view>
 
     <view class="bottom-save" @click="save">
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
 
     <BlSheet v-model="deleteSheetOpen" :headless="true" title="" :confirm-text="''">
       <view class="action-list">
         <view class="action-item" @click="reassignAndDelete">
-          <text class="action-text">删除并重新分配</text>
+          <text class="action-text">{{ $t('删除并重新分配') }}</text>
         </view>
         <view class="action-item danger" @click="confirmDeleteAll">
-          <text class="action-text">删除全部</text>
+          <text class="action-text">{{ $t('删除全部') }}</text>
         </view>
         <view class="action-cancel" @click="deleteSheetOpen = false">
-          <text class="action-cancel-text">取消</text>
+          <text class="action-cancel-text">{{ $t('取消') }}</text>
         </view>
       </view>
     </BlSheet>
@@ -125,7 +125,7 @@ onLoad((options) => {
   state.value = ensureCalendarState()
   const m = findMember(state.value, id)
   if (!m) {
-    uni.showToast({ title: '成员不存在', icon: 'none' })
+    uni.showToast({ title: uni.$t('成员不存在'), icon: 'none' })
     uni.navigateBack()
     return
   }
@@ -168,7 +168,7 @@ function pickAvatar() {
     return
   }
   uni.showActionSheet({
-    itemList: ['选择照片', '移除照片'],
+    itemList: [uni.$t('选择照片'), uni.$t('移除照片')],
     success: (res) => {
       const tapIndex = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       if (tapIndex === 0) {
@@ -185,7 +185,7 @@ function pickAvatar() {
 async function save() {
   const n = String(name.value || '').trim()
   if (!n) {
-    uni.showToast({ title: '请输入名称', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入名称'), icon: 'none' })
     return
   }
   const logged = !!uni.getStorageSync('auth_logged_in')
@@ -194,7 +194,7 @@ async function save() {
 
   if (isEdit.value) {
     if (logged) {
-      uni.showLoading({ title: '保存中' })
+      uni.showLoading({ title: uni.$t('保存中') })
       try {
         const res = await membersApi.updateMemberInfo({
           memberId: memberId.value,
@@ -203,14 +203,14 @@ async function save() {
           memberColor,
         })
         if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-          uni.showToast({ title: '保存失败', icon: 'none' })
+          uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
           return
         }
         try {
           await syncRemoteMembers()
         } catch (e) {}
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+        uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
         return
       } finally {
         try {
@@ -228,7 +228,7 @@ async function save() {
   }
 
   if (logged) {
-    uni.showLoading({ title: '保存中' })
+    uni.showLoading({ title: uni.$t('保存中') })
     try {
       const res = await membersApi.addMemberInfo({
         memberName: n,
@@ -236,14 +236,14 @@ async function save() {
         memberColor,
       })
       if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-        uni.showToast({ title: '保存失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
         return
       }
       try {
         await syncRemoteMembers()
       } catch (e) {}
     } catch (e) {
-      uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
       return
     } finally {
       try {
@@ -253,7 +253,7 @@ async function save() {
   } else {
     const m = addMember(state.value, { name: n, color: color.value, avatarUrl: avatarUrl.value })
     if (!m) {
-      uni.showToast({ title: '请输入名称', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入名称'), icon: 'none' })
       return
     }
   }
@@ -266,18 +266,18 @@ async function save() {
 async function deleteAll() {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (logged) {
-    uni.showLoading({ title: '删除中' })
+    uni.showLoading({ title: uni.$t('删除中') })
     try {
       const res = await membersApi.deleteMemberInfo({ memberId: memberId.value })
       if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-        uni.showToast({ title: '删除失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
         return
       }
       try {
         await syncRemoteMembers()
       } catch (e) {}
     } catch (e) {
-      uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
       return
     } finally {
       try {
@@ -314,10 +314,10 @@ function reassignAndDelete() {
 function confirmDeleteAll() {
   deleteSheetOpen.value = false
   uni.showModal({
-    title: '你确定吗？',
-    content: '该成员相关的事件、任务和奖惩将被删除，删除后不可撤销。',
-    confirmText: '是的，我确定',
-    cancelText: '取消',
+    title: uni.$t('你确定吗？'),
+    content: uni.$t('该成员相关的事件、任务和奖惩将被删除，删除后不可撤销。'),
+    confirmText: uni.$t('是的，我确定'),
+    cancelText: uni.$t('取消'),
     success: (r) => {
       if (r && r.confirm) deleteAll()
     },

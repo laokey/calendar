@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page cats-page">
-    <BlHeader title="分类" back />
+    <BlHeader :title="$t('分类')" back />
 
     <view class="list">
       <view v-for="c in categories" :key="c.id" class="row">

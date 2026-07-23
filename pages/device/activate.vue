@@ -1,34 +1,34 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="激活设备" back />
+    <BlHeader :title="$t('激活设备')" back />
 
     <view class="hero">
       <image class="device-img" src="/static/device/device_hero_plain.png" mode="aspectFit" />
     </view>
 
     <view class="code-card">
-      <view class="code-tag"><text class="tag-text">设备激活码</text></view>
+      <view class="code-tag"><text class="tag-text">{{ $t('设备激活码') }}</text></view>
       <view class="code-main">
         <text class="code-number">{{ code }}</text>
         <view class="code-actions">
-          <view class="bl-btn-secondary bordered" @click="copy"><text>复制</text></view>
+          <view class="bl-btn-secondary bordered" @click="copy"><text>{{ $t('复制') }}</text></view>
           <view class="bl-btn-secondary is-dark" @click="share">
             <!-- <image class="btn-icon" src="/static/device/icon_activate_action_add.png" mode="aspectFit" /> -->
-            <text>分享</text>
+            <text>{{ $t('分享') }}</text>
           </view>
         </view>
       </view>
-      <text class="code-hint bl-muted">此代码将在23小时后刷新。</text>
+      <text class="code-hint bl-muted">{{ $t('此代码将在23小时后刷新。') }}</text>
     </view>
 
     <view class="steps-card bl-card">
-      <text class="steps-title">三个步骤，激活设备</text>
+      <text class="steps-title">{{ $t('三个步骤，激活设备') }}</text>
       <view class="steps">
         <view class="step">
           <view class="step-icon">
             <image class="step-icon-img" src="/static/device/icon_activate_step_open_device.png" mode="aspectFit" />
           </view>
-          <text class="step-text">打开您的新日历</text>
+          <text class="step-text">{{ $t('打开您的新日历') }}</text>
         </view>
         <view class="step-dots">
           <image class="step-dots-img" src="/static/device/icon_activate_step_dots_alt.png" mode="aspectFit" />
@@ -37,7 +37,7 @@
           <view class="step-icon">
             <image class="step-icon-img" src="/static/device/icon_activate_step_wifi.png" mode="aspectFit" />
           </view>
-          <text class="step-text">连接到Wi‑Fi</text>
+          <text class="step-text">{{ $t('连接到Wi‑Fi') }}</text>
         </view>
         <view class="step-dots">
           <image class="step-dots-img" src="/static/device/icon_activate_step_dots_alt.png" mode="aspectFit" />
@@ -46,7 +46,7 @@
           <view class="step-icon">
             <image class="step-icon-img" src="/static/device/icon_activate_step_code.png" mode="aspectFit" />
           </view>
-          <text class="step-text">输入激活码</text>
+          <text class="step-text">{{ $t('输入激活码') }}</text>
         </view>
       </view>
     </view>
@@ -77,18 +77,18 @@ async function loadActivationCode(deviceEmail, fallbackCode = '') {
     code.value = String(fallbackCode || '').trim()
     return
   }
-  uni.showLoading({ title: '获取中' })
+  uni.showLoading({ title: uni.$t('获取中') })
   try {
     const remoteCode = await deviceApi.getDeviceActivationCode({ deviceEmail: email })
     const nextCode = String(remoteCode || fallbackCode || '').trim()
     if (!nextCode) {
-      uni.showToast({ title: '获取激活码失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('获取激活码失败'), icon: 'none' })
       return
     }
     code.value = nextCode
   } catch (e) {
     code.value = String(fallbackCode || '').trim()
-    uni.showToast({ title: String((e && e.message) || '获取激活码失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取激活码失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -108,7 +108,7 @@ function copy() {
 }
 
 function share() {
-  uni.showToast({ title: '已准备分享', icon: 'none' })
+  uni.showToast({ title: uni.$t('已准备分享'), icon: 'none' })
 }
 </script>
 
@@ -277,13 +277,16 @@ function share() {
 }
 
 .step-text {
+  display: block;
   text-align: center;
   font-size: 22rpx;
   font-weight: 600;
   color: rgba(17, 17, 17, 0.72);
   line-height: 30rpx;
-  min-height: 30rpx;
-  white-space: nowrap;
+  min-height: 60rpx;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .step-dots {

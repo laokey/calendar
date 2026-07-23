@@ -1,9 +1,9 @@
 <template>
   <view class="bl-page page">
-    <BlHeader title="同步日历" back back-icon-src="/static/sync/icon_nav_back_small.png" />
+    <BlHeader :title="$t('同步日历')" back back-icon-src="/static/sync/icon_nav_back_small.png" />
 
     <view v-if="syncedList.length" class="section">
-      <text class="section-title">已同步列表</text>
+      <text class="section-title">{{ $t('已同步列表') }}</text>
       <view class="card-list">
         <view v-for="item in syncedList" :key="item.id" class="card" @click="openEdit(item.id)">
           <image class="card-icon" :src="providerIcon(item.provider)" mode="aspectFit" />
@@ -20,12 +20,12 @@
     </view>
 
     <view class="section">
-      <text class="section-title">手机上的日历</text>
+      <text class="section-title">{{ $t('手机上的日历') }}</text>
 
       <view v-if="!calendarPerm" class="perm-card">
-        <text class="perm-title">点击启用本地日历访问</text>
+        <text class="perm-title">{{ $t('点击启用本地日历访问') }}</text>
         <view class="perm-row">
-          <text class="perm-label">启用本地日历权限</text>
+          <text class="perm-label">{{ $t('启用本地日历权限') }}</text>
           <switch :checked="calendarPerm" color="#3d6afb" @change="onPermToggle" />
         </view>
       </view>
@@ -39,11 +39,11 @@
           <view class="lmeta">
             <text class="lname">{{ c.title }}</text>
             <text class="lsub bl-muted">{{ c.source }}</text>
-            <text class="lsub bl-muted">{{ c.monthCount }} 本月事件</text>
+            <text class="lsub bl-muted">{{ c.monthCount }} {{ $t('本月事件') }}</text>
           </view>
           <view class="lright">
             <view class="pill" :class="{ disabled: c.synced }" @click="syncLocal(c)">
-              <text class="pill-text">{{ c.synced ? '已同步' : '同步' }}</text>
+              <text class="pill-text">{{ c.synced ? $t('已同步') : $t('同步') }}</text>
             </view>
           </view>
         </view>
@@ -51,15 +51,15 @@
     </view>
 
     <view class="bottom-action">
-      <view class="bl-btn-primary" @click="goNew"><text>同步新日历</text></view>
+      <view class="bl-btn-primary" @click="goNew"><text>{{ $t('同步新日历') }}</text></view>
     </view>
 
     <view v-if="permDialogOpen" class="mask" @click="closePermDialog">
       <view class="dialog" @click.stop>
-        <text class="dialog-text">需要日历权限以便查看系统本地日历的日历事件。</text>
+        <text class="dialog-text">{{ $t('需要日历权限以便查看系统本地日历的日历事件。') }}</text>
         <view class="dialog-actions">
-          <view class="btn btn-cancel" @click="denyPerm"><text class="btn-text">取消</text></view>
-          <view class="btn btn-ok" @click="grantPerm"><text class="btn-text ok-text">继续</text></view>
+          <view class="btn btn-cancel" @click="denyPerm"><text class="btn-text">{{ $t('取消') }}</text></view>
+          <view class="btn btn-ok" @click="grantPerm"><text class="btn-text ok-text">{{ $t('继续') }}</text></view>
         </view>
       </view>
     </view>

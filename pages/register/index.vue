@@ -4,21 +4,21 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/login/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">注册</text>
+      <text class="head-title">{{ $t('注册') }}</text>
       <view class="head-right" />
     </view>
 
-    <text class="hint">请输入您的163电子邮箱</text>
+    <text class="hint">{{ $t('请输入您的163电子邮箱') }}</text>
 
     <view class="panel">
       <view class="field">
-        <text class="label">邮箱</text>
+        <text class="label">{{ $t('邮箱') }}</text>
         <view class="input-wrap">
           <input
             v-model="email"
             type="email"
             class="input"
-            placeholder="请输入邮箱"
+            :placeholder="$t('请输入邮箱')"
             placeholder-class="ph"
             confirm-type="next"
             @blur="onEmailBlur"
@@ -29,13 +29,13 @@
       </view>
 
       <view class="field">
-        <text class="label">密码</text>
+        <text class="label">{{ $t('密码') }}</text>
         <view class="input-wrap">
           <input
             v-model="password"
             class="input"
             :password="!showPassword"
-            placeholder="请输入密码"
+            :placeholder="$t('请输入密码')"
             placeholder-class="ph"
             confirm-type="next"
           />
@@ -47,27 +47,27 @@
       </view>
 
       <view class="field">
-        <text class="label">姓名</text>
+        <text class="label">{{ $t('姓名') }}</text>
         <view class="input-wrap">
-          <input v-model="name" class="input" placeholder="请输入姓名" placeholder-class="ph" confirm-type="done" @confirm="submit" />
+          <input v-model="name" class="input" :placeholder="$t('请输入姓名')" placeholder-class="ph" confirm-type="done" @confirm="submit" />
           <view v-if="name" class="icon-btn" @click="name = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
         </view>
       </view>
 
-      <text class="tip">当前注册仅支持163邮箱。</text>
+      <text class="tip">{{ $t('当前注册仅支持163邮箱。') }}</text>
     </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
-      <text class="btn-text">创建账号</text>
+      <text class="btn-text">{{ $t('创建账号') }}</text>
     </view>
 
     <view class="agree-row" @click="agreed = !agreed">
       <image class="checkbox-img" :src="agreed ? '/static/login/icon_checkbox_on.png' : '/static/login/icon_checkbox_off.png'" mode="aspectFit" />
       <view class="agree-text">
-        <text class="agree-muted">以阅读并同意</text>
-        <text class="agree-link" @click.stop="openAgreement('user')">《用户协议》</text>
-        <text class="agree-muted">和</text>
-        <text class="agree-link" @click.stop="openAgreement('privacy')">《隐私政策》</text>
+        <text class="agree-muted">{{ $t('以阅读并同意') }}</text>
+        <text class="agree-link" @click.stop="openAgreement('user')">{{ $t('《用户协议》') }}</text>
+        <text class="agree-muted">{{ $t('和') }}</text>
+        <text class="agree-link" @click.stop="openAgreement('privacy')">{{ $t('《隐私政策》') }}</text>
       </view>
     </view>
   </view>
@@ -115,11 +115,11 @@ function validateEmail() {
   const v = email.value.trim()
   if (!v) return true
   if (!isEmail(v)) {
-    uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+    uni.showToast({ title: uni.$t('邮箱格式不正确'), icon: 'none' })
     return false
   }
   if (!isSupportedEmail(v)) {
-    uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+    uni.showToast({ title: uni.$t('当前仅支持163邮箱'), icon: 'none' })
     return false
   }
   return true
@@ -144,19 +144,19 @@ function openAgreement() {
 async function submit() {
   if (!canSubmit.value) {
     if (!email.value.trim()) {
-      uni.showToast({ title: '请输入邮箱', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入邮箱'), icon: 'none' })
       return
     }
     if (!password.value.trim()) {
-      uni.showToast({ title: '请输入密码', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入密码'), icon: 'none' })
       return
     }
     if (!name.value.trim()) {
-      uni.showToast({ title: '请输入姓名', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入姓名'), icon: 'none' })
       return
     }
     if (!agreed.value) {
-      uni.showToast({ title: '请先同意协议', icon: 'none' })
+      uni.showToast({ title: uni.$t('请先同意协议'), icon: 'none' })
       return
     }
     return
@@ -167,33 +167,33 @@ async function submit() {
   const v = email.value.trim()
   const n = name.value.trim()
   const p = password.value.trim()
-  uni.showLoading({ title: '创建中' })
+  uni.showLoading({ title: uni.$t('创建中') })
   try {
     const res = await authApi.register({ account: v, password: p, userName: n })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
       if (res.code === 201 || res.code === '201') {
-        uni.showToast({ title: '该邮箱已注册', icon: 'none' })
+        uni.showToast({ title: uni.$t('该邮箱已注册'), icon: 'none' })
         return
       }
-      uni.showToast({ title: '注册失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('注册失败'), icon: 'none' })
       return
     }
     uni.setStorageSync('auth_policy_agreed', true)
-    uni.showToast({ title: '注册成功，请登录', icon: 'none' })
+    uni.showToast({ title: uni.$t('注册成功，请登录'), icon: 'none' })
     setTimeout(() => {
       uni.redirectTo({ url: `/pages/login/index?email=${encodeURIComponent(v)}` })
     }, 350)
   } catch (e) {
     const code = e && e.code !== undefined ? e.code : undefined
     if (code === 201 || code === '201') {
-      uni.showToast({ title: '该邮箱已注册', icon: 'none' })
+      uni.showToast({ title: uni.$t('该邮箱已注册'), icon: 'none' })
       return
     }
     if (code === 202 || code === '202') {
-      uni.showToast({ title: '注册失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('注册失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: String((e && e.message) || '注册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('注册失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

@@ -62,9 +62,9 @@ import BlSheet from './BlSheet.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  title: { type: String, default: '时间' },
+  title: { type: String, default: uni.$t('时间') },
   value: { type: String, default: '' },
-  confirmText: { type: String, default: '确定' },
+  confirmText: { type: String, default: uni.$t('确定') },
 })
 
 const emit = defineEmits(['update:modelValue', 'confirm'])

@@ -4,16 +4,16 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">已关联设备</text>
+      <text class="head-title">{{ $t('已关联设备') }}</text>
       <view class="head-right" @click="goManage">
-        <text class="manage">管理</text>
+        <text class="manage">{{ $t('管理') }}</text>
       </view>
     </view>
 
     <view class="list">
       <view v-for="d in devices" :key="d.id" class="item" @click="open(d)">
         <view class="item-left">
-          <text class="status">已激活</text>
+          <text class="status">{{ $t('已激活') }}</text>
           <text class="name">{{ d.name }}</text>
         </view>
         <image class="chev" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
@@ -64,11 +64,11 @@ async function refresh() {
       .map((item) => ({
         linkId: item.linkId,
         deviceEmail: item.deviceEmail,
-        name: item.deviceName || '日历',
+        name: item.deviceName || uni.$t('日历'),
       }))
   } catch (e) {
     devices.value = []
-    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取设备失败')), icon: 'none' })
   }
 }
 

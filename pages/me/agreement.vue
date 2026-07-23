@@ -1,22 +1,22 @@
 <template>
   <view class="page">
-    <BlHeader title="用户协议" back />
+    <BlHeader :title="$t('用户协议')" back />
 
     <view class="card">
-      <view class="row" @click="open('隐私政策')">
-        <text class="label">隐私政策</text>
+      <view class="row" @click="open($t('隐私政策'))">
+        <text class="label">{{ $t('隐私政策') }}</text>
         <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
-      <view class="row" @click="open('用户协议')">
-        <text class="label">用户协议</text>
+      <view class="row" @click="open($t('用户协议'))">
+        <text class="label">{{ $t('用户协议') }}</text>
         <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
-      <view class="row" @click="open('会员服务协议')">
-        <text class="label">会员服务协议</text>
+      <view class="row" @click="open($t('会员服务协议'))">
+        <text class="label">{{ $t('会员服务协议') }}</text>
         <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
-      <view class="row" @click="open('自动续费协议')">
-        <text class="label">自动续费协议</text>
+      <view class="row" @click="open($t('自动续费协议'))">
+        <text class="label">{{ $t('自动续费协议') }}</text>
         <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
       </view>
     </view>
@@ -29,7 +29,7 @@ import BlHeader from '../../components/BlHeader.vue'
 function open(title) {
   uni.showModal({
     title,
-    content: '此处为协议内容占位，后续可替换为真实内容或跳转到H5/富文本页面。',
+    content: uni.$t('此处为协议内容占位，后续可替换为真实内容或跳转到H5/富文本页面。'),
     showCancel: false,
   })
 }

@@ -1,12 +1,12 @@
 <template>
   <view class="bl-page give-page">
-    <BlHeader title="给予心心" back back-icon-src="/static/reward/icon_nav_back_small.png" />
+    <BlHeader :title="$t('给予心心')" back back-icon-src="/static/reward/icon_nav_back_small.png" />
 
     <view class="card">
       <view class="card-head">
         <view class="head-left">
           <image class="head-icon" src="/static/reward/icon_members_small.png" mode="aspectFit" />
-          <text class="head-title"><text class="req">*</text>选择成员</text>
+          <text class="head-title"><text class="req">*</text>{{ $t('选择成员') }}</text>
         </view>
       </view>
 
@@ -18,7 +18,7 @@
         </view>
         <view class="mem add" @click="goAddMember">
           <view class="add-circle"><text class="add-plus">+</text></view>
-          <text class="mem-name">添加</text>
+          <text class="mem-name">{{ $t('添加') }}</text>
         </view>
       </view>
     </view>
@@ -27,11 +27,11 @@
       <view class="card-head">
         <view class="head-left">
           <image class="head-icon is-heart" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
-          <text class="head-title"><text class="req">*</text>心心</text>
+          <text class="head-title"><text class="req">*</text>{{ $t('心心') }}</text>
         </view>
       </view>
       <view class="heart-input">
-        <input v-model="hearts" class="input" type="number" placeholder="请输入心心数量" placeholder-class="ph" />
+        <input v-model="hearts" class="input" type="number" :placeholder="$t('请输入心心数量')" placeholder-class="ph" />
         <view v-if="hearts" class="clear" @click="hearts = ''">
           <image class="clear-img" src="/static/reward/icon_close_x.png" mode="aspectFit" />
         </view>
@@ -40,9 +40,9 @@
 
     <view class="card table-card">
       <view class="table-head">
-        <text class="th">成员</text>
-        <text class="th">之前</text>
-        <text class="th">之后</text>
+        <text class="th">{{ $t('成员') }}</text>
+        <text class="th">{{ $t('之前') }}</text>
+        <text class="th">{{ $t('之后') }}</text>
       </view>
       <view class="table-row">
         <text class="td">{{ selectedMemberName }}</text>
@@ -52,7 +52,7 @@
     </view>
 
     <view class="bottom" @click="confirm">
-      <text class="bottom-text">确认</text>
+      <text class="bottom-text">{{ $t('确认') }}</text>
     </view>
   </view>
 </template>
@@ -139,12 +139,12 @@ function goAddMember() {
 
 function validate() {
   if (!memberId.value) {
-    uni.showToast({ title: '请选择成员', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择成员'), icon: 'none' })
     return false
   }
   const n = Number(hearts.value || 0) || 0
   if (n <= 0) {
-    uni.showToast({ title: '请输入心心', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入心心'), icon: 'none' })
     return false
   }
   return true
@@ -158,13 +158,13 @@ async function confirm() {
     await rewardsApi.addStarNumberInfo({
       memberId: memberId.value,
       rewardId: '0',
-      updateReason: '手动赠送',
+      updateReason: uni.$t('手动赠送'),
       starNumber: n,
     })
     uni.$emit && uni.$emit('reward:refresh')
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '给予心心失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('给予心心失败')), icon: 'none' })
   } finally {
     submitting.value = false
   }

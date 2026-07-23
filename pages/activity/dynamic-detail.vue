@@ -4,7 +4,7 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">动态详情</text>
+      <text class="head-title">{{ $t('动态详情') }}</text>
       <view class="head-right">
         <view class="action" @click="editTitle">
           <image class="action-icon" src="/static/common/icon_edit.png" mode="aspectFit" />
@@ -48,7 +48,7 @@
         <view class="r-ico">
           <image class="r-ico-img" src="/static/message/icon_person.png" mode="aspectFit" />
         </view>
-        <text class="r-text">分配给</text>
+        <text class="r-text">{{ $t('分配给') }}</text>
         <view class="assignee">
           <view class="a-avatar" :style="{ background: item.detail.assignTo.color }">
             <text class="a-text">{{ item.detail.assignTo.glyph }}</text>
@@ -61,7 +61,7 @@
         <view class="r-ico">
           <image class="r-ico-img" src="/static/common/icon_complete.png" mode="aspectFit" />
         </view>
-        <text class="r-text">{{ item.detail.doneAtText }}</text>
+        <text class="r-text">{{ formatDoneAtText(item.detail.doneAtText) }}</text>
       </view>
     </view>
 
@@ -71,7 +71,7 @@
       :class="{ disabled: !item, primary: item && item.action !== 'done' }"
       @click="toggleDone"
     >
-      <text class="btn-text">{{ item && item.action === 'done' ? '标记为未完成' : '标记为已完成' }}</text>
+      <text class="btn-text">{{ item && item.action === 'done' ? $t('标记为未完成') : $t('标记为已完成') }}</text>
     </view>
   </view>
 </template>
@@ -99,7 +99,7 @@ onShow(() => {
   taskState.value = ensureTaskState()
   syncCurrentTaskDetail()
   if (id.value && !item.value) {
-    uni.showToast({ title: '动态不存在', icon: 'none' })
+    uni.showToast({ title: uni.$t('动态不存在'), icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
   }
 })
@@ -130,9 +130,59 @@ function pad(n) {
   return String(n).padStart(2, '0')
 }
 
+function currentLocaleTag() {
+  try {
+    return typeof uni.getLocale === 'function' ? String(uni.getLocale() || 'zh-CN') : 'zh-CN'
+  } catch (e) {
+    return 'zh-CN'
+  }
+}
+
 function formatDateTime(ts) {
   const d = new Date(ts)
-  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  try {
+    return new Intl.DateTimeFormat(currentLocaleTag(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(d)
+  } catch (e) {
+    return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+}
+
+function buildDoneAtText(action, timeValue) {
+  const label = action === 'cancel' ? uni.$t('取消于') : uni.$t('完成于')
+  return `${label} ${formatDateTime(timeValue)}`
+}
+
+function formatDoneAtText(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return uni.$t('未完成')
+  if (raw === uni.$t('未完成') || raw === '未完成') return uni.$t('未完成')
+
+  let action = 'done'
+  let timeText = raw
+  if (raw.startsWith('完成于')) {
+    action = 'done'
+    timeText = raw.slice(3).trim()
+  } else if (raw.startsWith('取消于')) {
+    action = 'cancel'
+    timeText = raw.slice(3).trim()
+  } else if (raw.startsWith(uni.$t('完成于'))) {
+    action = 'done'
+    timeText = raw.slice(String(uni.$t('完成于')).length).trim()
+  } else if (raw.startsWith(uni.$t('取消于'))) {
+    action = 'cancel'
+    timeText = raw.slice(String(uni.$t('取消于')).length).trim()
+  }
+
+  const parsed = Date.parse(timeText.replace(/\./g, '-').replace('T', ' '))
+  if (Number.isFinite(parsed)) return buildDoneAtText(action, parsed)
+  return `${action === 'cancel' ? uni.$t('取消于') : uni.$t('完成于')} ${timeText}`
 }
 
 function taskIconFromTitle(value) {
@@ -172,13 +222,13 @@ function formatTaskDateText(task, fallback) {
 
 function formatRepeatText(task, fallback) {
   if (!task) return String(fallback || '')
-  if (!task.repeat) return '不重复'
+  if (!task.repeat) return uni.$t('不重复')
   const unit = task.repeat.unit || 'day'
   const every = Number(task.repeat.every || 1) || 1
-  if (unit === 'week') return every > 1 ? `每${every}周` : '每周'
-  if (unit === 'month') return every > 1 ? `每${every}月` : '每月'
-  if (unit === 'year') return every > 1 ? `每${every}年` : '每年'
-  return every > 1 ? `每${every}天` : '每日'
+  if (unit === 'week') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('周')}` : uni.$t('每周')
+  if (unit === 'month') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('月')}` : uni.$t('每月')
+  if (unit === 'year') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('年')}` : uni.$t('每年')
+  return every > 1 ? `${uni.$t('每')}${every}${uni.$t('天')}` : uni.$t('每日')
 }
 
 function resolveAssignee(task, fallback) {
@@ -232,10 +282,10 @@ async function syncCurrentTaskDetail() {
     const baseStars = Math.abs(Number(latestTask.hearts || (current.detail && current.detail.starText) || 0))
     const nextAction = latestTask.completedAtTs ? 'done' : current.action
     const doneAtText = latestTask.completedAtTs
-      ? `完成于 ${formatDateTime(latestTask.completedAtTs === 1 ? Date.now() : latestTask.completedAtTs)}`
+      ? buildDoneAtText('done', latestTask.completedAtTs === 1 ? Date.now() : latestTask.completedAtTs)
       : current.detail && current.detail.doneAtText
         ? current.detail.doneAtText
-        : '未完成'
+        : uni.$t('未完成')
     const assignTo = resolveAssignee(latestTask, current.detail && current.detail.assignTo)
 
     const s = ensureActivityState()
@@ -273,7 +323,7 @@ function editTitle() {
   if (!item.value) return
   const taskId = item.value.taskId ? String(item.value.taskId).trim() : String(item.value.id || '').trim()
   if (!taskId) {
-    uni.showToast({ title: '未找到任务ID', icon: 'none' })
+    uni.showToast({ title: uni.$t('未找到任务ID'), icon: 'none' })
     return
   }
   const dateKey = resolveDateKey(item.value.taskDate || (item.value.detail && item.value.detail.dateText) || item.value.createdAt)
@@ -302,9 +352,9 @@ function remove() {
   if (!item.value) return
   uni.showModal({
     title: '',
-    content: '删除该动态？',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: uni.$t('删除该动态？'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: async (res) => {
       if (!res.confirm) return
       if (submitting.value) return
@@ -312,19 +362,19 @@ function remove() {
       try {
         const dynamicId = item.value && item.value.id ? String(item.value.id).trim() : String(id.value || '').trim()
         if (!dynamicId) {
-          uni.showToast({ title: '缺少动态ID', icon: 'none' })
+          uni.showToast({ title: uni.$t('缺少动态ID'), icon: 'none' })
           return
         }
         await noticeApi.deleteTaskDynamic({ dynamicId })
         const s = ensureActivityState()
         removeDynamic(s, dynamicId)
         state.value = ensureActivityState()
-        uni.showToast({ title: '删除成功', icon: 'none' })
+        uni.showToast({ title: uni.$t('删除成功'), icon: 'none' })
         setTimeout(() => {
           uni.navigateBack()
         }, 200)
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+        uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
       } finally {
         submitting.value = false
       }
@@ -343,7 +393,7 @@ async function toggleDone() {
     if (!memberId && t && Array.isArray(t.members) && t.members[0] && t.members[0].id) memberId = String(t.members[0].id).trim()
   }
   if (!taskId || !memberId) {
-    uni.showToast({ title: '缺少任务信息', icon: 'none' })
+    uni.showToast({ title: uni.$t('缺少任务信息'), icon: 'none' })
     return
   }
   submitting.value = true
@@ -351,7 +401,9 @@ async function toggleDone() {
   const baseStars = Math.abs(Number(item.value.task && item.value.task.points) || Number(item.value.detail && item.value.detail.starText) || 0)
   const stars = nextAction === 'done' ? baseStars : -baseStars
   const title = item.value.task && item.value.task.title ? String(item.value.task.title) : ''
-  const reason = nextAction === 'done' ? (title ? `完成任务:${title}` : '完成任务') : title ? `撤销完成任务:${title}` : '撤销完成任务'
+  const reason = nextAction === 'done'
+    ? (title ? `${uni.$t('完成任务')}:${title}` : uni.$t('完成任务'))
+    : (title ? `${uni.$t('撤销完成任务')}:${title}` : uni.$t('撤销完成任务'))
   try {
     await tasksApi.completeTask({
       taskId,
@@ -359,20 +411,19 @@ async function toggleDone() {
       updateReason: reason,
       starNumber: stars,
     })
-    const ts = formatDateTime(Date.now())
     const s = ensureActivityState()
     updateDynamic(s, id.value, {
       action: nextAction,
       task: { ...(item.value.task || {}), points: nextAction === 'done' ? baseStars : -baseStars },
       detail: {
         ...(item.value.detail || {}),
-        doneAtText: `${nextAction === 'done' ? '完成于' : '取消于'} ${ts}`,
+        doneAtText: buildDoneAtText(nextAction, Date.now()),
         starText: String(baseStars),
       },
     })
     state.value = ensureActivityState()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '操作失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('操作失败')), icon: 'none' })
   } finally {
     submitting.value = false
   }

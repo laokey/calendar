@@ -1,62 +1,62 @@
 <template>
   <view class="page">
-    <BlHeader title="设置" back />
+    <BlHeader :title="t('settings.title')" back />
 
     <view class="card">
       <view class="row" @click="goLanguage">
-        <text class="label">切换语言</text>
+        <text class="label">{{ t('settings.switchLanguage') }}</text>
         <view class="right">
           <text class="value muted">{{ langText }}</text>
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goNotice">
-        <text class="label">推送通知</text>
+        <text class="label">{{ t('settings.pushNotice') }}</text>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="restore">
-        <text class="label">恢复订阅</text>
+        <text class="label">{{ t('settings.restoreSubscription') }}</text>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="goAgreement">
-        <text class="label">用户协议</text>
+        <text class="label">{{ t('settings.userAgreement') }}</text>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
       <view class="row" @click="clear">
-        <text class="label">清除缓存</text>
+        <text class="label">{{ t('settings.clearCache') }}</text>
         <view class="right">
           <text class="value muted">{{ cacheText }}</text>
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goPermissions">
-        <text class="label">系统权限管理</text>
+        <text class="label">{{ t('settings.systemPermissions') }}</text>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
     </view>
 
     <view class="logout" @click="logout">
-      <text class="logout-text">退出登录</text>
+      <text class="logout-text">{{ t('settings.logout') }}</text>
     </view>
 
     <view v-if="restoreVisible" class="dialog-mask" @click="restoreVisible = false">
       <view class="dialog-content" @click.stop>
-        <text class="d-title">恢复订阅？</text>
-        <text class="d-sub">已开通Plus会员？您可尝试恢复订阅服务</text>
+        <text class="d-title">{{ t('settings.restoreTitle') }}</text>
+        <text class="d-sub">{{ t('settings.restoreDesc') }}</text>
         <view class="d-actions">
-          <view class="d-btn cancel" @click="restoreVisible = false"><text class="d-btn-text cancel-text">取消</text></view>
-          <view class="d-btn confirm" @click="confirmRestore"><text class="d-btn-text confirm-text">恢复订阅</text></view>
+          <view class="d-btn cancel" @click="restoreVisible = false"><text class="d-btn-text cancel-text">{{ t('settings.cancel') }}</text></view>
+          <view class="d-btn confirm" @click="confirmRestore"><text class="d-btn-text confirm-text">{{ t('settings.restoreConfirm') }}</text></view>
         </view>
       </view>
     </view>
 
     <view v-if="logoutVisible" class="dialog-mask" @click="logoutVisible = false">
       <view class="dialog-content" @click.stop>
-        <text class="d-title">你确定吗？</text>
-        <text class="d-sub">确定要退出登录吗？</text>
+        <text class="d-title">{{ t('settings.logoutTitle') }}</text>
+        <text class="d-sub">{{ t('settings.logoutDesc') }}</text>
         <view class="d-actions">
-          <view class="d-btn cancel" @click="logoutVisible = false"><text class="d-btn-text cancel-text">取消</text></view>
-          <view class="d-btn confirm" @click="confirmLogout"><text class="d-btn-text confirm-text">确定</text></view>
+          <view class="d-btn cancel" @click="logoutVisible = false"><text class="d-btn-text cancel-text">{{ t('settings.cancel') }}</text></view>
+          <view class="d-btn confirm" @click="confirmLogout"><text class="d-btn-text confirm-text">{{ t('settings.confirm') }}</text></view>
         </view>
       </view>
     </view>
@@ -66,16 +66,19 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useI18n } from 'vue-i18n'
 import BlHeader from '../../components/BlHeader.vue'
 import { clearCache, ensureMeState } from '../../utils/meStore'
 import { authApi } from '../../utils/api'
 import { getSystemNotificationEnabled, openSystemNotificationSettings } from '../../utils/notificationPermission'
+import { getLanguageLabel } from '../../utils/i18n'
 
 const state = ref(ensureMeState())
 const restoreVisible = ref(false)
 const logoutVisible = ref(false)
 const openingNotice = ref(false)
 const waitingForNotificationEnable = ref(false)
+const { t } = useI18n()
 
 onShow(async () => {
   state.value = ensureMeState()
@@ -89,8 +92,7 @@ const cacheText = computed(() => {
 
 const langText = computed(() => {
   const v = state.value.settings && state.value.settings.language ? state.value.settings.language : 'system'
-  if (v === 'system') return '遵循系统语言'
-  return v
+  return getLanguageLabel(v)
 })
 
 function goLanguage() {
@@ -119,11 +121,11 @@ async function goNotice() {
     const opened = await openSystemNotificationSettings()
     if (!opened) {
       waitingForNotificationEnable.value = false
-      uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+      uni.showToast({ title: t('settings.notificationUnsupported'), icon: 'none' })
     }
   } catch (e) {
     waitingForNotificationEnable.value = false
-    uni.showToast({ title: '检查通知权限失败', icon: 'none' })
+    uni.showToast({ title: t('settings.notificationFailed'), icon: 'none' })
   } finally {
     openingNotice.value = false
   }
@@ -143,21 +145,21 @@ function restore() {
 
 function confirmRestore() {
   restoreVisible.value = false
-  uni.showToast({ title: '已恢复', icon: 'none' })
+  uni.showToast({ title: t('settings.restored'), icon: 'none' })
 }
 
 function clear() {
   uni.showModal({
     title: '',
-    content: '确定清除缓存？',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: t('settings.clearCacheConfirm'),
+    cancelText: t('settings.cancel'),
+    confirmText: t('settings.confirm'),
     success: (res) => {
       if (!res.confirm) return
       const s = ensureMeState()
       clearCache(s)
       state.value = ensureMeState()
-      uni.showToast({ title: '已清除', icon: 'none' })
+      uni.showToast({ title: t('settings.cleared'), icon: 'none' })
     },
   })
 }
@@ -168,7 +170,7 @@ function logout() {
 
 async function confirmLogout() {
   logoutVisible.value = false
-  uni.showLoading({ title: '退出中' })
+  uni.showLoading({ title: t('settings.loggingOut') })
   try {
     await authApi.logout()
   } catch (e) {

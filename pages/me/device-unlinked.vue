@@ -4,7 +4,7 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">未关联设备</text>
+      <text class="head-title">{{ $t('未关联设备') }}</text>
       <view class="head-right" @click="goActivate">
         <image class="plus-img" src="/static/common/icon_plus.png" mode="aspectFit" />
       </view>
@@ -12,8 +12,8 @@
 
     <view class="empty">
       <image class="empty-img" src="/static/device/device_thumb_new.png" mode="aspectFit" />
-      <text class="empty-title">暂无关联设备</text>
-      <text class="empty-sub">点击右上角或右下角的+号，添加新设备并进行激活。</text>
+      <text class="empty-title">{{ $t('暂无关联设备') }}</text>
+      <text class="empty-sub">{{ $t('点击右上角或右下角的+号，添加新设备并进行激活。') }}</text>
     </view>
   </view>
 </template>

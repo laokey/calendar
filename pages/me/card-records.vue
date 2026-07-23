@@ -2,13 +2,13 @@
   <view class="page">
     <view class="head" :style="{ paddingTop: safeTop + 'px' }">
       <view class="head-left" @click="back"><image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" /></view>
-      <text class="title">卡片记录</text>
-      <view class="head-right" @click="clearAll"><text class="clear-text">清除</text></view>
+      <text class="title">{{ $t('卡片记录') }}</text>
+      <view class="head-right" @click="clearAll"><text class="clear-text">{{ $t('清除') }}</text></view>
     </view>
 
     <view v-if="items.length === 0" class="empty">
       <image class="empty-img" src="/static/my/img_empty_cards.png" mode="widthFix" />
-      <text class="empty-text">尚无卡片记录</text>
+      <text class="empty-text">{{ $t('尚无卡片记录') }}</text>
     </view>
 
     <view v-else class="list">
@@ -17,13 +17,13 @@
           <view class="env"><image class="env-img" src="/static/my/icon_cards.png" mode="aspectFit" /></view>
           <view class="meta">
             <text class="c-title">{{ it.title }}</text>
-            <text class="c-sub">设备：{{ it.device }}</text>
-            <text class="c-sub">时间：{{ it.timeText }}</text>
+            <text class="c-sub">{{ $t('设备：') }}{{ it.device }}</text>
+            <text class="c-sub">{{ $t('时间：') }}{{ it.timeText }}</text>
           </view>
         </view>
 
         <view class="bottom">
-          <text class="badge" :class="{ unread: it.status === 'unread' }">{{ it.status === 'unread' ? '未读' : '已读' }}</text>
+          <text class="badge" :class="{ unread: it.status === 'unread' }">{{ it.status === 'unread' ? $t('未读') : $t('已读') }}</text>
           <view class="actions">
             <view class="a-btn" @click="resend(it)"><image class="a-img" src="/static/my/logo_share.png" mode="aspectFit" /></view>
             <view class="a-btn" @click="preview(it)"><image class="a-img" src="/static/task/icon_edit_square.png" mode="aspectFit" /></view>
@@ -126,16 +126,16 @@ function remove(it) {
   if (!id) return
   uni.showModal({
     title: '',
-    content: '删除该记录？',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: uni.$t('删除该记录？'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: (res) => {
       if (!res.confirm) return
       const hidden = readHiddenIds()
       if (!hidden.includes(id)) hidden.push(id)
       writeHiddenIds(hidden)
       onlineItems.value = onlineItems.value.filter((x) => String(x && x.id ? x.id : '') !== id)
-      uni.showToast({ title: '删除成功', icon: 'none' })
+      uni.showToast({ title: uni.$t('删除成功'), icon: 'none' })
     },
   })
 }
@@ -144,9 +144,9 @@ function clearAll() {
   if (!onlineItems.value.length) return
   uni.showModal({
     title: '',
-    content: '清除全部卡片记录？',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: uni.$t('清除全部卡片记录？'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: (res) => {
       if (!res.confirm) return
       const hidden = new Set(readHiddenIds())
@@ -156,7 +156,7 @@ function clearAll() {
       })
       writeHiddenIds(Array.from(hidden))
       onlineItems.value = []
-      uni.showToast({ title: '已清除', icon: 'none' })
+      uni.showToast({ title: uni.$t('已清除'), icon: 'none' })
     },
   })
 }
@@ -176,7 +176,7 @@ async function refreshOnline() {
         const timeText = isTimer ? `${c.timedDate || ''} ${c.timedTime || ''}`.trim() : ''
         return {
           id: String(c.cardId || ''),
-          title: '贺卡',
+          title: uni.$t('贺卡'),
           device: String(c.deviceEmail || ''),
           timeText,
           status: 'read',

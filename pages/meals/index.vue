@@ -1,11 +1,11 @@
 <template>
   <view class="bl-page meals-page">
-    <BlHeader title="餐食" back />
+    <BlHeader :title="$t('餐食')" back />
 
     <view class="top-bar">
       <view class="cat-btn" @click="goCategories">
         <image class="cat-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
-        <text class="cat-text">类别</text>
+        <text class="cat-text">{{ $t('类别') }}</text>
       </view>
 
       <view class="week">
@@ -19,10 +19,10 @@
       <view v-for="d in days" :key="d.key" class="day">
         <view class="section-head">
           <view v-if="d.key === todayKey" class="sec-today">
-            <text class="sec-week">{{ d.weekday }}</text>
+            <text class="sec-week">{{ $t(d.weekday) }}</text>
             <view class="sec-date-on"><text class="sec-date-on-text">{{ d.date }}</text></view>
           </view>
-          <text v-else class="sec-title">{{ d.weekday }} {{ d.date }}</text>
+          <text v-else class="sec-title">{{ $t(d.weekday) }} {{ d.date }}</text>
         </view>
 
         <view class="section">
@@ -59,7 +59,7 @@
 
           <view class="add-card" @click="openPlanForm(d.key, dayCategoryId(d.key))">
             <image class="add-icon" src="/static/common/icon_plus.png" mode="aspectFit" />
-            <text class="add-text">添加</text>
+            <text class="add-text">{{ $t('添加') }}</text>
           </view>
         </view>
       </view>
@@ -202,10 +202,10 @@ function categoryNameById(id) {
 function mealTypeFromCategoryId(id) {
   const name = categoryNameById(id)
   const n = name.replace(/\s+/g, '')
-  if (n.includes('早餐') || n === '早') return 0
-  if (n.includes('午餐') || n === '午') return 1
-  if (n.includes('晚餐') || n === '晚') return 2
-  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  if (n.includes(uni.$t('早餐')) || n === uni.$t('早')) return 0
+  if (n.includes(uni.$t('午餐')) || n === uni.$t('午')) return 1
+  if (n.includes(uni.$t('晚餐')) || n === uni.$t('晚')) return 2
+  if (n.includes(uni.$t('点心')) || n.includes(uni.$t('加餐')) || n === uni.$t('点')) return 3
   const enabled = listCategories(mealState.value, { enabledOnly: true })
   const idx = enabled.findIndex((x) => x && x.id === id)
   return idx >= 0 ? idx : 0
@@ -262,7 +262,7 @@ function openPlanForm(dateKeyVal, categoryIdVal) {
 function openDetail(dateKeyVal, it) {
   const mealId = it && it.mealId ? String(it.mealId) : ''
   if (!mealId) {
-    uni.showToast({ title: '该餐点缺少 mealId', icon: 'none' })
+    uni.showToast({ title: uni.$t('该餐点缺少 mealId'), icon: 'none' })
     return
   }
   const title = it ? String(it.title || '') : ''
@@ -278,20 +278,20 @@ function openDetail(dateKeyVal, it) {
 async function removePlan(dateKeyVal, it) {
   const id = it && it.mealId ? String(it.mealId) : ''
   if (!id) {
-    uni.showToast({ title: '该餐点暂无 mealId，无法删除', icon: 'none' })
+    uni.showToast({ title: uni.$t('该餐点暂无 mealId，无法删除'), icon: 'none' })
     return
   }
-  uni.showLoading({ title: '删除中' })
+  uni.showLoading({ title: uni.$t('删除中') })
   try {
     const res = await mealsApi.deleteMealInfo({ mealId: id })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '删除失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: '已删除', icon: 'none' })
+    uni.showToast({ title: uni.$t('已删除'), icon: 'none' })
     await fetchWeekMeals()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -331,7 +331,7 @@ async function fetchWeekMeals() {
     weekMealsMap.value = map
   } catch (e) {
     weekMealsMap.value = {}
-    uni.showToast({ title: String((e && e.message) || '获取餐食失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取餐食失败')), icon: 'none' })
   } finally {
     loading.value = false
   }

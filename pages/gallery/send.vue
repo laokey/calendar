@@ -4,13 +4,13 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">上传</text>
+      <text class="head-title">{{ $t('上传') }}</text>
       <view class="head-right">
-        <text class="danger" @click="clearAll">删除</text>
+        <text class="danger" @click="clearAll">{{ $t('删除') }}</text>
       </view>
     </view>
 
-    <text class="hint">已发送{{ selectedCount }}张照片/视频</text>
+    <text class="hint">{{ $t('已发送{n}张照片/视频', { n: selectedCount }) }}</text>
 
     <view class="rows">
       <view v-for="(it, idx) in items" :key="it.uri" class="row">
@@ -28,7 +28,7 @@
           <textarea
             v-model="it.note"
             class="note-field"
-            placeholder="相片的想法或是说明..."
+            :placeholder="$t('相片的想法或是说明').concat('...')"
             placeholder-class="ph"
             :maxlength="120"
           />
@@ -37,7 +37,7 @@
     </view>
 
     <view class="send" :class="{ disabled: selectedCount === 0 }" @click="submit">
-      <text class="send-text">发送</text>
+      <text class="send-text">{{ $t('发送') }}</text>
     </view>
   </view>
 </template>
@@ -88,9 +88,9 @@ function clearAll() {
   }
   uni.showModal({
     title: '',
-    content: '删除已选择的内容？',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: uni.$t('删除已选择的内容？'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: (res) => {
       if (!res.confirm) return
       payload.items = []

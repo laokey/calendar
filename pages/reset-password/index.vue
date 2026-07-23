@@ -4,20 +4,20 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/login/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">重置密码</text>
+      <text class="head-title">{{ $t('重置密码') }}</text>
       <view class="head-right" />
     </view>
 
     <view class="panel">
-      <text class="label">邮箱</text>
+      <text class="label">{{ $t('邮箱') }}</text>
       <view class="input-wrap">
-        <input v-model="email" class="input" placeholder="请输入邮箱" placeholder-class="ph" confirm-type="done" @confirm="submit" />
+        <input v-model="email" class="input" :placeholder="$t('请输入邮箱')" placeholder-class="ph" confirm-type="done" @confirm="submit" />
         <view v-if="email" class="icon-btn" @click="email = ''"><image class="icon-img" src="/static/login/icon_clear.png" mode="aspectFit" /></view>
       </view>
     </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
-      <text class="btn-text">重置密码</text>
+      <text class="btn-text">{{ $t('重置密码') }}</text>
     </view>
   </view>
 </template>
@@ -52,14 +52,14 @@ function back() {
 
 function submit() {
   if (!canSubmit.value) {
-    uni.showToast({ title: '请输入邮箱', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入邮箱'), icon: 'none' })
     return
   }
 
-  uni.showLoading({ title: '发送中' })
+  uni.showLoading({ title: uni.$t('发送中') })
   setTimeout(() => {
     uni.hideLoading()
-    uni.showToast({ title: '已发送重置邮件', icon: 'none' })
+    uni.showToast({ title: uni.$t('已发送重置邮件'), icon: 'none' })
     setTimeout(() => {
       uni.navigateBack()
     }, 600)

@@ -11,7 +11,7 @@
 
     <view class="top-card">
       <view v-if="active" class="bl-card device-card">
-        <view class="bl-status-tag"><text>已激活</text></view>
+        <view class="bl-status-tag"><text>{{ $t('已激活') }}</text></view>
         <view class="bl-row">
           <view class="thumb">
             <image
@@ -22,7 +22,7 @@
           </view>
           <view class="meta">
             <text class="name">{{ calendarName }}</text>
-            <text class="email bl-muted">发送事件：{{ calendarEmail }}</text>
+            <text class="email bl-muted">{{ $t('发送事件：') }}{{ calendarEmail }}</text>
           </view>
         </view>
       </view>
@@ -34,10 +34,10 @@
             mode="aspectFit"
           />
         </view>
-        <text class="activate-title">准备激活设备？</text>
-        <text class="activate-desc bl-muted">激活设备后，下拉可刷新应用</text>
+        <text class="activate-title">{{ $t('准备激活设备？') }}</text>
+        <text class="activate-desc bl-muted">{{ $t('激活设备后，下拉可刷新应用') }}</text>
         <view class="bl-btn-primary" @click="goActivate">
-          <text>激活设备</text>
+          <text>{{ $t('激活设备') }}</text>
           <view class="bl-btn-arrow">
             <text class="arrow">→</text>
           </view>
@@ -88,7 +88,7 @@
             src="/static/home/icon_none_activity.png"
             mode="aspectFit"
           />
-          <text class="empty-text bl-muted">今日无活动</text>
+          <text class="empty-text bl-muted">{{ $t('今天没有活动') }}</text>
         </view>
       </view>
     </view>
@@ -121,7 +121,7 @@ import { ensureCalendarState, eventsForDate, listMembers } from "../../utils/cal
 import { ensureTaskState, isTaskDone, tasksForDate } from "../../utils/taskStore";
 
 const active = ref(false);
-const calendarName = ref("YYO的日历");
+const calendarName = ref(uni.$t('芝麻日历'));
 const calendarEmail = ref("");
 const memberItems = ref([]);
 const todayEventsRaw = ref([]);
@@ -135,18 +135,18 @@ const homeStats = ref({
 const HOME_EVENT_PREVIEW_LIMIT = 4;
 
 const BASE_MENUS = [
-  { title: "日历", sub: "今天没有活动", icon: "/static/home/icon_menu_calendar.png", cls: "is-purple" },
-  { title: "任务", sub: "剩余0个", icon: "/static/home/icon_menu_tasks.png", cls: "is-blue" },
-  { title: "奖励", sub: "大胆和小目标", icon: "/static/home/icon_menu_rewards.png", cls: "is-salmon" },
-  { title: "清单", sub: "0清单", icon: "/static/home/icon_menu_list.png", cls: "is-green" },
-  { title: "餐食", sub: "我们吃什么?", icon: "/static/home/icon_menu_meals.png", cls: "is-orange" },
-  { title: "相册", sub: "0个文件", icon: "/static/home/icon_menu_gallery.png", cls: "is-red" },
-  { title: "同步", sub: "同步在线日历", icon: "/static/home/icon_menu_sync.png", cls: "is-mint" },
-  { title: "成员管理", sub: "0个成员", icon: "/static/home/icon_menu_users.png", cls: "is-indigo" },
-  { title: "设备管理", sub: "控制功能", icon: "/static/home/icon_menu_devices.png", cls: "is-blue2" },
-  { title: "用户管理", sub: "邀请你爱的人", icon: "/static/home/icon_menu_members.png", cls: "is-indigo2" },
-  { title: "通知", sub: "通知事件", icon: "/static/home/icon_menu_notice.png", cls: "is-salmon2" },
-  { title: "贺卡", sub: "给设备推送祝福", icon: "/static/home/icon_menu_cards.png", cls: "is-orange2" },
+  { title: uni.$t('日历'), sub: uni.$t('今天没有活动'), icon: "/static/home/icon_menu_calendar.png", cls: "is-purple" },
+  { title: uni.$t('任务'), sub: uni.$t('剩余{n}个', { n: 0 }), icon: "/static/home/icon_menu_tasks.png", cls: "is-blue" },
+  { title: uni.$t('奖励'), sub: uni.$t('大胆和小目标'), icon: "/static/home/icon_menu_rewards.png", cls: "is-salmon" },
+  { title: uni.$t('清单'), sub: uni.$t('{n}清单', { n: 0 }), icon: "/static/home/icon_menu_list.png", cls: "is-green" },
+  { title: uni.$t('餐食'), sub: uni.$t('我们吃什么'), icon: "/static/home/icon_menu_meals.png", cls: "is-orange" },
+  { title: uni.$t('相册'), sub: uni.$t('{n}个文件', { n: 0 }), icon: "/static/home/icon_menu_gallery.png", cls: "is-red" },
+  { title: uni.$t('同步'), sub: uni.$t('同步在线日历'), icon: "/static/home/icon_menu_sync.png", cls: "is-mint" },
+  { title: uni.$t('成员管理'), sub: uni.$t('{n}个成员', { n: 0 }), icon: "/static/home/icon_menu_users.png", cls: "is-indigo" },
+  { title: uni.$t('设备管理'), sub: uni.$t('控制功能'), icon: "/static/home/icon_menu_devices.png", cls: "is-blue2" },
+  { title: uni.$t('用户管理'), sub: uni.$t('邀请你爱的人'), icon: "/static/home/icon_menu_members.png", cls: "is-indigo2" },
+  { title: uni.$t('通知'), sub: uni.$t('通知事件'), icon: "/static/home/icon_menu_notice.png", cls: "is-salmon2" },
+  { title: uni.$t('贺卡'), sub: uni.$t('给设备推送祝福'), icon: "/static/home/icon_menu_cards.png", cls: "is-orange2" },
 ];
 
 const todayTitleText = computed(() => formatTodayTitle(new Date()));
@@ -157,20 +157,23 @@ const todayTasks = computed(() => {
 const menus = computed(() => {
   const stats = homeStats.value || {};
   return BASE_MENUS.map((item) => {
-    if (item.title === "日历") {
-      return { ...item, sub: stats.calendarCount > 0 ? `今日${stats.calendarCount}个活动` : "今天没有活动" };
+    if (item.title === uni.$t('日历')) {
+      return {
+        ...item,
+        sub: stats.calendarCount > 0 ? uni.$t('今日{n}个活动', { n: stats.calendarCount }) : uni.$t('今天没有活动'),
+      };
     }
-    if (item.title === "任务") {
-      return { ...item, sub: `剩余${stats.taskPendingCount || 0}个` };
+    if (item.title === uni.$t('任务')) {
+      return { ...item, sub: uni.$t('剩余{n}个', { n: stats.taskPendingCount || 0 }) };
     }
-    if (item.title === "清单") {
-      return { ...item, sub: `${stats.listCount || 0}清单` };
+    if (item.title === uni.$t('清单')) {
+      return { ...item, sub: uni.$t('{n}清单', { n: stats.listCount || 0 }) };
     }
-    if (item.title === "相册") {
-      return { ...item, sub: `${stats.galleryFileCount || 0}个文件` };
+    if (item.title === uni.$t('相册')) {
+      return { ...item, sub: uni.$t('{n}个文件', { n: stats.galleryFileCount || 0 }) };
     }
-    if (item.title === "成员管理") {
-      return { ...item, sub: `${stats.memberCount || 0}个成员` };
+    if (item.title === uni.$t('成员管理')) {
+      return { ...item, sub: uni.$t('{n}个成员', { n: stats.memberCount || 0 }) };
     }
     return item;
   });
@@ -181,10 +184,27 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function currentLocaleTag() {
+  try {
+    const locale = typeof uni.getLocale === "function" ? uni.getLocale() : "";
+    return String(locale || "zh-CN");
+  } catch (e) {
+    return "zh-CN";
+  }
+}
+
 function formatTodayTitle(date) {
   const d = date instanceof Date ? date : new Date();
-  const weekdayMap = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-  return `${weekdayMap[d.getDay()]}，${String(d.getMonth() + 1).padStart(2, "0")}月${String(d.getDate()).padStart(2, "0")}日`;
+  try {
+    return new Intl.DateTimeFormat(currentLocaleTag(), {
+      weekday: "long",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(d);
+  } catch (e) {
+    const weekdayMap = [uni.$t('星期日'), uni.$t('星期一'), uni.$t('星期二'), uni.$t('星期三'), uni.$t('星期四'), uni.$t('星期五'), uni.$t('星期六')];
+    return `${weekdayMap[d.getDay()]} ${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+  }
 }
 
 function formatDateKey(date) {
@@ -318,7 +338,7 @@ function findMember(id) {
 
 function memberGlyph(id) {
   const member = findMember(id);
-  return member && member.glyph ? member.glyph : "我";
+  return member && member.glyph ? member.glyph : uni.$t('我');
 }
 
 function memberColor(id) {
@@ -328,11 +348,11 @@ function memberColor(id) {
 
 function eventTimeText(event) {
   if (!event) return "";
-  if (event.allDay) return "全天";
+  if (event.allDay) return uni.$t('全天');
   const start = String(event.startTime || "").trim();
   const end = String(event.endTime || "").trim();
   if (start && end) return `${start}-${end}`;
-  return start || end || "全天";
+  return start || end || uni.$t('全天');
 }
 
 function formatHomeEventCard(event, idx) {
@@ -441,53 +461,53 @@ onShow(() => {
 });
 
 function open(title) {
-  if (title === "日历") {
+  if (title === uni.$t('日历')) {
     uni.navigateTo({ url: "/pages/calendar/index" });
     return;
   }
-  if (title === "任务") {
+  if (title === uni.$t('任务')) {
     uni.navigateTo({ url: "/pages/tasks/index" });
     return;
   }
-  if (title === "奖励") {
+  if (title === uni.$t('奖励')) {
     uni.navigateTo({ url: "/pages/rewards/index" });
     return;
   }
-  if (title === "清单") {
+  if (title === uni.$t('清单')) {
     uni.navigateTo({ url: "/pages/lists/index" });
     return;
   }
-  if (title === "餐食") {
+  if (title === uni.$t('餐食')) {
     uni.navigateTo({ url: "/pages/meals/index" });
     return;
   }
-  if (title === "同步") {
+  if (title === uni.$t('同步')) {
     uni.navigateTo({ url: "/pages/sync/sync-home" });
     return;
   }
-  if (title === "成员管理") {
+  if (title === uni.$t('成员管理')) {
     uni.navigateTo({ url: "/pages/members/index" });
     return;
   }
-  if (title === "设备管理") {
+  if (title === uni.$t('设备管理')) {
     uni.navigateTo({ url: "/pages/me/device" });
     return;
   }
-  if (title === "用户管理") {
+  if (title === uni.$t('用户管理')) {
     uni.navigateTo({ url: "/pages/users/index" });
     return;
   }
-  if (title === "相册") {
+  if (title === uni.$t('相册')) {
     uni.navigateTo({ url: "/pages/gallery/index" });
     return;
   }
-  if (title === "通知") {
+  if (title === uni.$t('通知')) {
     uni.navigateTo({
       url: `/pages/me/notice?deviceName=${encodeURIComponent(String(calendarName.value || ""))}&deviceEmail=${encodeURIComponent(String(calendarEmail.value || ""))}`,
     });
     return;
   }
-  if (title === "贺卡") {
+  if (title === uni.$t('贺卡')) {
     uni.navigateTo({ url: "/pages/cards/index" });
     return;
   }

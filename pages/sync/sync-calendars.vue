@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page page">
-    <BlHeader title="您想同步哪些日历?" back back-icon-src="/static/sync/icon_nav_back_small.png" />
+    <BlHeader :title="$t('您想同步哪些日历')" back back-icon-src="/static/sync/icon_nav_back_small.png" />
 
     <view class="list">
       <view class="row" @click="toggleAll">
@@ -18,10 +18,10 @@
 
     <view class="bottom-action">
       <view class="bl-btn-primary" :class="{ 'is-disabled': !canSync }" @click="sync">
-        <text>同步日历</text>
+        <text>{{ $t('同步日历') }}</text>
       </view>
-      <view class="btn-outline" @click="reload"><text class="btn-outline-text">重新加载列表</text></view>
-      <text class="hint">没有看到所有的日历吗？</text>
+      <view class="btn-outline" @click="reload"><text class="btn-outline-text">{{ $t('重新加载列表') }}</text></view>
+      <text class="hint">{{ $t('没有看到所有的日历吗？') }}</text>
     </view>
   </view>
 </template>
@@ -65,11 +65,11 @@ function persist() {
 }
 
 function reload() {
-  uni.showToast({ title: '加载中', icon: 'none' })
+  uni.showToast({ title: uni.$t('加载中'), icon: 'none' })
   setTimeout(() => {
     const state = ensureSyncState()
     calendars.value = getProviderCalendars(state, provider.value)
-    uni.showToast({ title: '已刷新', icon: 'none' })
+    uni.showToast({ title: uni.$t('已刷新'), icon: 'none' })
   }, 350)
 }
 

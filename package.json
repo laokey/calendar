@@ -1,0 +1,7 @@
+{
+  "name": "calendar",
+  "private": true,
+  "dependencies": {
+    "vue-i18n": "^9.14.4"
+  }
+}

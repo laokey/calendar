@@ -1,9 +1,9 @@
 <template>
   <view class="bl-page form-page">
-    <BlHeader :title="isEdit ? '编辑事件' : '添加事项'" back>
+    <BlHeader :title="isEdit ? $t('编辑事件') : $t('添加事项')" back>
       <template #right>
         <view class="top-save" @click="save">
-          <text class="top-save-text">保存</text>
+          <text class="top-save-text">{{ $t('保存') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -17,13 +17,13 @@
         />
 
         <text class="req">*</text>
-        <text>标题</text>
+        <text>{{ $t('标题') }}</text>
       </view>
       <view class="input-wrap">
         <input
           v-model="title"
           class="input"
-          :placeholder="isEdit ? '' : '请输入标题'"
+          :placeholder="isEdit ? '' : $t('请输入标题')"
           placeholder-class="ph"
         />
       </view>
@@ -32,7 +32,7 @@
     <view class="block">
       <view class="row-between">
         <view class="row-left">
-          <text class="label">全天</text>
+          <text class="label">{{ $t('全天') }}</text>
         </view>
         <switch
           :checked="allDay"
@@ -50,7 +50,7 @@
             src="/static/calendar/icon_form_clock.png"
             mode="aspectFit"
           />
-          <text class="time-label">开始时间</text>
+          <text class="time-label">{{ $t('开始时间') }}</text>
         </view>
         <text class="time-val">{{ startDateText }}</text>
       </view>
@@ -73,7 +73,7 @@
             src="/static/calendar/icon_form_clock.png"
             mode="aspectFit"
           />
-          <text class="time-label">结束时间</text>
+          <text class="time-label">{{ $t('结束时间') }}</text>
         </view>
         <text class="time-val">{{ endDateText }}</text>
       </view>
@@ -98,7 +98,7 @@
             src="/static/calendar/icon_form_clock.png"
             mode="aspectFit"
           />
-          <text class="label">开始时间</text>
+          <text class="label">{{ $t('开始时间') }}</text>
         </view>
         <view style="margin-top: 14rpx;">
           <text class="val">{{ startDateText }}</text>
@@ -111,7 +111,7 @@
             src="/static/calendar/icon_form_clock.png"
             mode="aspectFit"
           />
-          <text class="label">结束时间</text>
+          <text class="label">{{ $t('结束时间') }}</text>
         </view>
         <view style="margin-top: 14rpx;">
           <text class="val">{{ endDateText }}</text>
@@ -143,7 +143,7 @@
           mode="aspectFit"
         />
         <text class="req">*</text>
-        <text>选择成员</text>
+        <text>{{ $t('选择成员') }}</text>
       </view>
       <view class="members">
         <view
@@ -169,7 +169,7 @@
               mode="aspectFit"
             />
           </view>
-          <text class="mem-name">添加</text>
+          <text class="mem-name">{{ $t('添加') }}</text>
         </view>
       </view>
     </view>
@@ -182,7 +182,7 @@
             src="/static/calendar/icon_form_location_alt.png"
             mode="aspectFit"
           />
-          <text class="label">同步日历</text>
+          <text class="label">{{ $t('同步日历') }}</text>
         </view>
         <image
           class="chev-img"
@@ -193,7 +193,7 @@
       </view>
       <view v-if="syncOpen" class="sync-body">
         <view class="row-between sync-row">
-          <text class="val">无</text>
+          <text class="val">{{ $t('无') }}</text>
           <image
             class="radio-img"
             src="/static/calendar/icon_check_on.png"
@@ -201,7 +201,7 @@
           />
         </view>
         <view class="sync-add" @click="goSyncAdd">
-          <text class="sync-add-text">+ 添加</text>
+          <text class="sync-add-text">{{ '+' + $t('添加') }}</text>
         </view>
       </view>
     </view>
@@ -213,13 +213,13 @@
           src="/static/calendar/icon_form_edit.png"
           mode="aspectFit"
         />
-        <text class="label">描述</text>
+        <text class="label">{{ $t('描述') }}</text>
       </view>
       <view class="input-wrap is-textarea">
         <textarea
           v-model="desc"
           class="textarea"
-          :placeholder="isEdit ? '' : '请输入描述'"
+          :placeholder="isEdit ? '' : $t('请输入描述')"
           placeholder-class="ph"
         />
       </view>
@@ -232,13 +232,13 @@
           src="/static/calendar/icon_form_location.png"
           mode="aspectFit"
         />
-        <text class="label">定位&天气</text>
+        <text class="label">{{ $t('定位&天气') }}</text>
       </view>
       <view class="input-wrap">
         <input
           v-model="location"
           class="input"
-          :placeholder="isEdit ? '' : '请输入描述'"
+          :placeholder="isEdit ? '' : $t('请输入描述')"
           placeholder-class="ph"
         />
       </view>
@@ -250,7 +250,7 @@
         src="/static/calendar/btn_primary_gradient.png"
         mode="scaleToFill"
       />
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
 
     <BlDatePickerSheet
@@ -336,10 +336,10 @@ const selectedMemberIds = ref([]);
 const syncOpen = ref(false);
 
 const repeatUnits = [
-  { label: "天", value: "day" },
-  { label: "周", value: "week" },
-  { label: "月", value: "month" },
-  { label: "年", value: "year" },
+  { label: uni.$t('天'), value: "day" },
+  { label: uni.$t('周'), value: "week" },
+  { label: uni.$t('月'), value: "month" },
+  { label: uni.$t('年'), value: "year" },
 ];
 
 const repeatSheetOpen = ref(false);
@@ -352,10 +352,10 @@ const timeSheetOpen = ref(false);
 const timeKind = ref("start");
 
 const dateSheetTitle = computed(() => {
-  if (dateKind.value === "start") return "开始时间";
-  if (dateKind.value === "end") return "结束时间";
-  if (dateKind.value === "until") return "重复直到";
-  return "结束时间";
+  if (dateKind.value === "start") return uni.$t('开始时间');
+  if (dateKind.value === "end") return uni.$t('结束时间');
+  if (dateKind.value === "until") return uni.$t('重复直到');
+  return uni.$t('结束时间');
 });
 
 function toCnDateText(key) {
@@ -614,21 +614,21 @@ function payloadColor() {
 function validate() {
   const n = String(title.value || "").trim();
   if (!n) {
-    uni.showToast({ title: "请输入标题", icon: "none" });
+    uni.showToast({ title: uni.$t('请输入标题'), icon: "none" });
     return false;
   }
   if (!selectedMemberIds.value.length) {
-    uni.showToast({ title: "请选择成员", icon: "none" });
+    uni.showToast({ title: uni.$t('请选择成员'), icon: "none" });
     return false;
   }
   if (!startDate.value || !endDate.value) {
-    uni.showToast({ title: "请选择日期", icon: "none" });
+    uni.showToast({ title: uni.$t('请选择日期'), icon: "none" });
     return false;
   }
   if (repeatOn.value && repeatUnit.value === "week") {
     const days = normalizeWeekdays(repeatWeekdays.value);
     if (!days.length) {
-      uni.showToast({ title: "请选择周几", icon: "none" });
+      uni.showToast({ title: uni.$t('请选择周几'), icon: "none" });
       return false;
     }
   }
@@ -674,7 +674,7 @@ function buildRemoteMatterPayload(payload, matterId = "") {
 }
 
 async function saveRemoteEdit(payload) {
-  uni.showLoading({ title: "保存中" });
+  uni.showLoading({ title: uni.$t('保存中') });
   try {
     const res = await calendarApi.updateMatterInfo(
       buildRemoteMatterPayload(payload, eventId.value),
@@ -686,13 +686,13 @@ async function saveRemoteEdit(payload) {
       res.code !== 200 &&
       res.code !== "200"
     ) {
-      uni.showToast({ title: "保存失败", icon: "none" });
+      uni.showToast({ title: uni.$t('保存失败'), icon: "none" });
       return false;
     }
     return true;
   } catch (e) {
     uni.showToast({
-      title: String((e && e.message) || "保存失败"),
+      title: String((e && e.message) || uni.$t('保存失败')),
       icon: "none",
     });
     return false;
@@ -724,7 +724,7 @@ async function save() {
   }
   const logged = !!uni.getStorageSync("auth_logged_in");
   if (logged) {
-    uni.showLoading({ title: "保存中" });
+    uni.showLoading({ title: uni.$t('保存中') });
     try {
       const res = await calendarApi.addMatterInfo(
         buildRemoteMatterPayload(payload),
@@ -736,12 +736,12 @@ async function save() {
         res.code !== 200 &&
         res.code !== "200"
       ) {
-        uni.showToast({ title: "保存失败", icon: "none" });
+        uni.showToast({ title: uni.$t('保存失败'), icon: "none" });
         return;
       }
     } catch (e) {
       uni.showToast({
-        title: String((e && e.message) || "保存失败"),
+        title: String((e && e.message) || uni.$t('保存失败')),
         icon: "none",
       });
       return;
@@ -776,9 +776,9 @@ async function applyRepeatEdit(scope) {
   pendingSave.value = null;
   uni.$emit && uni.$emit("calendar:refresh");
   if (scope === "this") {
-    uni.showToast({ title: "已应用到本次活动", icon: "none" });
+    uni.showToast({ title: uni.$t('已应用到本次活动'), icon: "none" });
   } else if (scope === "future") {
-    uni.showToast({ title: "已应用到未来活动", icon: "none" });
+    uni.showToast({ title: uni.$t('已应用到未来活动'), icon: "none" });
   }
   uni.navigateBack();
 }

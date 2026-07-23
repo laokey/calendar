@@ -6,12 +6,12 @@
       <view class="device-pic">
         <image class="device-img" src="/static/device/icon_device_invite.png" mode="aspectFit" />
       </view>
-      <text class="hero-title">邀请您的家人或朋友</text>
-      <text class="hero-sub">您要传给哪个设备？</text>
+      <text class="hero-title">{{ $t('邀请您的家人或朋友') }}</text>
+      <text class="hero-sub">{{ $t('您要传给哪个设备？') }}</text>
     </view>
 
     <view class="card">
-      <text class="card-title">芝麻日历</text>
+      <text class="card-title">{{ $t('芝麻日历') }}</text>
       <view class="opt" :class="{ active: selected === 0 }" @click="selected = 0">
         <text class="opt-text">601347083</text>
       </view>
@@ -21,7 +21,7 @@
     </view>
 
     <view class="btn" @click="send">
-      <text class="btn-text">发送邀请</text>
+      <text class="btn-text">{{ $t('发送邀请') }}</text>
     </view>
   </view>
 </template>
@@ -33,7 +33,7 @@ import BlHeader from '../../components/BlHeader.vue'
 const selected = ref(0)
 
 function send() {
-  uni.showToast({ title: '已发送邀请', icon: 'none' })
+  uni.showToast({ title: uni.$t('已发送邀请'), icon: 'none' })
 }
 </script>
 

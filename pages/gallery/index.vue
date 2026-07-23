@@ -39,9 +39,9 @@
           <image class="empty-pic" src="/static/gallery/bg_none_galley.png" mode="aspectFit" />
         </view>
       </view>
-      <text class="empty-text">暂无相册，快来添加你的相册吧！～</text>
+      <text class="empty-text">{{ $t('暂无相册，快来添加你的相册吧') + '！～' }}</text>
       <view class="empty-btn" @click="openAddAlbum">
-        <text class="empty-btn-text">添加相册</text>
+        <text class="empty-btn-text">{{ $t('添加相册') }}</text>
       </view>
     </view>
 
@@ -63,14 +63,14 @@
     <view v-if="showAdd" class="sheet-mask" @click="closeAddAlbum">
       <view class="sheet" @click.stop>
         <view class="sheet-head">
-          <text class="sheet-title">添加相册</text>
+          <text class="sheet-title">{{ $t('添加相册') }}</text>
           <image class="sheet-x" src="/static/gallery/icon_close.png" mode="aspectFit" @click="closeAddAlbum" />
         </view>
         <view class="sheet-input">
-          <input v-model="newAlbumName" class="sheet-field" placeholder="输入相册名称" placeholder-class="sheet-ph" />
+          <input v-model="newAlbumName" class="sheet-field" :placeholder="$t('输入相册名称')" placeholder-class="sheet-ph" />
         </view>
         <view class="sheet-btn" :class="{ disabled: !newAlbumName.trim() }" @click="createAlbum">
-          <text class="sheet-btn-text">确定</text>
+          <text class="sheet-btn-text">{{ $t('确定') }}</text>
         </view>
       </view>
     </view>
@@ -94,7 +94,7 @@ const loading = ref(false)
 
 const activeDevice = computed(() => {
   const found = devices.value.find((it) => it.id === activeDeviceId.value)
-  return found || devices.value[0] || { id: '', name: '我的设备', email: '' }
+  return found || devices.value[0] || { id: '', name: uni.$t('我的设备'), email: '' }
 })
 
 const albums = computed(() =>
@@ -133,7 +133,7 @@ async function refresh() {
     devices.value = (list || []).map((it) => ({
       id: String(it.deviceEmail || ''),
       email: String(it.deviceEmail || ''),
-      name: String(it.deviceName || it.deviceEmail || '日历设备'),
+      name: String(it.deviceName || it.deviceEmail || uni.$t('日历设备')),
     }))
     const stored = String(uni.getStorageSync('active_device_email_v1') || '').trim()
     const nextActive = devices.value.find((it) => it.id === stored) ? stored : devices.value[0]?.id || ''
@@ -147,7 +147,7 @@ async function refresh() {
   } catch (e) {
     devices.value = []
     rawAlbums.value = []
-    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相册失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -170,7 +170,7 @@ async function selectDevice(id) {
     rawAlbums.value = id ? await getAlbumList({ deviceEmail: id }) : []
   } catch (e) {
     rawAlbums.value = []
-    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相册失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -194,11 +194,11 @@ async function createAlbum() {
   const name = newAlbumName.value.trim()
   if (!name) return
   if (!activeDevice.value.email) {
-    uni.showToast({ title: '请先选择设备', icon: 'none' })
+    uni.showToast({ title: uni.$t('请先选择设备'), icon: 'none' })
     return
   }
   try {
-    uni.showLoading({ title: '创建中' })
+    uni.showLoading({ title: uni.$t('创建中') })
     await createAlbumInfo({ deviceEmail: activeDevice.value.email, albumName: name })
     showAdd.value = false
     await refresh()
@@ -206,10 +206,10 @@ async function createAlbum() {
     if (created && created.id) {
       uni.navigateTo({ url: `/pages/gallery/album?albumId=${encodeURIComponent(created.id)}` })
     } else {
-      uni.showToast({ title: '创建成功', icon: 'none' })
+      uni.showToast({ title: uni.$t('创建成功'), icon: 'none' })
     }
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '创建相册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('创建相册失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

@@ -42,7 +42,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: '' },
   value: { type: String, default: '' },
-  confirmText: { type: String, default: '确定' },
+  confirmText: { type: String, default: uni.$t('确定') },
   startYear: { type: Number, default: 2020 },
   yearCount: { type: Number, default: 21 },
 })
@@ -66,7 +66,7 @@ const calLocked = ref('')
 const calMoved = ref(false)
 const suppressPickUntil = ref(0)
 
-const weekLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const weekLabels = [uni.$t('周日'), uni.$t('周一'), uni.$t('周二'), uni.$t('周三'), uni.$t('周四'), uni.$t('周五'), uni.$t('周六')]
 
 const cursorTitle = computed(() => `${cursorY.value}年${cursorM.value}月`)
 

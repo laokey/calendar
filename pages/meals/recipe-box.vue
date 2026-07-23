@@ -1,10 +1,10 @@
 <template>
   <view class="bl-page box-page">
-    <BlHeader title="食谱盒" back>
+    <BlHeader :title="$t('食谱盒')" back>
       <template #right>
         <view class="top-add" @click="goAddRecipe">
           <image class="top-add-icon" src="/static/meals/icon_plus.png" mode="aspectFit" />
-          <text class="top-add-text">添加食谱</text>
+          <text class="top-add-text">{{ $t('添加食谱') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -13,7 +13,7 @@
 
     <view class="search">
       <image class="search-icon" src="/static/meals/icon_search.png" mode="aspectFit" />
-      <input v-model="q" class="search-input" placeholder="搜索" placeholder-class="ph" />
+      <input v-model="q" class="search-input" :placeholder="$t('搜索')" placeholder-class="ph" />
     </view>
 
     <view class="list">
@@ -35,34 +35,34 @@
     </view>
 
     <view class="bottom" :class="{ disabled: selectedIds.length === 0 }" @click="confirmSelect">
-      <text class="bottom-text">添加到计划（{{ selectedIds.length }}）</text>
+      <text class="bottom-text">{{ $t('添加到计划') }}（{{ selectedIds.length }}）</text>
     </view>
 
     <BlSheet v-model="actionOpen" title="" :confirm-text="''">
       <view class="action-list">
-        <view class="action-item" @click="editRecipe"><text class="action-text">编辑</text></view>
-        <view class="action-item danger" @click="openDelete"><text class="action-text danger-text">删除</text></view>
-        <view class="action-cancel" @click="actionOpen = false"><text class="action-cancel-text">取消</text></view>
+        <view class="action-item" @click="editRecipe"><text class="action-text">{{ $t('编辑') }}</text></view>
+        <view class="action-item danger" @click="openDelete"><text class="action-text danger-text">{{ $t('删除') }}</text></view>
+        <view class="action-cancel" @click="actionOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
       </view>
     </BlSheet>
 
-    <BlSheet v-model="deleteOpen" title="删除食谱" :confirm-text="''">
+    <BlSheet v-model="deleteOpen" :title="$t('删除食谱')" :confirm-text="''">
       <view class="del-list">
         <view class="del-item" @click="deleteScope = 'recipe_only'">
-          <text class="del-text">此食谱</text>
+          <text class="del-text">{{ $t('此食谱') }}</text>
           <view class="mark">
             <view v-if="deleteScope === 'recipe_only'" class="check"><text class="check-text">✓</text></view>
             <view v-else class="dot" />
           </view>
         </view>
         <view class="del-item" @click="deleteScope = 'recipe_and_plans'">
-          <text class="del-text">此食谱和计划的餐点</text>
+          <text class="del-text">{{ $t('此食谱和计划的餐点') }}</text>
           <view class="mark">
             <view v-if="deleteScope === 'recipe_and_plans'" class="check"><text class="check-text">✓</text></view>
             <view v-else class="dot" />
           </view>
         </view>
-        <view class="del-btn" @click="doDelete"><text class="del-btn-text">删除</text></view>
+        <view class="del-btn" @click="doDelete"><text class="del-btn-text">{{ $t('删除') }}</text></view>
       </view>
     </BlSheet>
   </view>
@@ -115,7 +115,7 @@ onLoad((options) => {
 const categories = computed(() => listCategories(mealState.value, { enabledOnly: true }))
 
 const tabOptions = computed(() => {
-  const base = [{ label: '全部', value: 'all' }]
+  const base = [{ label: uni.$t('全部'), value: 'all' }]
   const cats = categories.value.map((c) => ({ label: c.name, value: c.id }))
   return [...base, ...cats]
 })
@@ -194,10 +194,10 @@ function categoryNameById(id) {
 function mealTypeFromCategoryId(id) {
   const name = categoryNameById(id)
   const n = name.replace(/\s+/g, '')
-  if (n.includes('早餐') || n === '早') return 0
-  if (n.includes('午餐') || n === '午') return 1
-  if (n.includes('晚餐') || n === '晚') return 2
-  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  if (n.includes(uni.$t('早餐')) || n === uni.$t('早')) return 0
+  if (n.includes(uni.$t('午餐')) || n === uni.$t('午')) return 1
+  if (n.includes(uni.$t('晚餐')) || n === uni.$t('晚')) return 2
+  if (n.includes(uni.$t('点心')) || n.includes(uni.$t('加餐')) || n === uni.$t('点')) return 3
   const enabled = listCategories(mealState.value, { enabledOnly: true })
   const idx = enabled.findIndex((x) => x && x.id === id)
   return idx >= 0 ? idx : 0
@@ -224,24 +224,24 @@ async function fetchRecipes() {
     }))
   } catch (e) {
     recipes.value = []
-    uni.showToast({ title: String((e && e.message) || '获取食谱失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取食谱失败')), icon: 'none' })
   }
 }
 
 async function removeRecipe(recipeId) {
   const id = String(recipeId || '').trim()
   if (!id) return
-  uni.showLoading({ title: '删除中' })
+  uni.showLoading({ title: uni.$t('删除中') })
   try {
     const res = await mealsApi.deleteRecipeInfo({ recipeId: id })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '删除失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: '已删除', icon: 'none' })
+    uni.showToast({ title: uni.$t('已删除'), icon: 'none' })
     await fetchRecipes()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

@@ -4,21 +4,21 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">管理设备</text>
+      <text class="head-title">{{ $t('管理设备') }}</text>
       <view class="head-right" @click="done">
-        <text class="done">完成</text>
+        <text class="done">{{ $t('完成') }}</text>
       </view>
     </view>
 
     <view class="list">
       <view v-for="d in devices" :key="d.linkId || d.deviceEmail" class="item">
         <view class="item-left">
-          <text class="status">已激活</text>
-          <text class="name">{{ d.deviceName || '日历' }}</text>
+          <text class="status">{{ $t('已激活') }}</text>
+          <text class="name">{{ d.deviceName || $t('日历') }}</text>
         </view>
         <view class="item-right">
           <view class="mini-btn danger" @click="askRemove(d)">
-            <text class="mini-btn-text danger-text">解除关联</text>
+            <text class="mini-btn-text danger-text">{{ $t('解除关联') }}</text>
           </view>
         </view>
       </view>
@@ -26,11 +26,11 @@
 
     <view v-if="dialogVisible" class="dialog-mask" @click="closeDialog">
       <view class="dialog-content" @click.stop>
-        <text class="d-title">删除</text>
-        <text class="d-sub">确定解除该设备关联吗？</text>
+        <text class="d-title">{{ $t('删除') }}</text>
+        <text class="d-sub">{{ $t('确定解除该设备关联吗？') }}</text>
         <view class="d-actions">
-          <view class="d-btn cancel" @click="closeDialog"><text class="d-btn-text cancel-text">取消</text></view>
-          <view class="d-btn confirm" @click="confirmRemove"><text class="d-btn-text confirm-text">删除</text></view>
+          <view class="d-btn cancel" @click="closeDialog"><text class="d-btn-text cancel-text">{{ $t('取消') }}</text></view>
+          <view class="d-btn confirm" @click="confirmRemove"><text class="d-btn-text confirm-text">{{ $t('删除') }}</text></view>
         </view>
       </view>
     </view>
@@ -85,7 +85,7 @@ async function refresh() {
     devices.value = activeEmail.value ? active.filter((x) => String(x.deviceEmail) === activeEmail.value) : active
   } catch (e) {
     devices.value = []
-    uni.showToast({ title: String((e && e.message) || '获取设备失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取设备失败')), icon: 'none' })
   }
 }
 
@@ -106,18 +106,18 @@ function closeDialog() {
 async function confirmRemove() {
   const linkId = removeLinkId.value
   if (!linkId) return
-  uni.showLoading({ title: '解绑中' })
+  uni.showLoading({ title: uni.$t('解绑中') })
   try {
     const res = await deviceApi.deleteLinkDevice({ linkId })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '解绑失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('解绑失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: '已解除关联', icon: 'none' })
+    uni.showToast({ title: uni.$t('已解除关联'), icon: 'none' })
     closeDialog()
     setTimeout(() => uni.navigateBack(), 250)
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '解绑失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('解绑失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

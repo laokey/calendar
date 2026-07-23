@@ -1,14 +1,14 @@
 <template>
   <view class="page">
-    <BlHeader title="昵称" back />
+    <BlHeader :title="$t('昵称')" back />
 
     <view class="input-wrap">
-      <input v-model="name" class="input" placeholder="请输入昵称" placeholder-class="ph" confirm-type="done" @confirm="save" />
+      <input v-model="name" class="input" :placeholder="$t('请输入昵称')" placeholder-class="ph" confirm-type="done" @confirm="save" />
       <view v-if="name" class="x" @click="name = ''"><text class="x-text">×</text></view>
     </view>
 
     <view class="btn" @click="save">
-      <text class="btn-text">保存</text>
+      <text class="btn-text">{{ $t('保存') }}</text>
     </view>
   </view>
 </template>
@@ -30,10 +30,10 @@ onLoad(() => {
 async function save() {
   const v = name.value.trim()
   if (!v) {
-    uni.showToast({ title: '请输入昵称', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入昵称'), icon: 'none' })
     return
   }
-  uni.showLoading({ title: '保存中' })
+  uni.showLoading({ title: uni.$t('保存中') })
   try {
     await usersApi.updateUserNickname({ nickName: v })
     const s = ensureMeState()
@@ -43,10 +43,10 @@ async function save() {
   } catch (e) {
     const code = e && e.code !== undefined ? e.code : undefined
     if (code === 201 || code === '201') {
-      uni.showToast({ title: '用户不存在', icon: 'none' })
+      uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
       return
     }
-    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

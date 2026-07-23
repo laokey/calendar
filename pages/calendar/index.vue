@@ -57,7 +57,7 @@
     <view v-else class="week">
       <view v-for="day in weekList" :key="day.key" class="day-row" @click="onWeekDayRowClick(day)">
         <view class="left">
-          <text class="left-wd">{{ day.weekday }}</text>
+          <text class="left-wd">{{ $t(day.weekday) }}</text>
           <view class="date-pill" :class="{ 'is-active': day.isToday }">
             <text class="date-pill-text">{{ day.date }}</text>
           </view>
@@ -69,7 +69,7 @@
                 <text class="event-title">{{ ev.title }}</text>
                 <view class="event-time">
                   <image class="clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
-                  <text class="event-time-text">{{ ev.allDay ? '全天' : `${ev.startTime || ''}–${ev.endTime || ''}` }}</text>
+                  <text class="event-time-text">{{ ev.allDay ? $t('全天') : `${ev.startTime || ''}–${ev.endTime || ''}` }}</text>
                 </view>
               </view>
               <view class="event-right">
@@ -96,7 +96,7 @@
             </view>
           </template>
           <view v-else class="event event-empty" @click.stop="addEventFor(day.key)">
-            <text class="event-empty-text">无活动</text>
+            <text class="event-empty-text">{{ $t('无活动') }}</text>
           </view>
         </view>
       </view>
@@ -139,14 +139,14 @@ const safeTop = computed(() => {
 })
 
 const modeOptions = [
-  { label: '月', value: 'month' },
-  { label: '周', value: 'week' },
+  { label: uni.$t('月'), value: 'month' },
+  { label: uni.$t('周'), value: 'week' },
 ]
 
 const viewMode = ref(state.value.viewMode || 'month')
 const cursorDateKey = ref(state.value.cursorDate)
 
-const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const weekdays = [uni.$t('周日'), uni.$t('周一'), uni.$t('周二'), uni.$t('周三'), uni.$t('周四'), uni.$t('周五'), uni.$t('周六')]
 
 const rangeText = computed(() => {
   if (viewMode.value === 'month') {

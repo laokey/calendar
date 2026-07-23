@@ -7,9 +7,9 @@
       <text class="head-title">{{ headerTitle }}</text>
       <view class="head-right">
         <view v-if="selectMode" class="pill" @click="toggleSelectAll">
-          <text class="pill-text">✓ 全选</text>
+          <text class="pill-text">{{ $t('✓ 全选') }}</text>
         </view>
-        <text v-else class="danger" @click="confirmDeleteAlbum">删除</text>
+        <text v-else class="danger" @click="confirmDeleteAlbum">{{ $t('删除') }}</text>
       </view>
     </view>
 
@@ -34,8 +34,8 @@
             />
           </view>
         </view>
-        <text class="sub">数量: {{ photos.length }}</text>
-        <text class="sub">创建: {{ album?.createdAt }}</text>
+        <text class="sub">{{ $t('数量') }}: {{ photos.length }}</text>
+        <text class="sub">{{ $t('创建') }}: {{ album?.createdAt }}</text>
       </view>
     </view>
 
@@ -48,10 +48,10 @@
             mode="aspectFit"
           />
         </view>
-        <text class="tool-text">幻灯片</text>
+        <text class="tool-text">{{ $t('幻灯片') }}</text>
       </view>
-      <text v-if="!selectMode" class="choose" @click="enterSelect">选择</text>
-      <text v-else class="choose" @click="exitSelect">完成</text>
+      <text v-if="!selectMode" class="choose" @click="enterSelect">{{ $t('选择') }}</text>
+      <text v-else class="choose" @click="exitSelect">{{ $t('完成') }}</text>
     </view>
 
     <view v-if="photos.length === 0" class="empty">
@@ -62,9 +62,9 @@
           mode="aspectFit"
         />
       </view>
-      <text class="empty-text">暂无照片</text>
+      <text class="empty-text">{{ $t('暂无照片') }}</text>
       <view class="empty-btn" @click="openUpload">
-        <text class="empty-btn-text">添加照片</text>
+        <text class="empty-btn-text">{{ $t('添加照片') }}</text>
       </view>
     </view>
 
@@ -125,7 +125,7 @@
     <view v-if="renameVisible" class="sheet-mask" @click="closeRename">
       <view class="sheet" @click.stop>
         <view class="sheet-head">
-          <text class="sheet-title">编辑名称</text>
+          <text class="sheet-title">{{ $t('编辑名称') }}</text>
           <image
             class="sheet-x"
             src="/static/gallery/icon_close.png"
@@ -137,7 +137,7 @@
           <input
             v-model="renameValue"
             class="sheet-field"
-            placeholder="输入相册名称"
+            :placeholder="$t('输入相册名称')"
             placeholder-class="sheet-ph"
           />
         </view>
@@ -146,7 +146,7 @@
           :class="{ disabled: !renameValue.trim() }"
           @click="submitRename"
         >
-          <text class="sheet-btn-text">确定</text>
+          <text class="sheet-btn-text">{{ $t('确定') }}</text>
         </view>
       </view>
     </view>
@@ -204,7 +204,7 @@ const coverUri = computed(() => {
 });
 
 const headerTitle = computed(() => {
-  if (selectMode.value) return "选择";
+  if (selectMode.value) return uni.$t('选择');
   return album.value ? album.value.name : "";
 });
 
@@ -221,12 +221,12 @@ async function refresh() {
     deviceEmail.value = active;
     rawAlbums.value = active ? await getAlbumList({ deviceEmail: active }) : [];
     if (albumId.value && !album.value) {
-      uni.showToast({ title: "相册不存在", icon: "none" });
+      uni.showToast({ title: uni.$t('相册不存在'), icon: "none" });
       setTimeout(() => uni.navigateBack(), 300);
     }
   } catch (e) {
     rawAlbums.value = [];
-    uni.showToast({ title: String((e && e.message) || "获取相册失败"), icon: "none" });
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相册失败')), icon: "none" });
   }
 }
 
@@ -282,14 +282,14 @@ function openUpload() {
 function confirmDeleteAlbum() {
   if (!album.value) return;
   uni.showModal({
-    title: "删除相册",
-    content: "相册一旦删除将无法恢复",
-    cancelText: "取消",
-    confirmText: "确定",
+    title: uni.$t('删除相册'),
+    content: uni.$t('相册一旦删除将无法恢复'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: async (res) => {
       if (!res.confirm) return;
       try {
-        uni.showLoading({ title: "删除中" });
+        uni.showLoading({ title: uni.$t('删除中') });
         await deleteAlbumInfo({ albumId: albumId.value });
         try {
           const pages = typeof getCurrentPages === "function" ? getCurrentPages() : [];
@@ -304,7 +304,7 @@ function confirmDeleteAlbum() {
           uni.redirectTo({ url: "/pages/gallery/index" });
         }
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || "删除相册失败"), icon: "none" });
+        uni.showToast({ title: String((e && e.message) || uni.$t('删除相册失败')), icon: "none" });
       } finally {
         try {
           uni.hideLoading();
@@ -317,21 +317,21 @@ function confirmDeleteAlbum() {
 function confirmDeleteSelected() {
   if (selectedIds.value.length === 0) return;
   uni.showModal({
-    title: "删除图片",
+    title: uni.$t('删除图片'),
     content: `将删除${selectedIds.value.length}张照片，删除后无法恢复`,
-    cancelText: "取消",
-    confirmText: "确定",
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: async (res) => {
       if (!res.confirm) return;
       try {
-        uni.showLoading({ title: "删除中" });
+        uni.showLoading({ title: uni.$t('删除中') });
         for (const id of selectedIds.value) {
           await deleteAlbumPhoto({ photoId: id });
         }
         await refresh();
         exitSelect();
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || "删除照片失败"), icon: "none" });
+        uni.showToast({ title: String((e && e.message) || uni.$t('删除照片失败')), icon: "none" });
       } finally {
         try {
           uni.hideLoading();
@@ -355,12 +355,12 @@ async function submitRename() {
   const v = renameValue.value.trim();
   if (!v) return;
   try {
-    uni.showLoading({ title: "保存中" });
+    uni.showLoading({ title: uni.$t('保存中') });
     await updateAlbumInfo({ deviceEmail: deviceEmail.value, albumId: albumId.value, albumName: v });
     renameVisible.value = false;
     await refresh();
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || "更新相册失败"), icon: "none" });
+    uni.showToast({ title: String((e && e.message) || uni.$t('更新相册失败')), icon: "none" });
   } finally {
     try {
       uni.hideLoading();

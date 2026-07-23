@@ -5,16 +5,16 @@
     </view>
 
     <view class="card">
-      <text class="title">登录</text>
+      <text class="title">{{ $t('登录') }}</text>
 
       <view class="field">
-        <text class="label">邮箱</text>
+        <text class="label">{{ $t('邮箱') }}</text>
         <view class="input-wrap">
           <input
             v-model="email"
             type="email"
             class="input"
-            placeholder="请输入电子邮箱"
+            :placeholder="$t('请输入电子邮箱')"
             placeholder-class="ph"
             confirm-type="next"
             @blur="onEmailBlur"
@@ -27,13 +27,13 @@
       </view>
 
       <view class="field">
-        <text class="label">密码</text>
+        <text class="label">{{ $t('密码') }}</text>
         <view class="input-wrap">
           <input
             v-model="password"
             class="input"
             :password="!showPassword"
-            placeholder="请输入密码"
+            :placeholder="$t('请输入密码')"
             placeholder-class="ph"
             confirm-type="done"
             @confirm="submit"
@@ -54,35 +54,35 @@
       <view class="agree-row" @click="agreed = !agreed">
         <image class="checkbox-img" :src="agreed ? '/static/login/icon_checkbox_on.png' : '/static/login/icon_checkbox_off.png'" mode="aspectFit" />
         <view class="agree-text">
-          <text class="agree-muted">已阅读并同意</text>
-          <text class="agree-link" @click.stop="openAgreement">《用户协议》</text>
-          <text class="agree-muted">和</text>
-          <text class="agree-link" @click.stop="openAgreement">《隐私政策》</text>
+          <text class="agree-muted">{{ $t('已阅读并同意') }}</text>
+          <text class="agree-link" @click.stop="openAgreement">{{ $t('《用户协议》') }}</text>
+          <text class="agree-muted">{{ $t('和') }}</text>
+          <text class="agree-link" @click.stop="openAgreement">{{ $t('《隐私政策》') }}</text>
         </view>
       </view>
 
       <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
-        <text class="btn-text">登录</text>
+        <text class="btn-text">{{ $t('登录') }}</text>
       </view>
 
       <view class="bottom-row">
-        <text class="bottom-link" @click="goRegister">注册</text>
-        <text class="bottom-link" @click="goReset">忘记密码？</text>
+        <text class="bottom-link" @click="goRegister">{{ $t('注册') }}</text>
+        <text class="bottom-link" @click="goReset">{{ $t('忘记密码？') }}</text>
       </view>
     </view>
 
     <view v-if="policyVisible" class="dialog-mask">
       <view class="dialog-content" @click.stop>
-        <text class="d-title">服务协议及隐私政策</text>
+        <text class="d-title">{{ $t('服务协议及隐私政策') }}</text>
         <text class="d-sub">
-          为了更好的保障您的合法权益，请您阅读并同意以下协议
-          <text class="d-link" @click.stop="openAgreement('user')">《用户协议》</text>
-          和
-          <text class="d-link" @click.stop="openAgreement('privacy')">《隐私政策》</text>
+          {{ $t('为了更好的保障您的合法权益，请您阅读并同意以下协议') }}
+          <text class="d-link" @click.stop="openAgreement('user')">{{ $t('《用户协议》') }}</text>
+          {{ $t('和') }}
+          <text class="d-link" @click.stop="openAgreement('privacy')">{{ $t('《隐私政策》') }}</text>
         </text>
         <view class="d-actions">
-          <view class="d-btn cancel" @click="rejectPolicy"><text class="d-btn-text cancel-text">不同意</text></view>
-          <view class="d-btn confirm" @click="acceptPolicy"><text class="d-btn-text confirm-text">同意</text></view>
+          <view class="d-btn cancel" @click="rejectPolicy"><text class="d-btn-text cancel-text">{{ $t('不同意') }}</text></view>
+          <view class="d-btn confirm" @click="acceptPolicy"><text class="d-btn-text confirm-text">{{ $t('同意') }}</text></view>
         </view>
       </view>
     </view>
@@ -125,7 +125,7 @@ function validateEmail() {
   const v = email.value.trim()
   if (!v) return true
   if (isEmail(v)) return true
-  uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+  uni.showToast({ title: uni.$t('邮箱格式不正确'), icon: 'none' })
   return false
 }
 
@@ -155,20 +155,20 @@ function goReset() {
 
 async function submit() {
   if (policyVisible.value) {
-    uni.showToast({ title: '请先同意协议', icon: 'none' })
+    uni.showToast({ title: uni.$t('请先同意协议'), icon: 'none' })
     return
   }
   if (!canSubmit.value) {
     if (!email.value.trim()) {
-      uni.showToast({ title: '请输入邮箱', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入邮箱'), icon: 'none' })
       return
     }
     if (!password.value.trim()) {
-      uni.showToast({ title: '请输入密码', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入密码'), icon: 'none' })
       return
     }
     if (!agreed.value) {
-      uni.showToast({ title: '请先同意协议', icon: 'none' })
+      uni.showToast({ title: uni.$t('请先同意协议'), icon: 'none' })
       return
     }
     return
@@ -178,16 +178,16 @@ async function submit() {
 
   const v = email.value.trim()
   const p = password.value.trim()
-  uni.showLoading({ title: '登录中' })
+  uni.showLoading({ title: uni.$t('登录中') })
   try {
     const res = await authApi.login({ account: v, password: p })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
       if (res.code === 201 || res.code === '201') {
-        uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
+        uni.showToast({ title: uni.$t('账号不存在，请先注册'), icon: 'none' })
         setTimeout(() => goRegister(), 350)
         return
       }
-      uni.showToast({ title: '登录失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('登录失败'), icon: 'none' })
       return
     }
     uni.setStorageSync('auth_email', v)
@@ -196,11 +196,11 @@ async function submit() {
   } catch (e) {
     const code = e && e.code !== undefined ? e.code : undefined
     if (code === 201 || code === '201') {
-      uni.showToast({ title: '账号不存在，请先注册', icon: 'none' })
+      uni.showToast({ title: uni.$t('账号不存在，请先注册'), icon: 'none' })
       setTimeout(() => goRegister(), 350)
       return
     }
-    uni.showToast({ title: String((e && e.message) || '登录失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('登录失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -214,7 +214,7 @@ function acceptPolicy() {
 }
 
 function rejectPolicy() {
-  uni.showToast({ title: '需要同意协议才可继续使用', icon: 'none' })
+  uni.showToast({ title: uni.$t('需要同意协议才可继续使用'), icon: 'none' })
 }
 </script>
 

@@ -11,19 +11,19 @@
     </view>
 
     <view class="share-card">
-      <text class="share-title">将分享链接发送至:</text>
+      <text class="share-title">{{ $t('将分享链接发送至:') }}</text>
       <view class="share-row">
         <text class="share-email">{{ myEmail }}</text>
-        <view class="copy" @click="copyEmail"><text class="copy-text">复制</text></view>
+        <view class="copy" @click="copyEmail"><text class="copy-text">{{ $t('复制') }}</text></view>
       </view>
     </view>
 
     <view class="paste">
-      <textarea v-model="pasted" class="paste-area" placeholder="在此处粘贴网址" placeholder-class="ph" />
+      <textarea v-model="pasted" class="paste-area" :placeholder="$t('在此处粘贴网址')" placeholder-class="ph" />
     </view>
 
     <view class="bottom-action">
-      <view class="bl-btn-primary" @click="done"><text>完成</text></view>
+      <view class="bl-btn-primary" @click="done"><text>{{ $t('完成') }}</text></view>
     </view>
   </view>
 </template>
@@ -46,60 +46,60 @@ onLoad((options) => {
 })
 
 const title = computed(() => {
-  if (type.value === 'cozi') return '同步Cozi'
-  if (type.value === 'teamsnap') return '同步Teamsnap'
-  if (type.value === 'subscribed') return '同步已订阅日历'
-  return '同步iCloud日历'
+  if (type.value === 'cozi') return uni.$t('同步Cozi')
+  if (type.value === 'teamsnap') return uni.$t('同步Teamsnap')
+  if (type.value === 'subscribed') return uni.$t('同步已订阅日历')
+  return uni.$t('同步iCloud日历')
 })
 
 const steps = computed(() => {
   if (type.value === 'icloud') {
     return [
-      { text: '打开日历应用程序', image: asset('/static/sync/icloud/Slice 77.png') },
-      { text: '点击底部日历', image: asset('/static/sync/icloud/Slice 77(1).png') },
-      { text: '点击已同步的 iCloud 日历右侧信息按钮', image: asset('/static/sync/icloud/Slice 77(2).png') },
-      { text: '选择公开日历', image: asset('/static/sync/icloud/Slice 77(3).png') },
-      { text: '点击共享链接', image: asset('/static/sync/icloud/Slice 77(4).png') },
-      { text: '复制或发送日历 URL', image: asset('/static/sync/icloud/Slice 77(5).png') },
-      { text: '将 URL 粘贴到下方输入框', image: asset('/static/sync/icloud/Slice 77(6).png') },
-      { text: '确认同步完成', image: asset('/static/sync/icloud/Slice 78.png') },
+      { text: uni.$t('打开日历应用程序'), image: asset('/static/sync/icloud/Slice 77.png') },
+      { text: uni.$t('点击底部日历'), image: asset('/static/sync/icloud/Slice 77(1).png') },
+      { text: uni.$t('点击已同步的 iCloud 日历右侧信息按钮'), image: asset('/static/sync/icloud/Slice 77(2).png') },
+      { text: uni.$t('选择公开日历'), image: asset('/static/sync/icloud/Slice 77(3).png') },
+      { text: uni.$t('点击共享链接'), image: asset('/static/sync/icloud/Slice 77(4).png') },
+      { text: uni.$t('复制或发送日历 URL'), image: asset('/static/sync/icloud/Slice 77(5).png') },
+      { text: uni.$t('将 URL 粘贴到下方输入框'), image: asset('/static/sync/icloud/Slice 77(6).png') },
+      { text: uni.$t('确认同步完成'), image: asset('/static/sync/icloud/Slice 78.png') },
     ]
   }
   if (type.value === 'teamsnap') {
     return [
-      { text: '在电脑上登录 TeamSnap 网站', image: asset('/static/sync/teamsnap/Slice 77.png') },
-      { text: '进入团队页面', image: asset('/static/sync/teamsnap/Slice 77(1).png') },
-      { text: '打开赛程或设置入口', image: asset('/static/sync/teamsnap/Slice 77(2).png') },
-      { text: '选择同步日历或导出', image: asset('/static/sync/teamsnap/Slice 77(3).png') },
-      { text: '复制完整日历或仅赛事链接', image: asset('/static/sync/teamsnap/Slice 77(4).png') },
+      { text: uni.$t('在电脑上登录 TeamSnap 网站'), image: asset('/static/sync/teamsnap/Slice 77.png') },
+      { text: uni.$t('进入团队页面'), image: asset('/static/sync/teamsnap/Slice 77(1).png') },
+      { text: uni.$t('打开赛程或设置入口'), image: asset('/static/sync/teamsnap/Slice 77(2).png') },
+      { text: uni.$t('选择同步日历或导出'), image: asset('/static/sync/teamsnap/Slice 77(3).png') },
+      { text: uni.$t('复制完整日历或仅赛事链接'), image: asset('/static/sync/teamsnap/Slice 77(4).png') },
     ]
   }
   if (type.value === 'cozi') {
     return [
-      { text: '打开 Cozi 应用程序', image: asset('/static/sync/cozi/Slice 77.png') },
-      { text: '点击家庭图标', image: asset('/static/sync/cozi/Slice 77(1).png') },
-      { text: '选择设置', image: asset('/static/sync/cozi/Slice 77(2).png') },
-      { text: '点击共享 Cozi 日历', image: asset('/static/sync/cozi/Slice 77(3).png') },
-      { text: '共享所有事件或特定日历并点击按钮', image: asset('/static/sync/cozi/Slice 77(4).png') },
-      { text: '点击 Cozi 网址', image: asset('/static/sync/cozi/Slice 77(5).png') },
-      { text: '将 URL 粘贴到应用程序或邮件中', image: asset('/static/sync/cozi/Slice 77(6).png') },
+      { text: uni.$t('打开 Cozi 应用程序'), image: asset('/static/sync/cozi/Slice 77.png') },
+      { text: uni.$t('点击家庭图标'), image: asset('/static/sync/cozi/Slice 77(1).png') },
+      { text: uni.$t('选择设置'), image: asset('/static/sync/cozi/Slice 77(2).png') },
+      { text: uni.$t('点击共享 Cozi 日历'), image: asset('/static/sync/cozi/Slice 77(3).png') },
+      { text: uni.$t('共享所有事件或特定日历并点击按钮'), image: asset('/static/sync/cozi/Slice 77(4).png') },
+      { text: uni.$t('点击 Cozi 网址'), image: asset('/static/sync/cozi/Slice 77(5).png') },
+      { text: uni.$t('将 URL 粘贴到应用程序或邮件中'), image: asset('/static/sync/cozi/Slice 77(6).png') },
     ]
   }
   if (type.value === 'subscribed') {
     return [
-      { text: '打开订阅日历来源页面', image: asset('/static/sync/subscribed/Slice 77.png') },
-      { text: '找到对应订阅日历', image: asset('/static/sync/subscribed/Slice 77(1).png') },
-      { text: '打开订阅详情', image: asset('/static/sync/subscribed/Slice 77(2).png') },
-      { text: '复制订阅网址', image: asset('/static/sync/subscribed/Slice 77(3).png') },
-      { text: '发送或保存订阅链接', image: asset('/static/sync/subscribed/Slice 77(4).png') },
-      { text: '将链接粘贴到下方输入框', image: asset('/static/sync/subscribed/Slice 77(5).png') },
+      { text: uni.$t('打开订阅日历来源页面'), image: asset('/static/sync/subscribed/Slice 77.png') },
+      { text: uni.$t('找到对应订阅日历'), image: asset('/static/sync/subscribed/Slice 77(1).png') },
+      { text: uni.$t('打开订阅详情'), image: asset('/static/sync/subscribed/Slice 77(2).png') },
+      { text: uni.$t('复制订阅网址'), image: asset('/static/sync/subscribed/Slice 77(3).png') },
+      { text: uni.$t('发送或保存订阅链接'), image: asset('/static/sync/subscribed/Slice 77(4).png') },
+      { text: uni.$t('将链接粘贴到下方输入框'), image: asset('/static/sync/subscribed/Slice 77(5).png') },
     ]
   }
   return [
-    { text: '打开日历应用', image: asset('/static/sync/icloud/Slice 77.png') },
-    { text: '选择日历/订阅详情', image: asset('/static/sync/icloud/Slice 77(1).png') },
-    { text: '复制订阅网址', image: asset('/static/sync/icloud/Slice 77(2).png') },
-    { text: '将链接粘贴到邮件或输入框中', image: asset('/static/sync/icloud/Slice 77(3).png') },
+    { text: uni.$t('打开日历应用'), image: asset('/static/sync/icloud/Slice 77.png') },
+    { text: uni.$t('选择日历/订阅详情'), image: asset('/static/sync/icloud/Slice 77(1).png') },
+    { text: uni.$t('复制订阅网址'), image: asset('/static/sync/icloud/Slice 77(2).png') },
+    { text: uni.$t('将链接粘贴到邮件或输入框中'), image: asset('/static/sync/icloud/Slice 77(3).png') },
   ]
 })
 
@@ -107,7 +107,7 @@ function copyEmail() {
   uni.setClipboardData({
     data: myEmail.value,
     success() {
-      uni.showToast({ title: '已复制', icon: 'none' })
+      uni.showToast({ title: uni.$t('已复制'), icon: 'none' })
     },
   })
 }

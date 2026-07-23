@@ -4,11 +4,11 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">上传照片</text>
+      <text class="head-title">{{ $t('上传照片') }}</text>
       <view class="head-right" />
     </view>
 
-    <text class="hint">选择相片上传到指定的相册</text>
+    <text class="hint">{{ $t('选择相片上传到指定的相册') }}</text>
 
     <view class="device-row">
       <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
@@ -33,10 +33,10 @@
 
     <view class="actions">
       <view class="btn" :class="{ disabled: !targetAlbumId }" @click="pickFromAlbum">
-        <text class="btn-text">相册</text>
+        <text class="btn-text">{{ $t('相册') }}</text>
       </view>
       <view class="btn secondary" :class="{ disabled: !targetAlbumId }" @click="pickFromCamera">
-        <text class="btn-text secondary-text">相机</text>
+        <text class="btn-text secondary-text">{{ $t('相机') }}</text>
       </view>
     </view>
   </view>
@@ -74,7 +74,7 @@ const safeTop = computed(() => {
 
 const activeDevice = computed(() => {
   const found = devices.value.find((it) => it.id === activeDeviceId.value)
-  return found || devices.value[0] || { id: '', name: '我的设备', email: '' }
+  return found || devices.value[0] || { id: '', name: uni.$t('我的设备'), email: '' }
 })
 
 const albums = computed(() =>
@@ -90,7 +90,7 @@ async function refresh() {
     devices.value = (list || []).map((it) => ({
       id: String(it.deviceEmail || ''),
       email: String(it.deviceEmail || ''),
-      name: String(it.deviceName || it.deviceEmail || '日历设备'),
+      name: String(it.deviceName || it.deviceEmail || uni.$t('日历设备')),
     }))
     const stored = String(uni.getStorageSync('active_device_email_v1') || '').trim()
     const nextActive = devices.value.find((it) => it.id === stored) ? stored : devices.value[0]?.id || ''
@@ -106,7 +106,7 @@ async function refresh() {
   } catch (e) {
     devices.value = []
     rawAlbums.value = []
-    uni.showToast({ title: String((e && e.message) || '获取相册失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取相册失败')), icon: 'none' })
   }
 }
 
@@ -171,7 +171,7 @@ function pickVideo(source) {
 function pickFromAlbum() {
   if (!targetAlbumId.value) return
   uni.showActionSheet({
-    itemList: ['照片', '视频'],
+    itemList: [uni.$t('照片'), uni.$t('视频')],
     success: (res) => {
       const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       if (idx === 0) pickImages('album', 9)
@@ -183,7 +183,7 @@ function pickFromAlbum() {
 function pickFromCamera() {
   if (!targetAlbumId.value) return
   uni.showActionSheet({
-    itemList: ['拍照', '录像'],
+    itemList: [uni.$t('拍照'), uni.$t('录像')],
     success: (res) => {
       const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       if (idx === 0) pickImages('camera', 1)

@@ -5,7 +5,7 @@
         <image class="topbar-back" src="/static/card/icon-card-nav-back.png" mode="aspectFit" />
       </view>
       <view class="topbar-center">
-        <text class="topbar-title">预览</text>
+        <text class="topbar-title">{{ $t('预览') }}</text>
       </view>
       <view class="topbar-side right" @click="reload">
         <image class="topbar-refresh" src="/static/card/icon-card-loading.png" mode="aspectFit" />
@@ -19,7 +19,7 @@
             <view v-if="draft.photoPath || draft.imageUrl" class="photo-wrap">
               <image class="photo-img" :src="draft.photoPath || draft.imageUrl" mode="aspectFill" />
             </view>
-            <view v-else class="placeholder"><text class="ph">未添加照片</text></view>
+            <view v-else class="placeholder"><text class="ph">{{ $t('未添加照片') }}</text></view>
           </view>
         </view>
         <view class="book-page right-page">
@@ -31,18 +31,18 @@
     </view>
 
     <view class="msg">
-      <textarea v-model="message" class="msg-input" placeholder="*写下您的祝福..." placeholder-class="ph-msg" maxlength="100" />
+      <textarea v-model="message" class="msg-input" :placeholder="$t('*写下您的祝福...')" placeholder-class="ph-msg" maxlength="100" />
       <text class="counter">{{ message.length }}/100</text>
     </view>
 
-    <text class="section">显示模式</text>
+    <text class="section">{{ $t('显示模式') }}</text>
     <view class="mode">
       <view class="mode-item" @click="playMode = 'auto'">
         <view class="mode-left">
           <view class="mode-ico"><image class="mode-ico-img" src="/static/card/icon-card-play.png" mode="aspectFit" /></view>
           <view class="mode-meta">
-            <text class="mode-title">自动播放</text>
-            <text class="mode-sub bl-muted">收到相框后，祝福会自动打开</text>
+            <text class="mode-title">{{ $t('自动播放') }}</text>
+            <text class="mode-sub bl-muted">{{ $t('收到相框后，祝福会自动打开') }}</text>
           </view>
         </view>
         <image class="mode-sel" :src="playMode === 'auto' ? '/static/card/icon-card-select-on.png' : '/static/common/icon_radio_off.png'" mode="aspectFit" />
@@ -52,8 +52,8 @@
         <view class="mode-left">
           <view class="mode-ico"><image class="mode-ico-img" src="/static/card/icon-card-hand-pointer.png" mode="aspectFit" /></view>
           <view class="mode-meta">
-            <text class="mode-title">手动播放</text>
-            <text class="mode-sub bl-muted">收到相框后，祝福会手动打开</text>
+            <text class="mode-title">{{ $t('手动播放') }}</text>
+            <text class="mode-sub bl-muted">{{ $t('收到相框后，祝福会手动打开') }}</text>
           </view>
         </view>
         <image class="mode-sel" :src="playMode === 'manual' ? '/static/card/icon-card-select-on.png' : '/static/common/icon_radio_off.png'" mode="aspectFit" />
@@ -62,7 +62,7 @@
 
     <view class="schedule">
       <view class="schedule-head">
-        <text class="schedule-title">定期发送</text>
+        <text class="schedule-title">{{ $t('定期发送') }}</text>
         <view class="schedule-switch" :class="{ on: scheduleEnabled }" @click="scheduleEnabled = !scheduleEnabled">
           <view class="schedule-switch-dot" />
         </view>
@@ -71,13 +71,13 @@
       <view v-if="scheduleEnabled" class="schedule-grid">
         <picker mode="date" :value="scheduleDate" @change="scheduleDate = $event.detail.value">
           <view class="schedule-cell">
-            <text class="schedule-label bl-muted">发送日期</text>
+            <text class="schedule-label bl-muted">{{ $t('发送日期') }}</text>
             <text class="schedule-value">{{ scheduleDate }}</text>
           </view>
         </picker>
         <picker mode="time" :value="scheduleTime" @change="scheduleTime = $event.detail.value">
           <view class="schedule-cell">
-            <text class="schedule-label bl-muted">发送时间</text>
+            <text class="schedule-label bl-muted">{{ $t('发送时间') }}</text>
             <text class="schedule-value">{{ scheduleTime }}</text>
           </view>
         </picker>
@@ -85,7 +85,7 @@
     </view>
 
     <view class="send" :class="{ disabled: !canSend }" @click="send">
-      <text class="send-text">发送卡片</text>
+      <text class="send-text">{{ $t('发送卡片') }}</text>
     </view>
   </view>
 </template>
@@ -147,7 +147,7 @@ function back() {
 
 function send() {
   if (!canSend.value) {
-    uni.showToast({ title: '请输入祝福内容', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入祝福内容'), icon: 'none' })
     return
   }
   persist()

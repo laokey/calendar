@@ -1,8 +1,8 @@
 <template>
   <view class="bl-page page">
-    <BlHeader title="编辑日历" back back-icon-src="/static/sync/icon_nav_back_small.png">
+    <BlHeader :title="$t('编辑日历')" back back-icon-src="/static/sync/icon_nav_back_small.png">
       <template #right>
-        <text class="save" @click="save">保存</text>
+        <text class="save" @click="save">{{ $t('保存') }}</text>
       </template>
     </BlHeader>
 
@@ -54,8 +54,8 @@ const iconSrc = computed(() => {
 
 const topLabel = computed(() => {
   const t = item.value && item.value.type ? item.value.type : ''
-  if (t === 'url') return '日历链接'
-  return '邮箱地址'
+  if (t === 'url') return uni.$t('日历链接')
+  return uni.$t('邮箱地址')
 })
 
 const topValue = computed(() => {
@@ -70,7 +70,7 @@ function save() {
   if (!item.value) return
   const v = String(name.value || '').trim()
   if (!v) {
-    uni.showToast({ title: '请输入姓名', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入姓名'), icon: 'none' })
     return
   }
   const state = ensureSyncState()

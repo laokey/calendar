@@ -1,11 +1,11 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="日历设置" back />
+    <BlHeader :title="$t('日历设置')" back />
 
-    <text class="hint">创建您的专属芝麻日历电子邮箱</text>
+    <text class="hint">{{ $t('创建您的专属芝麻日历电子邮箱') }}</text>
 
     <view class="bl-input">
-      <input v-model="localPart" class="bl-input-field" placeholder="设备名称" placeholder-class="ph" />
+      <input v-model="localPart" class="bl-input-field" :placeholder="$t('设备名称')" placeholder-class="ph" />
       <view class="bl-input-suffix" @click="cycleDomain">
         <text>{{ domain }}</text>
         <image class="down-img" src="/static/calendar/icon_chevron_down.png" mode="aspectFit" />
@@ -14,7 +14,7 @@
 
     <view class="save-wrap">
       <view class="bl-btn-primary" :class="{ 'is-disabled': !canSave }" @click="save">
-        <text>保存</text>
+        <text>{{ $t('保存') }}</text>
       </view>
     </view>
 
@@ -51,18 +51,18 @@ function showToast(type, text) {
 function save() {
   if (!canSave.value) return
   toast.type = 'loading'
-  toast.text = '加载中'
+  toast.text = uni.$t('加载中')
   toast.visible = true
 
   const value = localPart.value.trim()
   setTimeout(() => {
     toast.visible = false
     if (value === '23456788897') {
-      showToast('error', '邮箱已存在')
+      showToast('error', uni.$t('邮箱已存在'))
       return
     }
     if (value === '000') {
-      showToast('error', '平台邮箱不存在')
+      showToast('error', uni.$t('平台邮箱不存在'))
       return
     }
     uni.navigateTo({ url: '/pages/calendar/pending' })

@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page reward-page">
-    <BlHeader title="奖励" back back-icon-src="/static/reward/icon_nav_back_small.png">
+    <BlHeader :title="$t('奖励')" back back-icon-src="/static/reward/icon_nav_back_small.png">
       <template #right>
         <view class="right">
           <view class="icon-btn" @click="goGive">
@@ -62,12 +62,12 @@
               </view>
               <view class="item-main">
                 <text class="item-title">{{ it.title }}</text>
-                <text v-if="it.type === 'punish'" class="item-sub bl-muted">{{ it.desc || '惩罚' }}</text>
+                <text v-if="it.type === 'punish'" class="item-sub bl-muted">{{ it.desc || $t('惩罚') }}</text>
               </view>
             </view>
             <view class="item-right">
               <view v-if="buttonMode(it) === 'today'" class="btn disabled">
-                <text class="btn-text">{{ it.type === 'punish' ? '今天惩罚' : '今天奖励' }}</text>
+                <text class="btn-text">{{ it.type === 'punish' ? $t('今天惩罚') : $t('今天奖励') }}</text>
               </view>
               <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
                 <view class="progress-fill" :style="{ width: progressWidth(it) }" />
@@ -78,7 +78,7 @@
               </view>
               <view v-else class="btn" :class="{ punish: it.type === 'punish', disabled: it.type !== 'punish' && !canAfford(it) }">
                 <template v-if="it.type !== 'punish'">
-                  <text class="btn-text">兑换</text>
+                  <text class="btn-text">{{ $t('兑换') }}</text>
                   <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
                   <text class="btn-text">+{{ it.hearts }}</text>
                 </template>
@@ -96,7 +96,7 @@
         <view class="empty-illus">
           <image class="empty-img" src="/static/reward/illus_empty_rewards.png" mode="aspectFit" />
         </view>
-        <text class="empty-text bl-muted">今天没有待完成的任务</text>
+        <text class="empty-text bl-muted">{{ $t('今天没有待完成的任务') }}</text>
       </view>
     </view>
 
@@ -134,16 +134,16 @@
 
     <BlSheet v-model="resultSheetOpen" title="" :confirm-text="''">
       <view class="result">
-        <text class="result-title">{{ celebrateType === 'punish' ? '受到惩罚！' : '奖励已发放！' }}</text>
+        <text class="result-title">{{ celebrateType === 'punish' ? $t('受到惩罚！') : $t('奖励已发放！') }}</text>
         <text class="result-sub">
-          {{ celebrateType === 'punish' ? '今天没有完成 ' : '今天已奖励 ' }}
+          {{ celebrateType === 'punish' ? $t('今天没有完成 ') : $t('今天已奖励 ') }}
           <text class="result-link">{{ celebrateTitle }}</text>
         </text>
         <view class="result-btn" :class="{ punish: celebrateType === 'punish' }" @click="closeResult">
-          <text class="result-btn-text">确定</text>
+          <text class="result-btn-text">{{ $t('确定') }}</text>
         </view>
         <view class="result-cancel" @click="cancelAction">
-          <text class="result-cancel-text">{{ celebrateType === 'punish' ? '取消惩罚' : '取消奖励' }}</text>
+          <text class="result-cancel-text">{{ celebrateType === 'punish' ? $t('取消惩罚') : $t('取消奖励') }}</text>
         </view>
       </view>
     </BlSheet>
@@ -215,7 +215,7 @@ const activeMember = computed(() => memberItems.value.find((m) => m.id === activ
   avatarUrl: '',
 })
 
-const activeMemberLabel = computed(() => activeMember.value.name || '成员')
+const activeMemberLabel = computed(() => activeMember.value.name || uni.$t('成员'))
 const activeMemberColor = computed(() => activeMember.value.color || '#4cc38a')
 
 const allRemoteItems = computed(() => rewardsApi.mapRemoteRewardsToLocalItems(remoteRewards.value))
@@ -291,7 +291,7 @@ async function refreshRemoteRewards() {
     remoteRewards.value = []
     memberBalanceMap.value = {}
     starRecords.value = []
-    uni.showToast({ title: String((e && e.message) || '获取奖励列表失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取奖励列表失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -416,7 +416,7 @@ async function tryRedeem(it) {
       resultSheetOpen.value = true
     }, 220)
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '调整星星失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('调整星星失败')), icon: 'none' })
   } finally {
     pendingAction.value = false
   }
@@ -443,7 +443,7 @@ async function cancelAction() {
     resultSheetOpen.value = false
     await refreshRemoteRewards()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '取消操作失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('取消操作失败')), icon: 'none' })
   } finally {
     pendingAction.value = false
   }
@@ -476,7 +476,7 @@ async function deleteItem() {
     await rewardsApi.deleteRewardInfo({ rewardId: id })
     await refreshRemoteRewards()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '删除奖励失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('删除奖励失败')), icon: 'none' })
   }
 }
 

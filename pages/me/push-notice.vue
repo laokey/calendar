@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <BlHeader title="通知" back />
+    <BlHeader :title="$t('通知')" back />
 
     <view class="list">
       <view class="item">
@@ -9,8 +9,8 @@
             <image class="ico-img" src="/static/my/icon_email.png" mode="aspectFit" />
           </view>
           <view class="meta">
-            <text class="title">邮件推送通知</text>
-            <text class="sub">这意味着我们将推送服务通知，例如系统升级、到您注册的电子邮件地址。</text>
+            <text class="title">{{ $t('邮件推送通知') }}</text>
+            <text class="sub">{{ $t('这意味着我们将推送服务通知，例如系统升级、到您注册的电子邮件地址。') }}</text>
           </view>
         </view>
         <switch :checked="notice.email" color="#4a6cff" class="sw" @change="onToggle('email', $event)" />
@@ -22,8 +22,8 @@
             <image class="ico-img" src="/static/my/icon_phone.png" mode="aspectFit" />
           </view>
           <view class="meta">
-            <text class="title">手机系统通知</text>
-            <text class="sub">当应用程序不在使用时，推送通知，您可以启用它来推送任务和事件的提醒</text>
+            <text class="title">{{ $t('手机系统通知') }}</text>
+            <text class="sub">{{ $t('当应用程序不在使用时，推送通知，您可以启用它来推送任务和事件的提醒') }}</text>
           </view>
         </view>
         <switch :checked="notice.system" color="#4a6cff" class="sw" @change="onToggle('system', $event)" />
@@ -35,8 +35,8 @@
             <image class="ico-img" src="/static/my/icon_belt.png" mode="aspectFit" />
           </view>
           <view class="meta">
-            <text class="title">任务完成提醒</text>
-            <text class="sub">引用 APP 完成任务时的提示音效</text>
+            <text class="title">{{ $t('任务完成提醒') }}</text>
+            <text class="sub">{{ $t('引用 APP 完成任务时的提示音效') }}</text>
           </view>
         </view>
         <switch :checked="notice.taskDone" color="#4a6cff" class="sw" @change="onToggle('taskDone', $event)" />
@@ -107,7 +107,7 @@ async function onSystemToggle(next) {
   const opened = await openSystemNotificationSettings()
   if (!opened) {
     waitingForSystemNotificationEnable.value = false
-    uni.showToast({ title: '当前环境暂不支持打开系统设置', icon: 'none' })
+    uni.showToast({ title: uni.$t('当前环境暂不支持打开系统设置'), icon: 'none' })
   }
 }
 

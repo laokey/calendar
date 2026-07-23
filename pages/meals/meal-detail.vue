@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page detail-page">
-    <BlHeader title="餐点详情" back>
+    <BlHeader :title="$t('餐点详情')" back>
       <template #right>
         <view class="top-del" @click="confirmOpen = true">
           <image
@@ -164,17 +164,17 @@ function goEdit() {
 
 async function del() {
   if (!planId.value) return
-  uni.showLoading({ title: '删除中' })
+  uni.showLoading({ title: uni.$t('删除中') })
   try {
     const res = await mealsApi.deleteMealInfo({ mealId: planId.value })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '删除失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
       return
     }
     confirmOpen.value = false
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

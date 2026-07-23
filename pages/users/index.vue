@@ -1,44 +1,44 @@
 <template>
   <view class="bl-page page">
-    <BlHeader title="用户管理" back backIconSrc="/static/my/icon_back.png" />
+    <BlHeader :title="$t('用户管理')" back backIconSrc="/static/my/icon_back.png" />
 
-    <text class="desc">您可以在此页面管理您的朋友和家人。</text>
+    <text class="desc">{{ $t('您可以在此页面管理您的朋友和家人。') }}</text>
 
-    <text class="section-title">邀请新朋友</text>
+    <text class="section-title">{{ $t('邀请新朋友') }}</text>
 
-    <text class="method">方法1</text>
+    <text class="method">{{ $t('方法1') }}</text>
     <view class="invite-row">
-      <input v-model="email" class="invite-input" placeholder="您朋友的电子邮件" placeholder-class="ph" />
+      <input v-model="email" class="invite-input" :placeholder="$t('您朋友的电子邮件')" placeholder-class="ph" />
       <view class="invite-btn" :class="{ disabled: !canAdd || submitting }" @click="add">
-        <text class="invite-btn-text">+添加</text>
+        <text class="invite-btn-text">{{ $t('+添加') }}</text>
       </view>
     </view>
 
-    <text class="method">方法2</text>
+    <text class="method">{{ $t('方法2') }}</text>
     <view class="share-row" @click="share">
       <image class="share-icon" src="/static/common/icon_link.png" mode="aspectFit" />
-      <text class="share-text">分享链接</text>
+      <text class="share-text">{{ $t('分享链接') }}</text>
     </view>
 
-    <text class="section-title">管理朋友和家人</text>
+    <text class="section-title">{{ $t('管理朋友和家人') }}</text>
     <view class="tabs">
       <view class="tab" @click="active = 'approved'">
-        <text class="tab-text" :class="{ active: active === 'approved' }">已通过</text>
+        <text class="tab-text" :class="{ active: active === 'approved' }">{{ $t('已通过') }}</text>
         <view v-if="active === 'approved'" class="underline" />
       </view>
       <view class="tab" @click="active = 'pending'">
-        <text class="tab-text" :class="{ active: active === 'pending' }">待处理</text>
+        <text class="tab-text" :class="{ active: active === 'pending' }">{{ $t('待处理') }}</text>
         <view v-if="active === 'pending'" class="underline" />
       </view>
       <view class="tab" @click="active = 'rejected'">
-        <text class="tab-text" :class="{ active: active === 'rejected' }">已拒绝</text>
+        <text class="tab-text" :class="{ active: active === 'rejected' }">{{ $t('已拒绝') }}</text>
         <view v-if="active === 'rejected'" class="underline" />
       </view>
     </view>
 
     <view v-if="items.length === 0" class="empty">
       <image class="empty-img" src="/static/common/bg_none_user.png" mode="widthFix" />
-      <text class="empty-text">暂无内容</text>
+      <text class="empty-text">{{ $t('暂无内容') }}</text>
     </view>
 
     <view v-else class="list">
@@ -53,14 +53,14 @@
 
         <view v-if="active === 'pending'" class="actions">
           <template v-if="u.canReview">
-            <view class="btn approve" @click="approve(u)"><text class="btn-text">批准</text></view>
-            <view class="btn reject" @click="reject(u)"><text class="btn-text">拒绝</text></view>
+            <view class="btn approve" @click="approve(u)"><text class="btn-text">{{ $t('批准') }}</text></view>
+            <view class="btn reject" @click="reject(u)"><text class="btn-text">{{ $t('拒绝') }}</text></view>
           </template>
-          <text v-else class="status-text">等待对方处理</text>
+          <text v-else class="status-text">{{ $t('等待对方处理') }}</text>
         </view>
 
         <view v-else-if="active === 'approved'" class="actions">
-          <view class="btn ghost" @click="openPermission(u)"><text class="ghost-text">权限管理</text></view>
+          <view class="btn ghost" @click="openPermission(u)"><text class="ghost-text">{{ $t('权限管理') }}</text></view>
         </view>
 
         <view v-else class="actions">
@@ -69,18 +69,18 @@
       </view>
     </view>
 
-    <BlSheet v-model="permissionOpen" title="权限">
+    <BlSheet v-model="permissionOpen" :title="$t('权限')">
       <view class="perm-list">
         <view class="perm-item" @click="permissionDraft = 'self'">
-          <text class="perm-text">只看自己的照片</text>
+          <text class="perm-text">{{ $t('只看自己的照片') }}</text>
           <view class="radio" :class="{ on: permissionDraft === 'self' }"><text v-if="permissionDraft === 'self'" class="radio-check">✓</text></view>
         </view>
         <view class="perm-item" @click="permissionDraft = 'view'">
-          <text class="perm-text">允许查看照片</text>
+          <text class="perm-text">{{ $t('允许查看照片') }}</text>
           <view class="radio" :class="{ on: permissionDraft === 'view' }"><text v-if="permissionDraft === 'view'" class="radio-check">✓</text></view>
         </view>
         <view class="perm-item" @click="permissionDraft = 'edit'">
-          <text class="perm-text">允许查看/编辑照片</text>
+          <text class="perm-text">{{ $t('允许查看/编辑照片') }}</text>
           <view class="radio" :class="{ on: permissionDraft === 'edit' }"><text v-if="permissionDraft === 'edit'" class="radio-check">✓</text></view>
         </view>
       </view>
@@ -127,9 +127,9 @@ function palette() {
 
 function glyphFromEmail(value) {
   const v = String(value || '').trim()
-  if (!v) return '友'
+  if (!v) return uni.$t('友')
   const ch = v[0]
-  return ch && ch.toUpperCase ? ch.toUpperCase() : ch || '友'
+  return ch && ch.toUpperCase ? ch.toUpperCase() : ch || uni.$t('友')
 }
 
 function colorForEmail(value) {
@@ -162,7 +162,7 @@ function mapInviteItem(item, tab) {
     inviterEmail: item && item.inviterEmail ? String(item.inviterEmail) : '',
     inviteeEmail: item && item.inviteeEmail ? String(item.inviteeEmail) : '',
     canReview,
-    statusText: canReview ? '你已拒绝' : '对方已拒绝',
+    statusText: canReview ? uni.$t('你已拒绝') : uni.$t('对方已拒绝'),
   }
 }
 
@@ -180,7 +180,7 @@ function mapFriendItem(item) {
 
 function showError(error, fallback, map = {}) {
   const code = Number(error && error.code)
-  const msg = map[code] || String((error && error.message) || fallback || '操作失败')
+  const msg = map[code] || String((error && error.message) || fallback || uni.$t('操作失败'))
   uni.showToast({ title: msg, icon: 'none' })
 }
 
@@ -195,7 +195,7 @@ async function refresh() {
   approvedUsers.value = approvedRes.status === 'fulfilled' ? approvedRes.value.map(mapFriendItem) : []
   const firstError = [pendingRes, rejectedRes, approvedRes].find((item) => item.status === 'rejected')
   if (firstError && firstError.status === 'rejected') {
-    showError(firstError.reason, '加载失败', { 201: '用户不存在' })
+    showError(firstError.reason, uni.$t('加载失败'), { 201: uni.$t('用户不存在') })
   }
 }
 
@@ -218,13 +218,13 @@ async function add() {
     await usersApi.inviteNewFriend({ inviteeEmail: String(email.value || '').trim() })
     email.value = ''
     active.value = 'pending'
-    uni.showToast({ title: '邀请已发送', icon: 'none' })
+    uni.showToast({ title: uni.$t('邀请已发送'), icon: 'none' })
     await refresh()
   } catch (e) {
-    showError(e, '邀请失败', {
-      201: '用户不存在',
-      202: '被邀请用户不存在',
-      203: '邀请提交失败',
+    showError(e, uni.$t('邀请失败'), {
+      201: uni.$t('用户不存在'),
+      202: uni.$t('被邀请用户不存在'),
+      203: uni.$t('邀请提交失败'),
     })
   } finally {
     submitting.value = false
@@ -232,7 +232,7 @@ async function add() {
 }
 
 function share() {
-  uni.showToast({ title: '接口文档未提供分享链接', icon: 'none' })
+  uni.showToast({ title: uni.$t('接口文档未提供分享链接'), icon: 'none' })
 }
 
 async function approve(item) {
@@ -240,12 +240,12 @@ async function approve(item) {
   submitting.value = true
   try {
     await usersApi.agreeAddFriend({ inviterEmail: item.inviterEmail })
-    uni.showToast({ title: '已通过', icon: 'none' })
+    uni.showToast({ title: uni.$t('已通过'), icon: 'none' })
     await refresh()
   } catch (e) {
-    showError(e, '添加失败', {
-      201: '用户不存在',
-      202: '添加失败',
+    showError(e, uni.$t('添加失败'), {
+      201: uni.$t('用户不存在'),
+      202: uni.$t('添加失败'),
     })
   } finally {
     submitting.value = false
@@ -257,12 +257,12 @@ async function reject(item) {
   submitting.value = true
   try {
     await usersApi.refuseAddFriend({ inviterEmail: item.inviterEmail })
-    uni.showToast({ title: '已拒绝', icon: 'none' })
+    uni.showToast({ title: uni.$t('已拒绝'), icon: 'none' })
     await refresh()
   } catch (e) {
-    showError(e, '拒绝失败', {
-      201: '用户不存在',
-      202: '拒绝失败',
+    showError(e, uni.$t('拒绝失败'), {
+      201: uni.$t('用户不存在'),
+      202: uni.$t('拒绝失败'),
     })
   } finally {
     submitting.value = false
@@ -288,12 +288,12 @@ async function confirmPermission() {
       authority: usersApi.authorityFromPermission(permissionDraft.value),
     })
     permissionOpen.value = false
-    uni.showToast({ title: '已更新', icon: 'none' })
+    uni.showToast({ title: uni.$t('已更新'), icon: 'none' })
     await refresh()
   } catch (e) {
-    showError(e, '设置失败', {
-      201: '用户不存在',
-      202: '设置失败',
+    showError(e, uni.$t('设置失败'), {
+      201: uni.$t('用户不存在'),
+      202: uni.$t('设置失败'),
     })
   } finally {
     submitting.value = false

@@ -1,13 +1,13 @@
 <template>
   <view class="bl-page page">
-    <BlHeader title="同步日历URL账户" back back-icon-src="/static/sync/icon_nav_back_small.png" />
+    <BlHeader :title="$t('同步日历URL账户')" back back-icon-src="/static/sync/icon_nav_back_small.png" />
 
     <view class="input-wrap">
-      <input v-model="url" class="input" placeholder="日历链接" placeholder-class="ph" />
+      <input v-model="url" class="input" :placeholder="$t('日历链接')" placeholder-class="ph" />
     </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
-      <text class="btn-text">同步日历链接</text>
+      <text class="btn-text">{{ $t('同步日历链接') }}</text>
     </view>
   </view>
 </template>
@@ -23,7 +23,7 @@ const canSubmit = computed(() => url.value.trim().length > 0)
 function submit() {
   if (!canSubmit.value) return
   const state = ensureSyncState()
-  addUrlSync(state, { url: url.value.trim(), name: '地址' })
+  addUrlSync(state, { url: url.value.trim(), name: uni.$t('地址') })
   uni.navigateTo({ url: '/pages/sync/sync-status?mode=progress&from=url&count=101' })
 }
 </script>

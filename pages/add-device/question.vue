@@ -3,7 +3,7 @@
     <BlHeader back />
 
     <view class="title-wrap">
-      <text class="title">你是否正在激活一个新的日历</text>
+      <text class="title">{{ $t('你是否正在激活一个新的日历？') }}</text>
     </view>
 
     <view class="options">
@@ -13,9 +13,9 @@
         </view>
         <view class="meta">
           <view class="row">
-            <text class="name">是的</text>
+            <text class="name">{{ $t('是的') }}</text>
           </view>
-          <text class="desc bl-muted">我们开始</text>
+          <text class="desc bl-muted">{{ $t('我们开始') }}</text>
         </view>
         <view v-if="selected === 'yes'" class="bl-select-check"><text>✓</text></view>
       </view>
@@ -25,15 +25,15 @@
           <image class="thumb-img" src="/static/device/device_thumb.png" mode="aspectFit" />
         </view>
         <view class="meta">
-          <text class="name">没有</text>
-          <text class="desc bl-muted">关联已有的设备</text>
+          <text class="name">{{ $t('没有') }}</text>
+          <text class="desc bl-muted">{{ $t('关联已有的设备') }}</text>
         </view>
         <view v-if="selected === 'no'" class="bl-select-check"><text>✓</text></view>
       </view>
     </view>
 
     <view class="bl-btn-primary" @click="confirm">
-      <text>确认</text>
+      <text>{{ $t('确认') }}</text>
     </view>
   </view>
 </template>

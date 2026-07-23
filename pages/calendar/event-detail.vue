@@ -98,7 +98,7 @@ onLoad((options) => {
   const id = options && options.id ? String(options.id) : ''
   const ev = id ? findEvent(state.value, id) : null
   if (!ev) {
-    uni.showToast({ title: '事件不存在', icon: 'none' })
+    uni.showToast({ title: uni.$t('事件不存在'), icon: 'none' })
     setTimeout(() => uni.navigateBack(), 350)
     return
   }
@@ -139,8 +139,8 @@ const repeatText = computed(() => {
   if (!event.value.repeat) return ''
   const every = event.value.repeat.every || 1
   const unit = event.value.repeat.unit || 'day'
-  const map = { day: '天', week: '周', month: '月', year: '年' }
-  return `每${every}${map[unit] || '天'}`
+  const map = { day: uni.$t('天'), week: uni.$t('周'), month: uni.$t('月'), year: uni.$t('年') }
+  return `每${every}${map[unit] || uni.$t('天')}`
 })
 
 const selectedMembers = computed(() =>
@@ -161,9 +161,9 @@ function openMemberManage() {
 function confirmDelete() {
   uni.showModal({
     title: '',
-    content: '您确定要删除吗？',
-    confirmText: '删除',
-    cancelText: '取消',
+    content: uni.$t('您确定要删除吗？'),
+    confirmText: uni.$t('删除'),
+    cancelText: uni.$t('取消'),
     confirmColor: '#3d6afb',
     success(res) {
       if (!res.confirm) return
@@ -171,15 +171,15 @@ function confirmDelete() {
         const logged = !!uni.getStorageSync('auth_logged_in')
         const isRemoteId = /^\d+$/.test(String(event.value.id || ''))
         if (logged && isRemoteId) {
-          uni.showLoading({ title: '删除中' })
+          uni.showLoading({ title: uni.$t('删除中') })
           try {
             const r = await calendarApi.deleteMatterInfo({ matterId: event.value.id })
             if (r && typeof r === 'object' && r.code !== undefined && r.code !== 200 && r.code !== '200') {
-              uni.showToast({ title: '删除失败', icon: 'none' })
+              uni.showToast({ title: uni.$t('删除失败'), icon: 'none' })
               return
             }
           } catch (e) {
-            uni.showToast({ title: String((e && e.message) || '删除失败'), icon: 'none' })
+            uni.showToast({ title: String((e && e.message) || uni.$t('删除失败')), icon: 'none' })
             return
           } finally {
             try {

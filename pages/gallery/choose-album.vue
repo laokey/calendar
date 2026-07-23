@@ -8,8 +8,8 @@
       <view class="head-right" />
     </view>
 
-    <text v-if="mode === 'copy'" class="hint">将选定的照片复制到另一个相册</text>
-    <text v-else class="hint">将选定的照片转移到另一个相册</text>
+    <text v-if="mode === 'copy'" class="hint">{{ $t('将选定的照片复制到另一个相册') }}</text>
+    <text v-else class="hint">{{ $t('将选定的照片转移到另一个相册') }}</text>
 
     <view class="device-row">
       <image class="mini-icon" src="/static/gallery/icon_video_camera.png" mode="aspectFit" />
@@ -79,8 +79,8 @@ const targets = computed(() => {
   return list.filter((a) => a.id !== fromAlbumId.value)
 })
 
-const title = computed(() => (mode.value === 'copy' ? '复制照片' : '转移照片'))
-const buttonText = computed(() => (mode.value === 'copy' ? '复制照片' : '转移照片'))
+const title = computed(() => (mode.value === 'copy' ? uni.$t('复制照片') : uni.$t('转移照片')))
+const buttonText = computed(() => (mode.value === 'copy' ? uni.$t('复制照片') : uni.$t('转移照片')))
 
 function back() {
   uni.navigateBack()
@@ -90,9 +90,9 @@ function submit() {
   if (!targetAlbumId.value || ids.value.length === 0) return
   uni.showModal({
     title: '',
-    content: '你的照片将被添加到选定的设备。',
+    content: uni.$t('你的照片将被添加到选定的设备。'),
     showCancel: false,
-    confirmText: '好的',
+    confirmText: uni.$t('好的'),
     success: () => {
       const s = ensureGalleryState()
       if (mode.value === 'copy') {

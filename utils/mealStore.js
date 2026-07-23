@@ -284,17 +284,45 @@ export function weekDaysForKey(weekStartKey) {
 export function weekRangeText(weekStartKey) {
   const start = startOfWeek(parseKey(weekStartKey))
   const end = addDays(start, 6)
-  return `${start.getMonth() + 1}月${start.getDate()}日–${end.getMonth() + 1}月${end.getDate()}日`
+  const locale = typeof uni !== 'undefined' && typeof uni.getLocale === 'function' ? String(uni.getLocale() || 'zh-CN') : 'zh-CN'
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' })
+    if (typeof formatter.formatRange === 'function') return formatter.formatRange(start, end)
+    return `${formatter.format(start)} - ${formatter.format(end)}`
+  } catch (e) {
+    return `${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`
+  }
+}
+
+function currentLocaleTag() {
+  return typeof uni !== 'undefined' && typeof uni.getLocale === 'function' ? String(uni.getLocale() || 'zh-CN') : 'zh-CN'
 }
 
 export function cnDateText(key) {
   const d = parseKey(key)
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日  ${weekdayText(d)}`
+  try {
+    return new Intl.DateTimeFormat(currentLocaleTag(), {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    }).format(d)
+  } catch (e) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
 }
 
 export function cnMonthDayText(key) {
   const d = parseKey(key)
-  return `${weekdayText(d)}，${d.getMonth() + 1}月${d.getDate()}`
+  try {
+    return new Intl.DateTimeFormat(currentLocaleTag(), {
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short',
+    }).format(d)
+  } catch (e) {
+    return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+  }
 }
 
 export function clearRecipeSelectTmp() {
@@ -330,4 +358,3 @@ export function writeRecipeSelectTmp(payload) {
   uni.setStorageSync(TMP_SELECT_KEY, JSON.stringify(next))
   return next
 }
-

@@ -1,11 +1,11 @@
 <template>
   <view class="page">
-    <BlHeader title="关于我们" back />
+    <BlHeader :title="$t('关于我们')" back />
 
     <view class="hero">
       <image class="logo" src="/static/logo.png" mode="aspectFit" />
       <view class="pill">
-        <text class="pill-text">当前版本:V{{ currentVersion }}</text>
+        <text class="pill-text">{{ $t('当前版本') }}:V{{ currentVersion }}</text>
       </view>
     </view>
 
@@ -13,24 +13,24 @@
       <view class="row" @click="checkUpdate">
         <view class="left">
           <view class="ico"><image class="ico-img" src="/static/my/icon_info.png" mode="aspectFit" /></view>
-          <text class="label">版本</text>
+          <text class="label">{{ $t('版本') }}</text>
         </view>
         <view class="right">
           <text class="value muted">{{ versionStatusText }}</text>
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
-      <view class="row" @click="open('小红书')">
+      <view class="row" @click="open($t('小红书'))">
         <view class="left">
           <view class="ico"><image class="ico-img" src="/static/my/icon_xhs.png" mode="aspectFit" /></view>
-          <text class="label">小红书</text>
+          <text class="label">{{ $t('小红书') }}</text>
         </view>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
-      <view class="row" @click="open('微信公众号')">
+      <view class="row" @click="open($t('微信公众号'))">
         <view class="left">
           <view class="ico"><image class="ico-img" src="/static/my/icon_wechat.png" mode="aspectFit" /></view>
-          <text class="label">微信公众号</text>
+          <text class="label">{{ $t('微信公众号') }}</text>
         </view>
         <view class="right"><image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" /></view>
       </view>
@@ -58,9 +58,9 @@ const latestVersion = computed(() => {
 const hasUpdate = computed(() => compareVersion(latestVersion.value, currentVersion.value) > 0)
 
 const versionStatusText = computed(() => {
-  if (versionLoading.value) return '检测中...'
-  if (hasUpdate.value) return `发现新版本 V${latestVersion.value}`
-  return '已是最新版本'
+  if (versionLoading.value) return uni.$t('检测中...')
+  if (hasUpdate.value) return `${uni.$t('发现新版本')} V${latestVersion.value}`
+  return uni.$t('已是最新版本')
 })
 
 onShow(() => {
@@ -115,7 +115,7 @@ async function fetchVersionInfo(showError) {
     return info
   } catch (e) {
     if (showError) {
-      uni.showToast({ title: String((e && e.message) || '获取版本信息失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('获取版本信息失败')), icon: 'none' })
     }
     return null
   } finally {
@@ -126,7 +126,7 @@ async function fetchVersionInfo(showError) {
 function openDownloadUrl(url) {
   const target = String(url || '').trim()
   if (!target) {
-    uni.showToast({ title: '下载地址缺失', icon: 'none' })
+    uni.showToast({ title: uni.$t('下载地址缺失'), icon: 'none' })
     return
   }
   if (typeof plus !== 'undefined' && plus.runtime && typeof plus.runtime.openURL === 'function') {
@@ -139,7 +139,7 @@ function openDownloadUrl(url) {
   }
   uni.setClipboardData({
     data: target,
-    success: () => uni.showToast({ title: '下载地址已复制', icon: 'none' }),
+    success: () => uni.showToast({ title: uni.$t('下载地址已复制'), icon: 'none' }),
   })
 }
 
@@ -147,15 +147,15 @@ async function checkUpdate() {
   const info = await fetchVersionInfo(true)
   if (!info) return
   if (!hasUpdate.value) {
-    uni.showToast({ title: '已是最新版本', icon: 'none' })
+    uni.showToast({ title: uni.$t('已是最新版本'), icon: 'none' })
     return
   }
-  const content = info.updateLog || `检测到新版本 V${latestVersion.value}，是否立即更新？`
+  const content = info.updateLog || `${uni.$t('发现新版本')} V${latestVersion.value}，${uni.$t('是否立即更新？')}`
   uni.showModal({
-    title: `发现新版本 V${latestVersion.value}`,
+    title: `${uni.$t('发现新版本')} V${latestVersion.value}`,
     content,
-    confirmText: '立即更新',
-    cancelText: info.isForce ? '' : '稍后',
+    confirmText: uni.$t('立即更新'),
+    cancelText: info.isForce ? '' : uni.$t('稍后'),
     showCancel: !info.isForce,
     success: (res) => {
       if (info.isForce || (res && res.confirm)) openDownloadUrl(info.downloadUrl)
@@ -164,7 +164,7 @@ async function checkUpdate() {
 }
 
 function open(title) {
-  uni.showToast({ title: `${title}未实现`, icon: 'none' })
+  uni.showToast({ title: `${title}${uni.$t('未实现')}`, icon: 'none' })
 }
 </script>
 

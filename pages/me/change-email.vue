@@ -1,13 +1,13 @@
 <template>
   <view class="page">
-    <BlHeader title="修改邮箱" back />
+    <BlHeader :title="$t('修改邮箱')" back />
 
     <view class="stack">
       <view class="input-wrap">
-        <input v-model="email" class="input" placeholder="新邮箱" placeholder-class="ph" confirm-type="next" />
+        <input v-model="email" class="input" :placeholder="$t('新邮箱')" placeholder-class="ph" confirm-type="next" />
       </view>
       <view class="input-wrap code-wrap">
-        <input v-model="code" class="input" placeholder="验证码" placeholder-class="ph" confirm-type="next" />
+        <input v-model="code" class="input" :placeholder="$t('验证码')" placeholder-class="ph" confirm-type="next" />
         <view class="code-btn" :class="{ disabled: !canSendCode }" @click="sendCode">
           <text class="code-btn-text">{{ codeBtnText }}</text>
         </view>
@@ -17,7 +17,7 @@
           v-model="password"
           class="input"
           :password="!showPassword"
-          placeholder="当前密码"
+          :placeholder="$t('当前密码')"
           placeholder-class="ph"
           confirm-type="done"
           @confirm="submit"
@@ -33,7 +33,7 @@
     </view>
 
     <view class="btn" :class="{ disabled: !canSubmit }" @click="submit">
-      <text class="btn-text">立即修改</text>
+      <text class="btn-text">{{ $t('立即修改') }}</text>
     </view>
   </view>
 </template>
@@ -75,7 +75,7 @@ const canSendCode = computed(() => {
 
 const codeBtnText = computed(() => {
   if (codeSeconds.value > 0) return `${codeSeconds.value}s`
-  return '获取验证码'
+  return uni.$t('获取验证码')
 })
 
 function clearCodeTimer() {
@@ -104,27 +104,27 @@ onUnload(() => {
 async function sendCode() {
   if (!canSendCode.value) {
     if (!email.value.trim()) {
-      uni.showToast({ title: '请输入新邮箱', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入新邮箱'), icon: 'none' })
       return
     }
     if (!isEmail(email.value.trim())) {
-      uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+      uni.showToast({ title: uni.$t('邮箱格式不正确'), icon: 'none' })
       return
     }
     if (!isSupportedEmail(email.value.trim())) {
-      uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+      uni.showToast({ title: uni.$t('当前仅支持163邮箱'), icon: 'none' })
       return
     }
     return
   }
   codeSending.value = true
-  uni.showLoading({ title: '发送中' })
+  uni.showLoading({ title: uni.$t('发送中') })
   try {
     await usersApi.sendEmailVerifyCode({ newEmail: email.value.trim() })
-    uni.showToast({ title: '验证码已发送', icon: 'none' })
+    uni.showToast({ title: uni.$t('验证码已发送'), icon: 'none' })
     startCodeCountdown(60)
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '发送失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('发送失败')), icon: 'none' })
   } finally {
     codeSending.value = false
     try {
@@ -135,41 +135,41 @@ async function sendCode() {
 
 async function submit() {
   if (!canSubmit.value) {
-    uni.showToast({ title: '请完善信息', icon: 'none' })
+    uni.showToast({ title: uni.$t('请完善信息'), icon: 'none' })
     return
   }
   const v = email.value.trim()
   if (!isEmail(v)) {
-    uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+    uni.showToast({ title: uni.$t('邮箱格式不正确'), icon: 'none' })
     return
   }
   if (!isSupportedEmail(v)) {
-    uni.showToast({ title: '当前仅支持163邮箱', icon: 'none' })
+    uni.showToast({ title: uni.$t('当前仅支持163邮箱'), icon: 'none' })
     return
   }
-  uni.showLoading({ title: '修改中' })
+  uni.showLoading({ title: uni.$t('修改中') })
   try {
     await usersApi.updateUserEmailAddress({ newEmail: v, verifyCode: code.value.trim(), password: password.value.trim() })
     const s = ensureMeState()
     updateProfile(s, { email: v })
     uni.setStorageSync('auth_email', v)
-    uni.showToast({ title: '修改成功', icon: 'none' })
+    uni.showToast({ title: uni.$t('修改成功'), icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
   } catch (e) {
     const errCode = e && e.code !== undefined ? e.code : undefined
     if (errCode === 201 || errCode === '201') {
-      uni.showToast({ title: '用户不存在', icon: 'none' })
+      uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
       return
     }
     if (errCode === 202 || errCode === '202') {
-      uni.showToast({ title: '邮箱已被注册', icon: 'none' })
+      uni.showToast({ title: uni.$t('邮箱已被注册'), icon: 'none' })
       return
     }
     if (errCode === 203 || errCode === '203') {
-      uni.showToast({ title: '密码错误', icon: 'none' })
+      uni.showToast({ title: uni.$t('密码错误'), icon: 'none' })
       return
     }
-    uni.showToast({ title: String((e && e.message) || '修改失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('修改失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

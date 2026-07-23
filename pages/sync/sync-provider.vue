@@ -5,7 +5,7 @@
     <view class="card-list">
       <view class="opt" :class="{ on: mode === 'twoWay' }" @click="mode = 'twoWay'">
         <view class="opt-meta">
-          <text class="opt-title">双向同步</text>
+          <text class="opt-title">{{ $t('双向同步') }}</text>
           <text class="opt-desc bl-muted">{{ twoWayDesc }}</text>
         </view>
         <image v-if="mode === 'twoWay'" class="opt-check" src="/static/sync/icon_radio_on_check_blue.png" mode="aspectFit" />
@@ -14,7 +14,7 @@
 
       <view class="opt" :class="{ on: mode === 'oneWay' }" @click="mode = 'oneWay'">
         <view class="opt-meta">
-          <text class="opt-title">单向同步</text>
+          <text class="opt-title">{{ $t('单向同步') }}</text>
           <text class="opt-desc bl-muted">{{ oneWayDesc }}</text>
         </view>
         <image v-if="mode === 'oneWay'" class="opt-check" src="/static/sync/icon_radio_on_check_blue.png" mode="aspectFit" />
@@ -23,7 +23,7 @@
     </view>
 
     <view class="bottom-action">
-      <view class="bl-btn-primary" @click="next"><text>同步新日历</text></view>
+      <view class="bl-btn-primary" @click="next"><text>{{ $t('同步新日历') }}</text></view>
     </view>
   </view>
 </template>
@@ -42,16 +42,16 @@ onLoad((options) => {
   provider.value = p === 'outlook' ? 'outlook' : 'google'
 })
 
-const headerTitle = computed(() => (provider.value === 'outlook' ? '同步微软账号' : '同步Google账号'))
+const headerTitle = computed(() => (provider.value === 'outlook' ? uni.$t('同步微软账号') : uni.$t('同步Google账号')))
 
 const twoWayDesc = computed(() => {
-  if (provider.value === 'outlook') return '在芝麻日历上的更改将会同步发送Outlook日历'
-  return '电子日历上的更改将发回Google日历'
+  if (provider.value === 'outlook') return uni.$t('在芝麻日历上的更改将会同步发送Outlook日历')
+  return uni.$t('电子日历上的更改将发回Google日历')
 })
 
 const oneWayDesc = computed(() => {
-  if (provider.value === 'outlook') return '在芝麻日历上的更改将不会同步Outlook日历'
-  return '在芝麻日历上的更改不会发送回GoogleCalendar'
+  if (provider.value === 'outlook') return uni.$t('在芝麻日历上的更改将不会同步Outlook日历')
+  return uni.$t('在芝麻日历上的更改不会发送回GoogleCalendar')
 })
 
 function upsertAccount() {

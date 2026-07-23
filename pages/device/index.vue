@@ -1,7 +1,7 @@
 <template>
   <view class="bl-page">
     <view class="bl-header" :style="{ paddingTop: safeTop + 'px' }">
-      <text class="bl-header-title">设备</text>
+      <text class="bl-header-title">{{ $t('设备') }}</text>
       <view class="bl-icon-btn" @click="goAdd">
         <text class="plus">+</text>
       </view>
@@ -11,11 +11,11 @@
       <view class="device-hero">
         <image class="device-hero-img" src="/static/device/device_hero.png" mode="aspectFit" />
       </view>
-      <text class="empty-title">尚未添加设备</text>
-      <text class="empty-desc bl-muted">请将手机靠近芝麻日历，保持网络通畅，输入设备号自动连接匹配</text>
+      <text class="empty-title">{{ $t('尚未添加设备') }}</text>
+      <text class="empty-desc bl-muted">{{ $t('请将手机靠近芝麻日历，保持网络通畅，输入设备号自动连接匹配') }}</text>
 
       <view class="bl-btn-primary" @click="goAdd">
-        <text>添加设备</text>
+        <text>{{ $t('添加设备') }}</text>
         <view class="bl-btn-arrow">
           <text class="arrow">→</text>
         </view>
@@ -36,7 +36,7 @@
       >
         <view class="swipe-actions">
           <view class="swipe-delete" @click.stop="removeCalendar(i)">
-            <text class="delete-text">删除</text>
+            <text class="delete-text">{{ $t('删除') }}</text>
           </view>
         </view>
         <view class="swipe-content" :style="{ transform: `translateX(${getSwipeX(i)}px)` }">
@@ -46,18 +46,18 @@
                 <image class="thumb-img" :src="d.status === 1 ? '/static/device/device_thumb.png' : '/static/device/device_thumb_new.png'" mode="aspectFit" />
               </view>
               <view class="meta">
-                <text class="name">{{ d.deviceName || '日历' }}</text>
-                <text class="email bl-muted">发送事件：{{ d.deviceEmail }}</text>
+                <text class="name">{{ d.deviceName || $t('日历') }}</text>
+                <text class="email bl-muted">{{ $t('发送事件：') }}{{ d.deviceEmail }}</text>
               </view>
             </view>
             <view v-if="d.status === 0" class="btn-inline is-primary" @click.stop="goActivate(d)">
-              <text class="btn-text">激活设备</text>
+              <text class="btn-text">{{ $t('激活设备') }}</text>
               <view class="btn-arrow">
                 <text class="arrow">→</text>
               </view>
             </view>
             <view v-else class="btn-inline is-soft" @click.stop="openCalendar(i)">
-              <text class="btn-text is-soft-text">查看任务</text>
+              <text class="btn-text is-soft-text">{{ $t('查看任务') }}</text>
               <view class="btn-arrow is-soft-arrow">
                 <text class="arrow">→</text>
               </view>
@@ -99,7 +99,7 @@ async function refresh() {
   } catch (e) {
     devices.value = []
     mode.value = 'empty'
-    uni.showToast({ title: String((e && e.message) || '获取设备列表失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取设备列表失败')), icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -186,25 +186,25 @@ async function removeCalendar(index) {
   swipeX.value = 0
   const item = devices.value && devices.value[index] ? devices.value[index] : null
   if (!item || !item.deviceEmail) return
-  uni.showLoading({ title: '删除中' })
+  uni.showLoading({ title: uni.$t('删除中') })
   try {
     const res = await deviceApi.unbindCalendarDevice(String(item.deviceEmail))
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
       if (res.code === 201 || res.code === '201') {
-        uni.showToast({ title: '用户不存在', icon: 'none' })
+        uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
         return
       }
       if (res.code === 202 || res.code === '202') {
-        uni.showToast({ title: '日历设备不存在', icon: 'none' })
+        uni.showToast({ title: uni.$t('日历设备不存在'), icon: 'none' })
         return
       }
-      uni.showToast({ title: '解绑失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('解绑失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: '已删除', icon: 'none' })
+    uni.showToast({ title: uni.$t('已删除'), icon: 'none' })
     await refresh()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '解绑失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('解绑失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -226,7 +226,7 @@ function openCalendar(index) {
   const idx = Number(index)
   const d = devices.value && devices.value[idx] ? devices.value[idx] : null
   const item = {
-    name: d && d.deviceName ? String(d.deviceName) : '日历',
+    name: d && d.deviceName ? String(d.deviceName) : uni.$t('日历'),
     email: d && d.deviceEmail ? String(d.deviceEmail) : '',
     active: d && Number(d.status) === 1,
     tasks: [],

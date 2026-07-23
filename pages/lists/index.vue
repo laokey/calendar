@@ -1,10 +1,10 @@
 <template>
   <view class="bl-page lists-page">
-    <BlHeader title="清单" back>
+    <BlHeader :title="$t('清单')" back>
       <template #right>
         <view class="add-btn" @click="goAdd">
           <text class="add-plus">+</text>
-          <text class="add-text">添加清单</text>
+          <text class="add-text">{{ $t('添加清单') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -15,7 +15,7 @@
           <view class="glyph" />
         </view>
         <text class="tile-title">{{ l.title }}</text>
-        <text class="tile-sub bl-muted">{{ stats(l.id).undone }}项目</text>
+        <text class="tile-sub bl-muted">{{ stats(l.id).undone }} {{ $t('项目') }}</text>
       </view>
     </view>
   </view>

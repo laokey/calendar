@@ -1,12 +1,12 @@
 <template>
   <view class="bl-page plan-form-page">
-    <BlHeader title="编辑餐点计划" back />
+    <BlHeader :title="$t('编辑餐点计划')" back />
 
     <view class="block">
       <view class="row">
         <view class="left">
           <image class="row-icon" src="/static/meals/icon_calendar.png" mode="aspectFit" />
-          <text class="label">日期</text>
+          <text class="label">{{ $t('日期') }}</text>
         </view>
         <text class="value">{{ dateText }}</text>
       </view>
@@ -16,7 +16,7 @@
       <view class="row" @click="catOpen = true">
         <view class="left">
           <image class="row-icon" src="/static/meals/icon_grid.png" mode="aspectFit" />
-          <text class="label">分类</text>
+          <text class="label">{{ $t('分类') }}</text>
         </view>
         <view class="right">
           <text class="value">{{ categoryName }}</text>
@@ -29,10 +29,10 @@
       <view class="row col">
         <view class="left">
           <image class="row-icon" src="/static/meals/icon_note.png" mode="aspectFit" />
-          <text class="label">笔记</text>
+          <text class="label">{{ $t('笔记') }}</text>
         </view>
         <view class="note-wrap">
-          <textarea v-model="note" class="note-input" placeholder="请输入" placeholder-class="ph" />
+          <textarea v-model="note" class="note-input" :placeholder="$t('请输入')" placeholder-class="ph" />
         </view>
       </view>
 
@@ -41,14 +41,14 @@
       <view class="row">
         <view class="left">
           <image class="row-icon" src="/static/common/icon_refresh.png" mode="aspectFit" />
-          <text class="label">重复</text>
+          <text class="label">{{ $t('重复') }}</text>
         </view>
         <switch :checked="repeat" color="#3d6afb" @change="repeat = !!$event.detail.value" />
       </view>
     </view>
 
     <view class="sec">
-      <text class="sec-title">你想吃什么？</text>
+      <text class="sec-title">{{ $t('你想吃什么') + '?'  }}</text>
       <view v-if="selectedRecipes.length" class="recipe-list">
         <view v-for="r in selectedRecipes" :key="r.id" class="recipe-row" @click="openRecipeBox">
           <view class="thumb">
@@ -60,7 +60,7 @@
         </view>
       </view>
       <view v-else class="recipe-empty" @click="openRecipeBox">
-        <text class="recipe-empty-text bl-muted">去食谱盒选择</text>
+        <text class="recipe-empty-text bl-muted">{{ $t('去食谱盒选择') }}</text>
         <image class="row-icon" src="/static/common/icon_right.png" mode="aspectFit" />
       </view>
     </view>
@@ -69,7 +69,7 @@
       <text class="bottom-text">{{ bottomText }}</text>
     </view>
 
-    <BlSheet v-model="catOpen" title="分类" :confirm-text="''">
+    <BlSheet v-model="catOpen" :title="$t('分类')" :confirm-text="''">
       <view class="cat-list">
         <view v-for="c in categories" :key="c.id" class="cat-item" @click="selectCategory(c.id)">
           <view class="cat-left">
@@ -187,14 +187,14 @@ const bottomDisabled = computed(() => {
 })
 
 const bottomText = computed(() => {
-  if (isEdit.value) return '保存'
-  return `添加到计划（${selectedIds.value.length}）`
+  if (isEdit.value) return uni.$t('保存')
+  return `${uni.$t('添加到计划')}（${selectedIds.value.length}）`
 })
 
 function onBottom() {
   if (bottomDisabled.value) return
   if (!date.value) {
-    uni.showToast({ title: '日期缺失', icon: 'none' })
+    uni.showToast({ title: uni.$t('日期缺失'), icon: 'none' })
     return
   }
   const mealType = mealTypeFromCategoryId(categoryId.value)
@@ -216,10 +216,10 @@ function categoryNameById(id) {
 function mealTypeFromCategoryId(id) {
   const name = categoryNameById(id)
   const n = name.replace(/\s+/g, '')
-  if (n.includes('早餐') || n === '早') return 0
-  if (n.includes('午餐') || n === '午') return 1
-  if (n.includes('晚餐') || n === '晚') return 2
-  if (n.includes('点心') || n.includes('加餐') || n === '点') return 3
+  if (n.includes(uni.$t('早餐')) || n === uni.$t('早')) return 0
+  if (n.includes(uni.$t('午餐')) || n === uni.$t('午')) return 1
+  if (n.includes(uni.$t('晚餐')) || n === uni.$t('晚')) return 2
+  if (n.includes(uni.$t('点心')) || n.includes(uni.$t('加餐')) || n === uni.$t('点')) return 3
   const enabled = listCategories(mealState.value, { enabledOnly: true })
   const idx = enabled.findIndex((x) => x && x.id === id)
   return idx >= 0 ? idx : 0
@@ -243,19 +243,19 @@ async function fetchRecipes() {
 async function saveAdd({ mealDate, mealType, recipeIds }) {
   const ids = Array.isArray(recipeIds) ? recipeIds.map((x) => String(x || '').trim()).filter(Boolean) : []
   if (!ids.length) return
-  uni.showLoading({ title: '添加中' })
+  uni.showLoading({ title: uni.$t('添加中') })
   try {
     for (const rid of ids) {
       const res = await mealsApi.addMealInfo({ mealType, mealDate, recipeId: rid })
       if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-        uni.showToast({ title: '添加失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('添加失败'), icon: 'none' })
         return
       }
     }
     clearRecipeSelectTmp()
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '添加失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('添加失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -266,18 +266,18 @@ async function saveAdd({ mealDate, mealType, recipeIds }) {
 async function saveEdit({ mealId, mealDate, mealType, recipeId }) {
   const mid = String(mealId || '').trim()
   if (!mid) return
-  uni.showLoading({ title: '保存中' })
+  uni.showLoading({ title: uni.$t('保存中') })
   try {
     await mealsApi.deleteMealInfo({ mealId: mid })
     const res = await mealsApi.addMealInfo({ mealType, mealDate, recipeId })
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-      uni.showToast({ title: '保存失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
       return
     }
     clearRecipeSelectTmp()
     uni.navigateBack()
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

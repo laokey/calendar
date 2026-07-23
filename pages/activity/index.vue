@@ -2,15 +2,15 @@
   <view class="page">
     <view class="tabs" :style="{ paddingTop: safeTop + 'px' }">
       <view class="tab" @click="setTab('dynamic')">
-        <text class="tab-text" :class="{ active: tab === 'dynamic' }">动态</text>
+        <text class="tab-text" :class="{ active: tab === 'dynamic' }">{{ $t('动态') }}</text>
         <view v-if="tab === 'dynamic'" class="underline" />
       </view>
       <view class="tab" @click="setTab('notice')">
-        <text class="tab-text" :class="{ active: tab === 'notice' }">通知</text>
+        <text class="tab-text" :class="{ active: tab === 'notice' }">{{ $t('通知') }}</text>
         <view v-if="tab === 'notice'" class="underline" />
       </view>
       <view class="tab" @click="setTab('invite')">
-        <text class="tab-text" :class="{ active: tab === 'invite' }">邀请</text>
+        <text class="tab-text" :class="{ active: tab === 'invite' }">{{ $t('邀请') }}</text>
         <view v-if="tab === 'invite'" class="underline" />
       </view>
     </view>
@@ -18,7 +18,7 @@
     <view v-if="tab === 'dynamic'">
       <view v-if="state.dynamics.length === 0" class="empty">
         <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
-        <text class="empty-text">暂无动态</text>
+        <text class="empty-text">{{ $t('暂无动态') }}</text>
       </view>
 
       <view v-else class="list">
@@ -32,7 +32,7 @@
           </view>
           <view class="body">
             <view class="left">
-              <text class="desc">“{{ item.who.name }}”{{ item.action === 'done' ? '完成了任务' : '取消了任务' }}</text>
+              <text class="desc">“{{ item.who.name }}”{{ item.action === 'done' ? $t('完成了任务') : $t('取消了任务') }}</text>
               <view class="row">
                 <text class="task">{{ item.task.title }}</text>
                 <view class="points">
@@ -55,7 +55,7 @@
     <view v-else-if="tab === 'notice'">
       <view v-if="state.notices.length === 0" class="empty">
         <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
-        <text class="empty-text">暂无通知</text>
+        <text class="empty-text">{{ $t('暂无通知') }}</text>
       </view>
 
       <view v-else class="list">
@@ -74,7 +74,7 @@
           <text class="n-sub">{{ n.subject }}</text>
           <text class="n-body">{{ n.preview }}</text>
           <view class="n-foot">
-            <text class="n-more">查看详情</text>
+            <text class="n-more">{{ $t('查看详情') }}</text>
             <text class="n-chev">›</text>
           </view>
         </view>
@@ -84,7 +84,7 @@
     <view v-else>
       <view v-if="state.invites.length === 0" class="empty">
         <image class="empty-img" src="/static/message/img_empty_activity.png" mode="widthFix" />
-        <text class="empty-text">暂无邀请</text>
+        <text class="empty-text">{{ $t('暂无邀请') }}</text>
       </view>
 
       <view v-else class="list">
@@ -97,12 +97,12 @@
             <text class="time">{{ inv.timeText }}</text>
           </view>
           <view class="inv-text">
-            <text>邀请你加入</text>
+            <text>{{ $t('邀请你加入') }}</text>
             <text class="inv-link">{{ inv.calendarName }}</text>
           </view>
           <view class="inv-actions">
-            <view class="btn light" @click="reject(inv.id)"><text class="btn-text light-text">取消</text></view>
-            <view class="btn" @click="accept(inv.id)"><text class="btn-text">确定</text></view>
+            <view class="btn light" @click="reject(inv.id)"><text class="btn-text light-text">{{ $t('取消') }}</text></view>
+            <view class="btn" @click="accept(inv.id)"><text class="btn-text">{{ $t('确定') }}</text></view>
           </view>
         </view>
       </view>
@@ -156,7 +156,7 @@ function setTab(t) {
 
 function showError(error, fallback, map = {}) {
   const code = Number(error && error.code)
-  const msg = map[code] || String((error && error.message) || fallback || '操作失败')
+  const msg = map[code] || String((error && error.message) || fallback || uni.$t('操作失败'))
   uni.showToast({ title: msg, icon: 'none' })
 }
 
@@ -206,13 +206,13 @@ function formatTaskDateText(task, fallback) {
 
 function formatRepeatText(task, fallback) {
   if (!task) return String(fallback || '')
-  if (!task.repeat) return '不重复'
+  if (!task.repeat) return uni.$t('不重复')
   const unit = task.repeat.unit || 'day'
   const every = Number(task.repeat.every || 1) || 1
-  if (unit === 'week') return every > 1 ? `每${every}周` : '每周'
-  if (unit === 'month') return every > 1 ? `每${every}月` : '每月'
-  if (unit === 'year') return every > 1 ? `每${every}年` : '每年'
-  return every > 1 ? `每${every}天` : '每日'
+  if (unit === 'week') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('周')}` : uni.$t('每周')
+  if (unit === 'month') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('月')}` : uni.$t('每月')
+  if (unit === 'year') return every > 1 ? `${uni.$t('每')}${every}${uni.$t('年')}` : uni.$t('每年')
+  return every > 1 ? `${uni.$t('每')}${every}${uni.$t('天')}` : uni.$t('每日')
 }
 
 function resolveAssignee(task, fallback) {
@@ -293,7 +293,7 @@ async function syncDynamicTasks() {
             ? `完成于 ${formatDateTime(task.completedAtTs === 1 ? Date.now() : task.completedAtTs)}`
             : dynamic.detail && dynamic.detail.doneAtText
               ? dynamic.detail.doneAtText
-              : '未完成',
+              : uni.$t('未完成'),
         },
       })
     }
@@ -319,7 +319,7 @@ async function refresh() {
   state.value = ensureActivityState()
   const firstError = [dynamicRes, noticeRes, inviteRes].find((item) => item.status === 'rejected')
   if (firstError && firstError.status === 'rejected') {
-    showError(firstError.reason, '加载失败', { 201: '用户不存在' })
+    showError(firstError.reason, uni.$t('加载失败'), { 201: uni.$t('用户不存在') })
   }
 }
 
@@ -337,12 +337,12 @@ async function accept(id) {
   submitting.value = true
   try {
     await usersApi.agreeAddFriend({ inviterEmail: item.inviterEmail })
-    uni.showToast({ title: '已加入', icon: 'none' })
+    uni.showToast({ title: uni.$t('已加入'), icon: 'none' })
     const s = ensureActivityState()
     removeInvite(s, id)
     state.value = ensureActivityState()
   } catch (e) {
-    showError(e, '操作失败', { 201: '用户不存在', 202: '添加失败' })
+    showError(e, uni.$t('操作失败'), { 201: uni.$t('用户不存在'), 202: uni.$t('添加失败') })
   } finally {
     submitting.value = false
   }
@@ -354,12 +354,12 @@ async function reject(id) {
   submitting.value = true
   try {
     await usersApi.refuseAddFriend({ inviterEmail: item.inviterEmail })
-    uni.showToast({ title: '已取消', icon: 'none' })
+    uni.showToast({ title: uni.$t('已取消'), icon: 'none' })
     const s = ensureActivityState()
     removeInvite(s, id)
     state.value = ensureActivityState()
   } catch (e) {
-    showError(e, '操作失败', { 201: '用户不存在', 202: '拒绝失败' })
+    showError(e, uni.$t('操作失败'), { 201: uni.$t('用户不存在'), 202: uni.$t('拒绝失败') })
   } finally {
     submitting.value = false
   }

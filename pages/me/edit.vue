@@ -4,7 +4,7 @@
       <view class="head-left" @click="back">
         <image class="back-img" src="/static/my/icon_back.png" mode="aspectFit" />
       </view>
-      <text class="head-title">编辑信息</text>
+      <text class="head-title">{{ $t('编辑信息') }}</text>
       <view class="head-right" />
     </view>
 
@@ -20,21 +20,21 @@
 
     <view class="card">
       <view class="row" @click="goNickname">
-        <text class="label">姓名</text>
+        <text class="label">{{ $t('姓名') }}</text>
         <view class="right">
           <text class="value">{{ profile.name }}</text>
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="goEmail">
-        <text class="label">邮箱</text>
+        <text class="label">{{ $t('邮箱') }}</text>
         <view class="right">
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <picker mode="date" :value="birthdayPickerValue" @change="onBirthdayChange">
         <view class="row">
-          <text class="label">生日</text>
+          <text class="label">{{ $t('生日') }}</text>
           <view class="right">
             <text class="value">{{ profile.birthday }}</text>
             <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
@@ -42,15 +42,15 @@
         </view>
       </picker>
       <view class="row" @click="goPassword">
-        <text class="label">密码</text>
+        <text class="label">{{ $t('密码') }}</text>
         <view class="right">
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
         </view>
       </view>
       <view class="row" @click="deleteAccount">
         <view class="left">
-          <text class="label">账户删除</text>
-          <text class="value">删除账号后将无法恢复，请谨慎操作</text>
+          <text class="label">{{ $t('账户删除') }}</text>
+          <text class="value">{{ $t('删除账号后将无法恢复，请谨慎操作') }}</text>
         </view>
         <view class="right">
           <image class="chev-img" src="/static/my/icon_chevron_right.png" mode="aspectFit" />
@@ -95,7 +95,7 @@ const birthdayPickerValue = computed(() => {
 
 function chooseAvatar() {
   uni.showActionSheet({
-    itemList: ['相机', '从手机相册中选择'],
+    itemList: [uni.$t('相机'), uni.$t('从手机相册中选择')],
     success: (res) => {
       const idx = res.tapIndex
       const sourceType = idx === 0 ? ['camera'] : ['album']
@@ -105,7 +105,7 @@ function chooseAvatar() {
         success: async (r) => {
           const path = r && r.tempFilePaths && r.tempFilePaths[0] ? r.tempFilePaths[0] : ''
           if (!path) return
-          uni.showLoading({ title: '上传中' })
+          uni.showLoading({ title: uni.$t('上传中') })
           try {
             const res = await usersApi.updateUserAvatar({ filePath: path })
             const avatarUrl =
@@ -117,14 +117,14 @@ function chooseAvatar() {
             const s = ensureMeState()
             updateProfile(s, { avatarUrl: avatarUrl || path })
             state.value = ensureMeState()
-            uni.showToast({ title: '已更新', icon: 'none' })
+            uni.showToast({ title: uni.$t('已更新'), icon: 'none' })
           } catch (e) {
             const code = e && e.code !== undefined ? e.code : undefined
             if (code === 201 || code === '201') {
-              uni.showToast({ title: '用户不存在', icon: 'none' })
+              uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
               return
             }
-            uni.showToast({ title: String((e && e.message) || '上传失败'), icon: 'none' })
+            uni.showToast({ title: String((e && e.message) || uni.$t('上传失败')), icon: 'none' })
           } finally {
             try {
               uni.hideLoading()
@@ -161,20 +161,20 @@ async function onBirthdayChange(e) {
   const parts = v.split('-')
   if (parts.length !== 3) return
   const text = `${parts[0]}.${parts[1]}.${parts[2]}`
-  uni.showLoading({ title: '保存中' })
+  uni.showLoading({ title: uni.$t('保存中') })
   try {
     await usersApi.updateUserBrithDate({ brithDate: text })
     const s = ensureMeState()
     updateProfile(s, { birthday: text })
     state.value = ensureMeState()
-    uni.showToast({ title: '更新成功', icon: 'none' })
+    uni.showToast({ title: uni.$t('更新成功'), icon: 'none' })
   } catch (e) {
     const code = e && e.code !== undefined ? e.code : undefined
     if (code === 201 || code === '201') {
-      uni.showToast({ title: '用户不存在', icon: 'none' })
+      uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
       return
     }
-    uni.showToast({ title: String((e && e.message) || '更新失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('更新失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()
@@ -201,12 +201,12 @@ function goPassword() {
 function deleteAccount() {
   uni.showModal({
     title: '',
-    content: '删除账号后将无法恢复，请谨慎操作',
-    cancelText: '取消',
-    confirmText: '确定',
+    content: uni.$t('删除账号后将无法恢复，请谨慎操作'),
+    cancelText: uni.$t('取消'),
+    confirmText: uni.$t('确定'),
     success: async (res) => {
       if (!res.confirm) return
-      uni.showLoading({ title: '处理中' })
+      uni.showLoading({ title: uni.$t('处理中') })
       try {
         const token = getToken()
         const inviterEmail = String(uni.getStorageSync('auth_inviter_email') || '').trim()

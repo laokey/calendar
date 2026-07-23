@@ -1,12 +1,12 @@
 <template>
   <view class="bl-page settings-page">
-    <BlHeader title="显示设置" back back-icon-src="/static/reward/icon_nav_back_small.png" />
+    <BlHeader :title="$t('显示设置')" back back-icon-src="/static/reward/icon_nav_back_small.png" />
 
     <view class="card">
       <view class="row" @click="sortOpen = true">
         <view class="left">
           <image class="row-icon" src="/static/reward/icon_list_bullets.png" mode="aspectFit" />
-          <text class="label">列表排序</text>
+          <text class="label">{{ $t('列表排序') }}</text>
         </view>
         <view class="right">
           <text class="value">{{ sortLabel }}</text>
@@ -18,20 +18,20 @@
         <view class="row row-flat">
           <view class="left">
             <image class="row-icon" src="/static/reward/icon_clock.png" mode="aspectFit" />
-            <text class="label">显示已完成</text>
+            <text class="label">{{ $t('显示已完成') }}</text>
           </view>
           <switch :checked="showDone" color="#3d6afb" @change="toggleShowDone" />
         </view>
         <view class="desc-wrap">
-          <text class="desc">若开启则奖励列表显示已完成的奖励/惩罚，关闭则不显示已完成的奖励/惩罚</text>
+          <text class="desc">{{ $t('若开启则奖励列表显示已完成的奖励/惩罚，关闭则不显示已完成的奖励/惩罚') }}</text>
         </view>
       </view>
     </view>
 
-    <BlSheet v-model="sortOpen" title="排序" :confirm-text="''">
+    <BlSheet v-model="sortOpen" :title="$t('排序')" :confirm-text="''">
       <view class="sort-list">
         <view class="sort-item" :class="{ on: sort === 'asc' }" @click="setSort('asc')">
-          <text class="sort-text">心心从小到大排列</text>
+          <text class="sort-text">{{ $t('心心从小到大') }}</text>
           <view class="mark">
             <image
               class="mark-img"
@@ -41,11 +41,11 @@
           </view>
         </view>
         <view class="sort-item" :class="{ on: sort === 'desc' }" @click="setSort('desc')">
-          <text class="sort-text">心心从大到小排序</text>
+          <text class="sort-text">{{ $t('心心从大到小') }}</text>
           <view class="mark">
             <image
               class="mark-img"
-              :src="sort === 'desc' ? '/static/reward/icon_check_circle_blue.png' : '/static/calendar/icon_radio_off.png'"
+              :src="sort === 'desc' ? '/static/reward/icon_check_circle_blue.png' : '/static/common/icon_radio_off.png'"
               mode="aspectFit"
             />
           </view>
@@ -75,7 +75,7 @@ onShow(() => refresh())
 const sort = computed(() => (rewardState.value.settings && rewardState.value.settings.sort) || 'asc')
 const showDone = computed(() => (rewardState.value.settings && typeof rewardState.value.settings.showDone === 'boolean' ? rewardState.value.settings.showDone : true))
 
-const sortLabel = computed(() => (sort.value === 'desc' ? '从大到小' : '从小到大'))
+const sortLabel = computed(() => (sort.value === 'desc' ? uni.$t('从大到小') : uni.$t('从小到大')))
 
 function setSort(v) {
   updateRewardSettings(rewardState.value, { sort: v === 'desc' ? 'desc' : 'asc' })

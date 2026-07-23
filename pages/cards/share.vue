@@ -10,8 +10,8 @@
       <view class="hero-icon">
         <image class="hero-img" src="/static/card/icon-card-share-hero.png" mode="aspectFit" />
       </view>
-      <text class="hero-title">分享给您的家人或朋友</text>
-      <text class="hero-sub bl-muted">您想共享哪个设备</text>
+      <text class="hero-title">{{ $t('分享给您的家人或朋友') }}</text>
+      <text class="hero-sub bl-muted">{{ $t('您想共享哪个设备') }}</text>
     </view>
 
     <view class="list">
@@ -26,7 +26,7 @@
     </view>
 
     <view class="send" @click="confirmSend">
-      <text class="send-text">发送卡片</text>
+      <text class="send-text">{{ $t('发送卡片') }}</text>
     </view>
   </view>
 </template>
@@ -66,7 +66,7 @@ onShow(() => {
       if (!selectedId.value && deviceList.value.length) selectedId.value = String(deviceList.value[0].id)
     } catch (e) {
       deviceList.value = []
-      uni.showToast({ title: String((e && e.message) || '加载设备失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('加载设备失败')), icon: 'none' })
     }
   })()
 })
@@ -74,7 +74,7 @@ onShow(() => {
 async function confirmSend() {
   const dev = devices.value.find((x) => x.id === selectedId.value)
   if (!dev) {
-    uni.showToast({ title: '请选择设备', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择设备'), icon: 'none' })
     return
   }
   if (submitting.value) return
@@ -84,12 +84,12 @@ async function confirmSend() {
     const remotePhoto = /^https?:\/\//i.test(localPhoto) ? localPhoto : ''
     const imageUrl = remotePhoto || String(draft.value.imageUrl || '').trim()
     if (!imageUrl) {
-      uni.showToast({ title: '请选择贺卡图片', icon: 'none' })
+      uni.showToast({ title: uni.$t('请选择贺卡图片'), icon: 'none' })
       return
     }
     const greetings = String(draft.value.message || '').trim()
     if (!greetings) {
-      uni.showToast({ title: '请输入祝福内容', icon: 'none' })
+      uni.showToast({ title: uni.$t('请输入祝福内容'), icon: 'none' })
       return
     }
     const scheduleEnabled = !!draft.value.scheduleEnabled
@@ -102,16 +102,16 @@ async function confirmSend() {
       timedDate: scheduleEnabled ? String(draft.value.scheduleDate || '').trim() : '',
       timedTime: scheduleEnabled ? String(draft.value.scheduleTime || '').trim() : '',
     })
-    uni.showToast({ title: '已发送', icon: 'none' })
+    uni.showToast({ title: uni.$t('已发送'), icon: 'none' })
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '发送失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('发送失败')), icon: 'none' })
     return
   } finally {
     submitting.value = false
   }
   const me = ensureMeState()
   addCardRecord(me, {
-    title: '贺卡',
+    title: uni.$t('贺卡'),
     device: dev.name,
     message: draft.value.message || '',
     mode: draft.value.playMode || 'auto',

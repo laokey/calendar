@@ -1,9 +1,9 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="显示设置" back back-icon-src="/static/task/icon_nav_back_small.png" />
+    <BlHeader :title="$t('显示设置')" back back-icon-src="/static/task/icon_nav_back_small.png" />
 
     <view class="card" @click="openSort">
-      <text class="card-title">排序列表</text>
+      <text class="card-title">{{ $t('排序列表') }}</text>
       <view class="card-right">
         <view class="pill"><text class="pill-text">{{ sortText }}</text></view>
         <image class="chev-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
@@ -12,18 +12,18 @@
 
     <view class="card">
       <view class="row-between">
-        <text class="card-title">显示已完成任务</text>
+        <text class="card-title">{{ $t('显示已完成任务') }}</text>
         <switch :checked="showDone" color="#3d6afb" @change="setShowDone(!!$event.detail.value)" />
       </view>
-      <text class="desc bl-muted">开启后，任务列表将展示已完成任务；关闭则不展示。</text>
+      <text class="desc bl-muted">{{ $t('开启后，任务列表将展示已完成任务；关闭则不展示。') }}</text>
     </view>
 
     <view class="card">
       <view class="row-between">
-        <text class="card-title">显示逾期任务</text>
+        <text class="card-title">{{ $t('显示逾期任务') }}</text>
         <switch :checked="showOverdue" color="#3d6afb" @change="setShowOverdue(!!$event.detail.value)" />
       </view>
-      <text class="desc bl-muted">若开启则已逾期的任务将持续在任务列表显示；关闭则仅在逾期当天显示。</text>
+      <text class="desc bl-muted">{{ $t('若开启则已逾期的任务将持续在任务列表显示；关闭则仅在逾期当天显示。') }}</text>
     </view>
 
     <BlSheet v-model="sortSheetOpen" title="" :confirm-text="''">
@@ -37,8 +37,8 @@
           />
         </view>
         <view class="sort-actions">
-          <view class="btn cancel" @click="sortSheetOpen = false"><text class="btn-text">取消</text></view>
-          <view class="btn ok" @click="confirmSort"><text class="btn-text ok-text">确认</text></view>
+          <view class="btn cancel" @click="sortSheetOpen = false"><text class="btn-text">{{ $t('取消') }}</text></view>
+          <view class="btn ok" @click="confirmSort"><text class="btn-text ok-text">{{ $t('确认') }}</text></view>
         </view>
       </view>
     </BlSheet>
@@ -56,9 +56,9 @@ const taskState = ref(ensureTaskState())
 const sortSheetOpen = ref(false)
 
 const sortOptions = [
-  { label: '按时间排序', value: 'time' },
-  { label: '按优先级排序', value: 'priority' },
-  { label: '按创建排序', value: 'created' },
+  { label: uni.$t('按时间排序'), value: 'time' },
+  { label: uni.$t('按优先级排序'), value: 'priority' },
+  { label: uni.$t('按创建排序'), value: 'created' },
 ]
 
 const sortDraft = ref('time')
@@ -76,7 +76,7 @@ const showOverdue = computed(() => !!(taskState.value.settings && taskState.valu
 const sortText = computed(() => {
   const v = taskState.value.settings && taskState.value.settings.sort ? taskState.value.settings.sort : 'time'
   const opt = sortOptions.find((x) => x.value === v)
-  return opt ? opt.label : '按时间排序'
+  return opt ? opt.label : uni.$t('按时间排序')
 })
 
 function openSort() {

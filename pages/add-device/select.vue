@@ -1,15 +1,15 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="添加设备" back />
+    <BlHeader :title="$t('添加设备')" back />
 
     <view class="panel">
-      <text class="label">设备邮箱</text>
+      <text class="label">{{ $t('设备邮箱') }}</text>
       <view class="input-wrap">
         <input
           v-model="deviceEmail"
           type="email"
           class="input"
-          placeholder="请输入设备邮箱"
+          :placeholder="$t('请输入设备邮箱')"
           placeholder-class="ph"
           confirm-type="done"
           @confirm="submit"
@@ -19,11 +19,11 @@
           <text class="icon-text">×</text>
         </view>
       </view>
-      <text class="tip bl-muted">示例：565656556@zmkh.com</text>
+      <text class="tip bl-muted">{{ $t('示例') + '：' + $t('565656556@zmkh.com') }}</text>
     </view>
 
     <view class="bl-btn-primary" :class="{ disabled: !canSubmit }" @click="submit">
-      <text>{{ mode === 'create' ? '创建并获取激活码' : '申请绑定' }}</text>
+      <text>{{ mode === 'create' ? $t('创建并获取激活码') : $t('申请绑定') }}</text>
     </view>
   </view>
 </template>
@@ -54,7 +54,7 @@ function validateEmail() {
   const v = deviceEmail.value.trim()
   if (!v) return false
   if (isEmail(v)) return true
-  uni.showToast({ title: '设备邮箱格式不正确', icon: 'none' })
+  uni.showToast({ title: uni.$t('设备邮箱格式不正确'), icon: 'none' })
   return false
 }
 
@@ -67,20 +67,20 @@ async function submit() {
   if (!canSubmit.value) return
   if (!validateEmail()) return
   const email = deviceEmail.value.trim()
-  uni.showLoading({ title: mode.value === 'create' ? '创建中' : '申请中' })
+  uni.showLoading({ title: mode.value === 'create' ? uni.$t('创建中') : uni.$t('申请中') })
   try {
     if (mode.value === 'create') {
       const res = await deviceApi.createCalendarDevice(email)
       if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
         if (res.code === 201 || res.code === '201') {
-          uni.showToast({ title: '用户不存在', icon: 'none' })
+          uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
           return
         }
         if (res.code === 202 || res.code === '202') {
-          uni.showToast({ title: '日历设备已创建', icon: 'none' })
+          uni.showToast({ title: uni.$t('日历设备已创建'), icon: 'none' })
           return
         }
-        uni.showToast({ title: '创建设备失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('创建设备失败'), icon: 'none' })
         return
       }
       const code = res && typeof res === 'object' ? String(res.activationCode || res.codeValue || res.activation_code || '') : ''
@@ -88,7 +88,7 @@ async function submit() {
         uni.redirectTo({ url: `/pages/device/activate?code=${encodeURIComponent(code)}&deviceEmail=${encodeURIComponent(email)}` })
         return
       }
-      uni.showToast({ title: '创建成功', icon: 'none' })
+      uni.showToast({ title: uni.$t('创建成功'), icon: 'none' })
       uni.redirectTo({ url: '/pages/device/index' })
       return
     }
@@ -96,24 +96,24 @@ async function submit() {
     const res = await deviceApi.bindCalendarDevice(email)
     if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
       if (res.code === 201 || res.code === '201') {
-        uni.showToast({ title: '用户不存在', icon: 'none' })
+        uni.showToast({ title: uni.$t('用户不存在'), icon: 'none' })
         return
       }
       if (res.code === 202 || res.code === '202') {
-        uni.showToast({ title: '日历设备不存在', icon: 'none' })
+        uni.showToast({ title: uni.$t('日历设备不存在'), icon: 'none' })
         return
       }
       if (res.code === 203 || res.code === '203') {
-        uni.showToast({ title: '申请绑定失败', icon: 'none' })
+        uni.showToast({ title: uni.$t('申请绑定失败'), icon: 'none' })
         return
       }
-      uni.showToast({ title: '申请绑定失败', icon: 'none' })
+      uni.showToast({ title: uni.$t('申请绑定失败'), icon: 'none' })
       return
     }
-    uni.showToast({ title: '申请绑定成功，等待审核', icon: 'none' })
+    uni.showToast({ title: uni.$t('申请绑定成功，等待审核'), icon: 'none' })
     uni.redirectTo({ url: '/pages/device/index' })
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '操作失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('操作失败')), icon: 'none' })
   } finally {
     try {
       uni.hideLoading()

@@ -2,9 +2,9 @@
   <view class="page">
     <view class="center">
       <image class="logo" src="/static/login/icon_calendar_3d.png" mode="aspectFit" />
-      <text class="name">芝麻日历</text>
-      <text class="slogan">一屏见年月，诸事皆清晰，</text>
-      <text class="slogan">芝麻日历伴朝夕</text>
+      <text class="name">{{ $t('芝麻日历') }}</text>
+      <text class="slogan">{{ $t('一屏见年月，诸事皆清晰，') }}</text>
+      <text class="slogan">{{ $t('芝麻日历伴朝夕') }}</text>
     </view>
   </view>
 </template>

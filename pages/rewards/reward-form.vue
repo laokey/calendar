@@ -1,13 +1,13 @@
 <template>
   <view class="bl-page form-page">
     <BlHeader
-      title="添加奖励"
+      :title="$t('添加奖励')"
       back
       back-icon-src="/static/reward/icon_nav_back_small.png"
     >
       <template #right>
         <view class="top-save" @click="save">
-          <text class="top-save-text">保存</text>
+          <text class="top-save-text">{{ $t('保存') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -21,13 +21,13 @@
         />
 
         <text class="req">*</text>
-        <text>标题</text>
+        <text>{{ $t('标题') }}</text>
       </view>
       <view class="input-wrap">
         <input
           v-model="title"
           class="input"
-          placeholder="请输入标题"
+          :placeholder="$t('请输入标题')"
           placeholder-class="ph"
         />
       </view>
@@ -40,7 +40,7 @@
           src="/static/reward/icon_smiley.png"
           mode="aspectFit"
         />
-        <text class="label">表情符号(可选)</text>
+        <text class="label">{{ $t('表情符号(可选)') }}</text>
       </view>
       <image
         class="field-icon"
@@ -56,7 +56,7 @@
           src="/static/task/icon_repeat.png"
           mode="aspectFit"
         />
-        <text class="label">执行后重置</text>
+        <text class="label">{{ $t('执行后重置') }}</text>
       </view>
       <switch
         :checked="resetAfter"
@@ -73,14 +73,14 @@
           mode="aspectFit"
         />
         <text class="req">*</text>
-        <text>心心</text>
+        <text>{{ $t('心心') }}</text>
       </view>
       <view class="input-wrap">
         <input
           v-model="hearts"
           class="input"
           type="number"
-          placeholder="请输入心心数量"
+          :placeholder="$t('请输入心心数量')"
           placeholder-class="ph"
         />
       </view>
@@ -88,7 +88,7 @@
 
     <view v-if="tipOpen" class="tip">
       <text class="tip-text"
-        >请输入本次奖励或惩罚变更的星星数量。奖励会增加星星，惩罚会减少星星。</text
+        >{{ $t('请输入本次奖励或惩罚变更的星星数量。奖励会增加星星，惩罚会减少星星。') }}</text
       >
       <view class="tip-close" @click="tipOpen = false">
         <image
@@ -107,7 +107,7 @@
           mode="aspectFit"
         />
         <text class="req">*</text>
-        <text>选择成员</text>
+        <text>{{ $t('选择成员') }}</text>
       </view>
       <view class="members">
         <view
@@ -129,7 +129,7 @@
         </view>
         <view class="mem add" @click="goAddMember">
           <view class="add-circle"><text class="add-plus">+</text></view>
-          <text class="mem-name">添加</text>
+          <text class="mem-name">{{ $t('添加') }}</text>
         </view>
       </view>
     </view>
@@ -138,7 +138,7 @@
       <view class="field-title row-between">
         <view class="row-left">
           <text class="req">*</text>
-          <text>类型</text>
+          <text>{{ $t('类型') }}</text>
         </view>
         <view class="q" @click="infoOpen = true"
           ><text class="q-text">?</text></view
@@ -150,14 +150,14 @@
           :class="{ on: type === 'reward' }"
           @click="type = 'reward'"
         >
-          <text class="type-text">奖励</text>
+          <text class="type-text">{{ $t('奖励') }}</text>
         </view>
         <view
           class="type-pill punish"
           :class="{ on: type === 'punish' }"
           @click="type = 'punish'"
         >
-          <text class="type-text">惩罚</text>
+          <text class="type-text">{{ $t('惩罚') }}</text>
         </view>
       </view>
     </view>
@@ -169,23 +169,23 @@
           src="/static/reward/icon_title_t.png"
           mode="aspectFit"
         />
-        <text class="label">描述</text>
+        <text class="label">{{ $t('描述') }}</text>
       </view>
       <view class="input-wrap is-textarea">
         <textarea
           v-model="desc"
           class="textarea"
-          placeholder="请输入描述"
+          :placeholder="$t('请输入描述')"
           placeholder-class="ph"
         />
       </view>
     </view>
 
     <view class="bottom-save" @click="save">
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
 
-    <BlSheet v-model="emojiSheetOpen" title="选择表情" :confirm-text="''">
+    <BlSheet v-model="emojiSheetOpen" :title="$t('选择表情')" :confirm-text="''">
       <view class="emoji-grid">
         <view
           v-for="e in emojiOptions"
@@ -196,18 +196,18 @@
           <text class="emoji-text">{{ e }}</text>
         </view>
         <view class="emoji-item clear" @click="selectEmoji('')">
-          <text class="emoji-text">清除</text>
+          <text class="emoji-text">{{ $t('清除') }}</text>
         </view>
       </view>
       <view class="sheet-cancel" @click="emojiSheetOpen = false"
-        ><text class="sheet-cancel-text">取消</text></view
+        ><text class="sheet-cancel-text">{{ $t('取消') }}</text></view
       >
     </BlSheet>
 
     <BlSheet v-model="infoOpen" title="" :confirm-text="''">
       <view class="info">
         <view class="info-head">
-          <text class="info-title">奖励与惩罚说明</text>
+          <text class="info-title">{{ $t('奖励与惩罚说明') }}</text>
           <view class="info-x" @click="infoOpen = false">
             <image
               class="info-x-img"
@@ -217,17 +217,17 @@
           </view>
         </view>
         <text class="info-text">
-          健康成长不仅需要掌声，也需要温柔的提醒。现在您可以直接配置奖励与惩罚，让孩子直观地看到行为带来的正向激励和结果反馈。
+          {{ $t('健康成长不仅需要掌声，也需要温柔的提醒。现在您可以直接配置奖励与惩罚，让孩子直观地看到行为带来的正向激励和结果反馈。') }}
         </text>
-        <text class="info-subtitle">奖励与惩罚</text>
+        <text class="info-subtitle">{{ $t('奖励与惩罚说明') }}</text>
         <text class="info-text"
-          >1.奖励会增加星星，惩罚会减少星星。</text
+          >{{ $t('1.奖励会增加星星，惩罚会减少星星。') }}</text
         >
         <text class="info-text"
-          >2.保存的星星数量表示单次执行的变化值；奖励执行后增加对应数量，惩罚执行后扣减对应数量。</text
+          >{{ $t('2.保存的星星数量表示单次执行的变化值；奖励执行后增加对应数量，惩罚执行后扣减对应数量。') }}</text
         >
         <view class="info-btn" @click="infoOpen = false"
-          ><text class="info-btn-text">立即体验</text></view
+          ><text class="info-btn-text">{{ $t('立即体验') }}</text></view
         >
       </view>
     </BlSheet>
@@ -261,18 +261,18 @@ const emojiSheetOpen = ref(false);
 const infoOpen = ref(false);
 
 const emojiOptions = [
-  "跑",
-  "力",
-  "书",
-  "星",
-  "笑",
-  "家",
-  "球",
-  "心",
-  "乐",
-  "奖",
-  "黑",
-  "白",
+  uni.$t('跑'),
+  uni.$t('力'),
+  uni.$t('书'),
+  uni.$t('星'),
+  uni.$t('笑'),
+  uni.$t('家'),
+  uni.$t('球'),
+  uni.$t('心'),
+  uni.$t('乐'),
+  uni.$t('奖'),
+  uni.$t('黑'),
+  uni.$t('白'),
 ];
 
 function refresh() {
@@ -390,7 +390,7 @@ async function loadRewardDetail(id) {
     type.value = Number(it.rewardType) === 1 ? "punish" : "reward";
     desc.value = it.description || "";
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || "获取奖励详情失败"), icon: "none" });
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取奖励详情失败')), icon: "none" });
   }
 }
 
@@ -405,16 +405,16 @@ function goAddMember() {
 
 function validate() {
   if (!String(title.value || "").trim()) {
-    uni.showToast({ title: "请输入标题", icon: "none" });
+    uni.showToast({ title: uni.$t('请输入标题'), icon: "none" });
     return false;
   }
   const n = Number(hearts.value || 0) || 0;
   if (n <= 0) {
-    uni.showToast({ title: "请输入心心", icon: "none" });
+    uni.showToast({ title: uni.$t('请输入心心'), icon: "none" });
     return false;
   }
   if (!Array.isArray(memberIds.value) || !memberIds.value.length) {
-    uni.showToast({ title: "请选择成员", icon: "none" });
+    uni.showToast({ title: uni.$t('请选择成员'), icon: "none" });
     return false;
   }
   return true;
@@ -441,7 +441,7 @@ async function save() {
     uni.$emit && uni.$emit("reward:refresh");
     uni.navigateBack();
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || "保存奖励失败"), icon: "none" });
+    uni.showToast({ title: String((e && e.message) || uni.$t('保存奖励失败')), icon: "none" });
   } finally {
     saving.value = false;
   }

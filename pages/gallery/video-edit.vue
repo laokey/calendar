@@ -4,7 +4,7 @@
       <view class="head-left" @click="back">
         <text class="back-text">‹</text>
       </view>
-      <text class="head-title">剪辑</text>
+      <text class="head-title">{{ $t('剪辑') }}</text>
       <view class="head-right" />
     </view>
 
@@ -71,12 +71,12 @@
         </movable-area>
       </view>
 
-      <text class="hint">拖动剪辑视频</text>
+      <text class="hint">{{ $t('拖动剪辑视频') }}</text>
     </view>
 
     <view class="bottom">
       <view class="btn" :class="{ disabled: !canSend }" @click="send">
-        <text class="btn-text">发送</text>
+        <text class="btn-text">{{ $t('发送') }}</text>
       </view>
     </view>
   </view>

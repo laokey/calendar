@@ -4,17 +4,17 @@
 
     <view class="hero">
       <image class="device-img" src="/static/device/device_hero.png" mode="aspectFit" />
-      <view class="tag"><text class="tag-text">待审批</text></view>
+      <view class="tag"><text class="tag-text">{{ $t('待审批') }}</text></view>
     </view>
 
     <view class="info-card">
       <text class="info-text">
-        该电子日历为私密状态，加入日历需要审批。我们已邮件通知设备所有者，您也可告知设备所有者在应用“用户管理”的“待处理”列表中完成审批。审批通过后，即可访问该日历。
+        {{ $t('该电子日历为私密状态，加入日历需要审批。我们已邮件通知设备所有者，您也可告知设备所有者在应用“用户管理”的“待处理”列表中完成审批。审批通过后，即可访问该日历。') }}
       </text>
     </view>
 
     <view class="bl-btn-primary" @click="done">
-      <text>明白了</text>
+      <text>{{ $t('明白了') }}</text>
     </view>
   </view>
 </template>

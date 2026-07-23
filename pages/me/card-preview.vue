@@ -5,7 +5,7 @@
         <image class="topbar-back" src="/static/card/icon-card-nav-back.png" mode="aspectFit" />
       </view>
       <view class="topbar-center">
-        <text class="topbar-title">预览</text>
+        <text class="topbar-title">{{ $t('预览') }}</text>
       </view>
       <view class="topbar-side right" @click="refresh">
         <image class="topbar-refresh" src="/static/card/icon-card-loading.png" mode="aspectFit" />
@@ -13,7 +13,7 @@
     </view>
 
     <view v-if="record" class="pill">
-      <text class="pill-text">{{ record.timeText || '未设置时间' }}</text>
+      <text class="pill-text">{{ record.timeText || $t('未设置时间') }}</text>
     </view>
 
     <view v-if="record" class="stage">
@@ -23,7 +23,7 @@
             <view v-if="record.imageUrl" class="photo-wrap">
               <image class="photo-img" :src="record.imageUrl" mode="aspectFill" />
             </view>
-            <view v-else class="placeholder"><text class="ph">未添加照片</text></view>
+            <view v-else class="placeholder"><text class="ph">{{ $t('未添加照片') }}</text></view>
           </view>
         </view>
         <view class="book-page right-page">
@@ -56,7 +56,7 @@
       <text class="msg-text">{{ record.message }}</text>
     </view>
 
-    <text class="section">显示模式</text>
+    <text class="section">{{ $t('显示模式') }}</text>
     <view class="mode">
       <view class="mode-item">
         <view class="mode-left">
@@ -111,12 +111,12 @@ const record = computed(() => {
 
 const playModeTitle = computed(() => {
   const mode = Number(record.value && record.value.playMode)
-  return mode === 1 ? '手动播放' : '自动播放'
+  return mode === 1 ? uni.$t('手动播放') : uni.$t('自动播放')
 })
 
 const playModeDesc = computed(() => {
   const mode = Number(record.value && record.value.playMode)
-  return mode === 1 ? '收到相框后，点击后打开' : '收到相框后，祝福会自动打开'
+  return mode === 1 ? uni.$t('收到相框后，点击后打开') : uni.$t('收到相框后，祝福会自动打开')
 })
 
 const rightPageText = computed(() => {

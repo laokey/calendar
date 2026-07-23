@@ -1,9 +1,9 @@
 <template>
   <view class="bl-page form-page">
-    <BlHeader :title="isEdit ? '编辑任务' : '添加任务'" back back-icon-src="/static/task/icon_nav_back_small.png">
+    <BlHeader :title="isEdit ? $t('编辑任务') : $t('添加任务')" back back-icon-src="/static/task/icon_nav_back_small.png">
       <template #right>
         <view class="top-save" @click="save">
-          <text class="top-save-text">保存</text>
+          <text class="top-save-text">{{ $t('保存') }}</text>
         </view>
       </template>
     </BlHeader>
@@ -13,18 +13,18 @@
         <view class="row-left">
           <image class="field-icon" src="/static/task/icon_title_t.png" mode="aspectFit" />
           <text class="req">*</text>
-          <text class="label">标题</text>
+          <text class="label">{{ $t('标题') }}</text>
         </view>
       </view>
       <view class="input-wrap">
-        <input v-model="title" class="input" placeholder="请输入标题" placeholder-class="ph" />
+        <input v-model="title" class="input" :placeholder="$t('请输入标题')" placeholder-class="ph" />
       </view>
     </view>
 
     <view class="block row-between" @click="emojiSheetOpen = true">
       <view class="row-left">
         <image class="field-icon" src="/static/task/icon_smiley.png" mode="aspectFit" />
-        <text class="label">表情符号(可选)</text>
+        <text class="label">{{ $t('表情符号(可选)') }}</text>
       </view>
       <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
     </view>
@@ -33,7 +33,7 @@
       <view class="row-between">
         <view class="row-left">
           <image class="field-icon" src="/static/common/icon_calendar.png" mode="aspectFit" />
-          <text class="label">日期</text>
+          <text class="label">{{ $t('日期') }}</text>
         </view>
         <switch :checked="dateEnabled" color="#3d6afb" @change="dateEnabled = !!$event.detail.value" />
       </view>
@@ -45,7 +45,7 @@
     <view class="block row-between">
       <view class="row-left">
         <image class="field-icon" src="/static/task/icon_clock_grey.png" mode="aspectFit" />
-        <text class="label">时间</text>
+        <text class="label">{{ $t('时间') }}</text>
       </view>
       <switch :checked="timeEnabled" color="#3d6afb" @change="timeEnabled = !!$event.detail.value" />
     </view>
@@ -75,7 +75,7 @@
     <view class="block row-between">
       <view class="row-left">
         <image class="field-icon" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
-        <text class="label">心心</text>
+        <text class="label">{{ $t('心心') }}</text>
       </view>
       <view class="row-right">
         <input v-model="heartsText" class="hearts-input" type="number" placeholder="0" placeholder-class="ph" />
@@ -86,7 +86,7 @@
     </view>
 
     <view v-if="tipOpen" class="tip">
-      <text class="tip-text">用心心获取奖励，培养好习惯</text>
+      <text class="tip-text">{{ $t('用心心获取奖励，培养好习惯') }}</text>
       <view class="tip-close" @click="tipOpen = false">
         <image class="tip-close-img" src="/static/task/icon_close.png" mode="aspectFit" />
       </view>
@@ -97,7 +97,7 @@
         <view class="row-left">
           <image class="field-icon" src="/static/task/icon_task_members_small.png" mode="aspectFit" />
           <text class="req">*</text>
-          <text class="label">选择成员</text>
+          <text class="label">{{ $t('选择成员') }}</text>
         </view>
       </view>
       <view class="members">
@@ -114,7 +114,7 @@
           <view class="add-circle">
             <image class="add-plus-img" src="/static/task/icon_chevron_right.png" mode="aspectFit" />
           </view>
-          <text class="mem-name">添加</text>
+          <text class="mem-name">{{ $t('添加') }}</text>
         </view>
       </view>
     </view>
@@ -122,7 +122,7 @@
     <view class="block row-between" @click="openPriority">
       <view class="row-left">
         <image class="field-icon" src="/static/task/icon_bolt_black.png" mode="aspectFit" />
-        <text class="label">优先级</text>
+        <text class="label">{{ $t('优先级') }}</text>
       </view>
       <view class="row-right">
         <text class="val">{{ priorityText }}</text>
@@ -133,24 +133,24 @@
     <view class="save-placeholder"></view>
 
     <view class="bottom-action">
-      <button class="save-btn" @click="save">保存</button>
+      <button class="save-btn" @click="save">{{ $t('保存') }}</button>
     </view>
 
-    <BlSheet v-model="emojiSheetOpen" title="选择表情" :confirm-text="''">
+    <BlSheet v-model="emojiSheetOpen" :title="$t('选择表情')" :confirm-text="''">
       <view class="emoji-grid">
         <view v-for="e in emojiOptions" :key="e" class="emoji-item" @click="selectEmoji(e)">
           <text class="emoji-text">{{ e }}</text>
         </view>
         <view class="emoji-item clear" @click="selectEmoji('')">
-          <text class="emoji-text">清除</text>
+          <text class="emoji-text">{{ $t('清除') }}</text>
         </view>
       </view>
-      <view class="sheet-cancel" @click="emojiSheetOpen = false"><text class="sheet-cancel-text">取消</text></view>
+      <view class="sheet-cancel" @click="emojiSheetOpen = false"><text class="sheet-cancel-text">{{ $t('取消') }}</text></view>
     </BlSheet>
 
-    <BlDatePickerSheet v-model="dateSheetOpen" title="日期" :value="date" @confirm="onDatePicked" />
+    <BlDatePickerSheet v-model="dateSheetOpen" :title="$t('日期')" :value="date" @confirm="onDatePicked" />
 
-    <BlTimePickerSheet v-model="timeSheetOpen" title="时间" :value="time" @confirm="onTimePicked" />
+    <BlTimePickerSheet v-model="timeSheetOpen" :title="$t('时间')" :value="time" @confirm="onTimePicked" />
 
     <BlSheet v-model="prioritySheetOpen" title="" :confirm-text="''">
       <view class="prio-sheet">
@@ -170,8 +170,8 @@
           </view>
         </view>
         <view class="prio-actions">
-          <view class="prio-btn cancel" @click="prioritySheetOpen = false"><text class="prio-btn-text">取消</text></view>
-          <view class="prio-btn ok" @click="confirmPriority"><text class="prio-btn-text ok-text">确认</text></view>
+          <view class="prio-btn cancel" @click="prioritySheetOpen = false"><text class="prio-btn-text">{{ $t('取消') }}</text></view>
+          <view class="prio-btn ok" @click="confirmPriority"><text class="prio-btn-text ok-text">{{ $t('确认') }}</text></view>
         </view>
       </view>
     </BlSheet>
@@ -237,22 +237,44 @@ const dateKind = ref('task')
 const timeSheetOpen = ref(false)
 const prioritySheetOpen = ref(false)
 
-const emojiOptions = ['笑', '酷', '赞', '爱', '星', '书', '钢', '跑', '洗', '吃', '球', '家']
+const emojiOptions = [uni.$t('笑'), uni.$t('酷'), uni.$t('赞'), uni.$t('爱'), uni.$t('星'), uni.$t('书'), uni.$t('钢'), uni.$t('跑'), uni.$t('洗'), uni.$t('吃'), uni.$t('球'), uni.$t('家')]
 const repeatUnits = [
-  { label: '天', value: 'day' },
-  { label: '周', value: 'week' },
-  { label: '月', value: 'month' },
-  { label: '年', value: 'year' },
+  { label: uni.$t('天'), value: 'day' },
+  { label: uni.$t('周'), value: 'week' },
+  { label: uni.$t('月'), value: 'month' },
+  { label: uni.$t('年'), value: 'year' },
 ]
 
 function isRemoteTaskMode() {
   return !!uni.getStorageSync('auth_logged_in')
 }
 
-function toCnDateText(key) {
+function currentLocaleTag() {
+  try {
+    const locale = typeof uni.getLocale === 'function' ? uni.getLocale() : ''
+    return String(locale || 'zh-CN')
+  } catch (e) {
+    return 'zh-CN'
+  }
+}
+
+function formatDateText(key) {
   const parts = String(key || '').split('-')
   if (parts.length !== 3) return ''
-  return `${parts[0]}年${Number(parts[1])}月${Number(parts[2])}日`
+  const y = Number(parts[0])
+  const m = Number(parts[1])
+  const d = Number(parts[2])
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return String(key || '')
+  const dateObj = new Date(y, m - 1, d)
+  try {
+    return new Intl.DateTimeFormat(currentLocaleTag(), {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(dateObj)
+  } catch (e) {
+    return `${parts[0]}-${parts[1]}-${parts[2]}`
+  }
 }
 
 function weekdayFromDateKey(key) {
@@ -281,10 +303,10 @@ function monthRuleFromDateKey(key, type = 'day') {
   }
 }
 
-const dateText = computed(() => toCnDateText(date.value))
+const dateText = computed(() => formatDateText(date.value))
 
 const members = computed(() => [
-  // { id: 'me', name: '我的', glyph: '我', color: '#4cc38a' },
+  // { id: 'me', name: uni.$t('我的'), glyph: uni.$t('我'), color: '#4cc38a' },
   ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
 ])
 
@@ -314,17 +336,17 @@ watch(
 )
 
 const priorityOptions = [
-  { label: '高优先级', value: 'high', icon: '/static/task/icon_bolt_red.png' },
-  { label: '中优先级', value: 'mid', icon: '/static/task/icon_bolt_yellow.png' },
-  { label: '低优先级', value: 'low', icon: '/static/task/icon_bolt_blue.png' },
-  { label: '无优先级', value: 'none', icon: '/static/task/icon_bolt_black_small.png' },
+  { label: uni.$t('高优先级'), value: 'high', icon: '/static/task/icon_bolt_red.png' },
+  { label: uni.$t('中优先级'), value: 'mid', icon: '/static/task/icon_bolt_yellow.png' },
+  { label: uni.$t('低优先级'), value: 'low', icon: '/static/task/icon_bolt_blue.png' },
+  { label: uni.$t('无优先级'), value: 'none', icon: '/static/task/icon_bolt_black_small.png' },
 ]
 
 const priorityDraft = ref('none')
 
 const priorityText = computed(() => {
   const opt = priorityOptions.find((x) => x.value === priority.value)
-  return opt ? opt.label : '无优先级'
+  return opt ? opt.label : uni.$t('无优先级')
 })
 
 const priorityIconSrc = computed(() => {
@@ -442,20 +464,20 @@ function goAddMember() {
 
 function validate() {
   if (!String(title.value || '').trim()) {
-    uni.showToast({ title: '请输入标题', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入标题'), icon: 'none' })
     return false
   }
   const mids = resolveSelectedMemberIds()
   if (!mids.length) {
-    uni.showToast({ title: '请选择成员', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择成员'), icon: 'none' })
     return false
   }
   if (isRemoteTaskMode() && !date.value) {
-    uni.showToast({ title: '请选择日期', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择日期'), icon: 'none' })
     return false
   }
   if (dateEnabled.value && !date.value) {
-    uni.showToast({ title: '请选择日期', icon: 'none' })
+    uni.showToast({ title: uni.$t('请选择日期'), icon: 'none' })
     return false
   }
   return true
@@ -506,7 +528,7 @@ async function save() {
   }
   if (isRemoteTaskMode()) {
     if (isEdit.value && taskId.value) {
-      uni.showLoading({ title: '保存中' })
+      uni.showLoading({ title: uni.$t('保存中') })
       try {
         const primaryMemberId = resolvedMemberIds[0]
         const repeatValue = buildRepeat(Date.now())
@@ -525,7 +547,7 @@ async function save() {
           memberId: primaryMemberId,
         })
         if (res && typeof res === 'object' && res.code !== undefined && res.code !== 200 && res.code !== '200') {
-          uni.showToast({ title: '保存失败', icon: 'none' })
+          uni.showToast({ title: uni.$t('保存失败'), icon: 'none' })
           return
         }
         updateTask(taskState.value, taskId.value, { ...basePayload, repeat: repeatValue, memberId: primaryMemberId })
@@ -552,7 +574,7 @@ async function save() {
         uni.$emit && uni.$emit('task:refresh')
         uni.navigateBack()
       } catch (e) {
-        uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+        uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
       } finally {
         try {
           uni.hideLoading()
@@ -561,7 +583,7 @@ async function save() {
       return
     }
     try {
-      uni.showLoading({ title: '保存中' })
+      uni.showLoading({ title: uni.$t('保存中') })
       for (let i = 0; i < resolvedMemberIds.length; i += 1) {
         const mid = resolvedMemberIds[i]
         await tasksApi.addTaskInfo({
@@ -581,7 +603,7 @@ async function save() {
       uni.$emit && uni.$emit('task:refresh')
       uni.navigateBack()
     } catch (e) {
-      uni.showToast({ title: String((e && e.message) || '保存失败'), icon: 'none' })
+      uni.showToast({ title: String((e && e.message) || uni.$t('保存失败')), icon: 'none' })
     } finally {
       try {
         uni.hideLoading()

@@ -13,8 +13,11 @@ app.$mount()
 
 // #ifdef VUE3
 import { createSSRApp } from 'vue'
+import { i18n, syncStoredLanguage } from './utils/i18n'
 export function createApp() {
   const app = createSSRApp(App)
+  syncStoredLanguage()
+  app.use(i18n)
   return {
     app
   }

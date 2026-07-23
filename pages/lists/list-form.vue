@@ -4,13 +4,13 @@
 
     <view class="bl-card title-card">
       <view class="bl-input">
-        <input v-model="title" class="bl-input-field" placeholder="清单名称" placeholder-class="ph" />
+        <input v-model="title" class="bl-input-field" :placeholder="$t('清单名称')" placeholder-class="ph" />
         <view v-if="title" class="clear" @click="title = ''"><text class="clear-text">×</text></view>
       </view>
     </view>
 
     <view class="bl-card colors-card">
-      <text class="sec-title">选择颜色</text>
+      <text class="sec-title">{{ $t('选择颜色') }}</text>
       <view class="colors">
         <view v-for="c in colors" :key="c" class="dot" :style="{ background: c }" @click="color = c">
           <view v-if="color === c" class="dot-check"><text class="dot-check-text">✓</text></view>
@@ -19,7 +19,7 @@
     </view>
 
     <view class="bottom-save" @click="save">
-      <text class="bottom-save-text">保存</text>
+      <text class="bottom-save-text">{{ $t('保存') }}</text>
     </view>
   </view>
 </template>
@@ -52,7 +52,7 @@ const colors = [
   '#c218d4',
 ]
 
-const pageTitle = computed(() => (listId.value ? '修改清单' : '添加清单'))
+const pageTitle = computed(() => (listId.value ? uni.$t('修改清单') : uni.$t('添加清单')))
 
 async function initEditData(id) {
   try {
@@ -76,7 +76,7 @@ onLoad((options) => {
 
 function validate() {
   if (!String(title.value || '').trim()) {
-    uni.showToast({ title: '请输入清单名称', icon: 'none' })
+    uni.showToast({ title: uni.$t('请输入清单名称'), icon: 'none' })
     return false
   }
   return true

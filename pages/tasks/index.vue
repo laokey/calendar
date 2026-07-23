@@ -6,7 +6,7 @@
           <text class="center-date">{{ mdText }}</text>
           <view class="today-pill" @click="goToday">
             <text class="today-refresh">↻</text>
-            <text class="today-text">今天</text>
+            <text class="today-text">{{ $t('今天') }}</text>
           </view>
         </view>
       </template>
@@ -82,7 +82,7 @@
               @click="activeFilter = f.id"
             >
               <view v-if="f.id === 'all'" class="circle all" :style="circleRingStyle(f)">
-                <text class="all-text">全部</text>
+                <text class="all-text">{{ $t('全部') }}</text>
               </view>
               <view v-else class="circle" :style="circleStyle(f)">
                 <text class="circle-text">{{ f.glyph }}</text>
@@ -152,11 +152,11 @@
           <view class="empty-illus">
             <image class="empty-bg" src="/static/task/bg_none_task.png" mode="aspectFit" />
           </view>
-          <text class="empty-text bl-muted">今天没有待完成的任务</text>
+          <text class="empty-text bl-muted">{{ $t('今天没有待完成的任务') }}</text>
         </view>
 
         <view v-if="settings.showDone" class="done-section">
-          <text class="done-title">已完成</text>
+          <text class="done-title">{{ $t('已完成') }}</text>
           <view v-if="doneTasks.length" class="list">
             <view v-for="t in doneTasks" :key="t.id" class="swipe-item" :class="{ 'is-open': isSwipeRevealed(t.id) }">
               <view class="swipe-actions">
@@ -212,18 +212,18 @@
 
     <BlSheet v-model="actionSheetOpen" title="" :confirm-text="''">
       <view class="action-list">
-        <view class="action-item" @click="editTask"><text class="action-text">编辑</text></view>
-        <view class="action-item danger" @click="askDelete"><text class="action-text danger-text">删除</text></view>
-        <view class="action-cancel" @click="actionSheetOpen = false"><text class="action-cancel-text">取消</text></view>
+        <view class="action-item" @click="editTask"><text class="action-text">{{ $t('编辑') }}</text></view>
+        <view class="action-item danger" @click="askDelete"><text class="action-text danger-text">{{ $t('删除') }}</text></view>
+        <view class="action-cancel" @click="actionSheetOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
       </view>
     </BlSheet>
 
     <BlSheet v-model="deleteSheetOpen" title="" :confirm-text="''">
       <view class="action-list">
-        <view class="action-item" @click="doDelete('one')"><text class="action-text">删除此任务</text></view>
-        <view class="action-item" @click="doDelete('future')"><text class="action-text">删除此任务和所有后续任务</text></view>
-        <view class="action-item" @click="doDelete('all')"><text class="action-text">删除所有任务</text></view>
-        <view class="action-cancel" @click="deleteSheetOpen = false"><text class="action-cancel-text">取消</text></view>
+        <view class="action-item" @click="doDelete('one')"><text class="action-text">{{ $t('删除此任务') }}</text></view>
+        <view class="action-item" @click="doDelete('future')"><text class="action-text">{{ $t('删除此任务和所有后续任务') }}</text></view>
+        <view class="action-item" @click="doDelete('all')"><text class="action-text">{{ $t('删除所有任务') }}</text></view>
+        <view class="action-cancel" @click="deleteSheetOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
       </view>
     </BlSheet>
 
@@ -233,9 +233,9 @@
           <image class="pop-burst" src="/static/task/illus_task_done_burst.png" mode="aspectFit" />
           <image class="pop-confetti" src="/static/task/illus_task_done_confetti.png" mode="aspectFit" />
         </view>
-        <text class="pop-title">太棒了！</text>
-        <text class="pop-sub">你今天完成了所有任务。明天继续。</text>
-        <view class="pop-btn" @click="donePopupOpen = false"><text class="pop-btn-text">确认</text></view>
+        <text class="pop-title">{{ $t('太棒了！') }}</text>
+        <text class="pop-sub">{{ $t('你今天完成了所有任务。明天继续。') }}</text>
+        <view class="pop-btn" @click="donePopupOpen = false"><text class="pop-btn-text">{{ $t('确认') }}</text></view>
       </view>
     </BlSheet>
   </view>
@@ -290,7 +290,7 @@ const calLocked = ref('')
 const calMoved = ref(false)
 const calSuppressSelectUntil = ref(0)
 
-const weekdayLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const weekdayLabels = [uni.$t('周日'), uni.$t('周一'), uni.$t('周二'), uni.$t('周三'), uni.$t('周四'), uni.$t('周五'), uni.$t('周六')]
 
 const cursorKey = computed(() => taskState.value.cursorDate)
 const calendarOpen = computed(() => !!taskState.value.calendarOpen)
@@ -299,7 +299,7 @@ const settings = computed(() => taskState.value.settings || { sort: 'time', show
 function formatMdText(key) {
   const parts = String(key || '').split('-')
   if (parts.length !== 3) return ''
-  return `${String(parts[1]).padStart(2, '0')}月${String(parts[2]).padStart(2, '0')}日`
+  return `${String(parts[1]).padStart(2, '0')}${uni.$t('月')}${String(parts[2]).padStart(2, '0')}${uni.$t('日')}`
 }
 
 function parseKey(key) {
@@ -378,7 +378,7 @@ const mdText = computed(() => formatMdText(cursorKey.value))
 
 function memberList() {
   const base = [
-    { id: 'me', name: '我', glyph: '我', color: '#4cc38a' },
+    { id: 'me', name: uni.$t('我'), glyph: uni.$t('我'), color: '#4cc38a' },
     ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
   ]
   return base
@@ -390,7 +390,7 @@ const filterItems = computed(() => {
   const list = [
     { id: 'all', glyph: '', color: '' },
     other[0] ? { id: other[0].id, glyph: other[0].glyph, color: other[0].color } : null,
-    { id: 'me', glyph: '我', color: '#4cc38a' },
+    { id: 'me', glyph: uni.$t('我'), color: '#4cc38a' },
     ...other.slice(1).map((m) => ({ id: m.id, glyph: m.glyph, color: m.color })),
   ].filter((x) => !!x)
   return list
@@ -550,7 +550,7 @@ function swipeEdit(t) {
   swipeActiveId.value = ''
   if (!t || !t.id) return
   if (isRemoteTaskMode() && t.remote) {
-    uni.showToast({ title: '接口文档暂未提供编辑任务接口', icon: 'none' })
+    uni.showToast({ title: uni.$t('接口文档暂未提供编辑任务接口'), icon: 'none' })
     return
   }
   uni.navigateTo({ url: `/pages/tasks/task-form?id=${t.id}` })
@@ -756,14 +756,14 @@ async function toggleDone(t) {
   const beforePending = pendingTasks.value.length
   if (isRemoteTaskItem(t)) {
     if (isTaskDone(t)) {
-      uni.showToast({ title: '接口文档暂未提供撤销完成接口', icon: 'none' })
+      uni.showToast({ title: uni.$t('接口文档暂未提供撤销完成接口'), icon: 'none' })
       return
     }
     try {
       await tasksApi.completeTask({
         taskId: t.id,
         memberId: t.memberId,
-        updateReason: t.title ? `完成任务:${t.title}` : '完成任务',
+        updateReason: t.title ? `${uni.$t('完成任务')}:${t.title}` : uni.$t('完成任务'),
         starNumber: Number(t.hearts || 0) || 0,
       })
       markTaskDone(taskState.value, t.id)
@@ -798,9 +798,9 @@ function askDelete() {
   if (isRemoteTaskItem(t)) {
     uni.showModal({
       title: '',
-      content: '您确定要删除吗？',
-      confirmText: '删除',
-      cancelText: '取消',
+      content: uni.$t('您确定要删除吗？'),
+      confirmText: uni.$t('删除'),
+      cancelText: uni.$t('取消'),
       confirmColor: '#3d6afb',
       success(res) {
         if (!res.confirm) return
@@ -815,9 +815,9 @@ function askDelete() {
   }
   uni.showModal({
     title: '',
-    content: '您确定要删除吗？',
-    confirmText: '删除',
-    cancelText: '取消',
+    content: uni.$t('您确定要删除吗？'),
+    confirmText: uni.$t('删除'),
+    cancelText: uni.$t('取消'),
     confirmColor: '#3d6afb',
     success(res) {
       if (!res.confirm) return

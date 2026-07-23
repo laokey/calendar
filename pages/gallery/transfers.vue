@@ -4,16 +4,16 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">传输列表</text>
+      <text class="head-title">{{ $t('传输列表') }}</text>
       <view class="head-right" />
     </view>
 
     <view class="tabs">
       <view class="tab" :class="{ active: tab === 'uploading' }" @click="tab = 'uploading'">
-        <text class="tab-text">上传中</text>
+        <text class="tab-text">{{ $t('上传中') }}</text>
       </view>
       <view class="tab" :class="{ active: tab === 'failed' }" @click="tab = 'failed'">
-        <text class="tab-text">上传失败</text>
+        <text class="tab-text">{{ $t('上传失败') }}</text>
       </view>
     </view>
 
@@ -84,7 +84,7 @@ function mapErrorCode(err) {
 function mapErrorText(err) {
   const message = String((err && err.message) || '').trim()
   if (message) return message
-  return '上传失败'
+  return uni.$t('上传失败')
 }
 
 function maybeAutoBack(nextState) {

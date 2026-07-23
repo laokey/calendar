@@ -1,8 +1,8 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="查找现有日历" back />
+    <BlHeader :title="$t('查找现有日历')" back />
 
-    <text class="hint">通过输入他们唯一的芝麻日历邮箱，搜索亲人的日历。</text>
+    <text class="hint">{{ $t('通过输入他们唯一的芝麻日历邮箱，搜索亲人的日历。') }}</text>
 
     <view class="bl-input">
       <input v-model="localPart" class="bl-input-field" placeholder="23456788897" placeholder-class="ph" />
@@ -17,7 +17,7 @@
 
     <view class="search-wrap">
       <view class="bl-btn-primary" :class="{ 'is-disabled': !canSearch }" @click="search">
-        <text>搜索</text>
+        <text>{{ $t('搜索') }}</text>
       </view>
     </view>
 
@@ -37,7 +37,7 @@ const canSearch = computed(() => localPart.value.trim().length > 0)
 function search() {
   if (!canSearch.value) return
   toast.type = 'loading'
-  toast.text = '加载中'
+  toast.text = uni.$t('加载中')
   toast.visible = true
   const value = localPart.value.trim()
   setTimeout(() => {
@@ -47,7 +47,7 @@ function search() {
       return
     }
     toast.type = 'error'
-    toast.text = '未找到'
+    toast.text = uni.$t('未找到')
     toast.visible = true
     setTimeout(() => {
       toast.visible = false

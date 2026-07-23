@@ -53,7 +53,7 @@
     </view>
 
     <view class="bottom" :class="{ grey: isDone }" @click="toggleDone">
-      <text class="bottom-text">{{ isDone ? '标记为未完成' : '标记为完成' }}</text>
+      <text class="bottom-text">{{ isDone ? $t('标记为未完成') : $t('标记为完成') }}</text>
       <view class="bottom-icon">
         <image
           class="bottom-icon-img"
@@ -65,10 +65,10 @@
 
     <BlSheet v-model="deleteSheetOpen" title="" :confirm-text="''">
       <view class="action-list">
-        <view class="action-item" @click="doDelete('one')"><text class="action-text">删除此任务</text></view>
-        <view class="action-item" @click="doDelete('future')"><text class="action-text">删除此任务和所有后续任务</text></view>
-        <view class="action-item" @click="doDelete('all')"><text class="action-text">删除所有任务</text></view>
-        <view class="action-cancel" @click="deleteSheetOpen = false"><text class="action-cancel-text">取消</text></view>
+        <view class="action-item" @click="doDelete('one')"><text class="action-text">{{ $t('删除此任务') }}</text></view>
+        <view class="action-item" @click="doDelete('future')"><text class="action-text">{{ $t('删除此任务和所有后续任务') }}</text></view>
+        <view class="action-item" @click="doDelete('all')"><text class="action-text">{{ $t('删除所有任务') }}</text></view>
+        <view class="action-cancel" @click="deleteSheetOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
       </view>
     </BlSheet>
   </view>
@@ -123,7 +123,7 @@ onLoad((options) => {
   const id = options && options.id ? String(options.id) : ''
   const ok = refresh(id)
   if (!ok) {
-    uni.showToast({ title: '任务不存在', icon: 'none' })
+    uni.showToast({ title: uni.$t('任务不存在'), icon: 'none' })
     setTimeout(() => uni.navigateBack(), 350)
   }
 })
@@ -147,7 +147,7 @@ const priorityIconSrc = computed(() => prioIconSrc(task.value && task.value.prio
  
 const doneStatusText = computed(() => {
   const ct = task.value && task.value.completeTime !== undefined && task.value.completeTime !== null ? String(task.value.completeTime).trim() : ''
-  return ct ? `完成于 ${ct}` : '已完成'
+  return ct ? `${uni.$t('完成于')} ${ct}` : uni.$t('已完成')
 })
 
 function memberList() {
@@ -203,9 +203,9 @@ function askDelete() {
   }
   uni.showModal({
     title: '',
-    content: '您确定要删除吗？',
-    confirmText: '删除',
-    cancelText: '取消',
+    content: uni.$t('您确定要删除吗？'),
+    confirmText: uni.$t('删除'),
+    cancelText: uni.$t('取消'),
     confirmColor: '#3d6afb',
     success(res) {
       if (!res.confirm) return

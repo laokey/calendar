@@ -4,13 +4,13 @@
       <view class="head-left" @click="back">
         <text class="back">‹</text>
       </view>
-      <text class="head-title">通知详情</text>
+      <text class="head-title">{{ $t('通知详情') }}</text>
       <view class="head-right" />
     </view>
 
     <view v-if="notice" class="content">
       <text class="title">{{ notice.subject }}</text>
-      <text class="sub">报名时间:12.17–01.15</text>
+      <text class="sub">{{ $t('报名时间:12.17–01.15') }}</text>
       <view class="line" />
       <text class="body">{{ notice.content }}</text>
     </view>
@@ -32,7 +32,7 @@ onLoad((options) => {
 onShow(() => {
   state.value = ensureActivityState()
   if (id.value && !notice.value) {
-    uni.showToast({ title: '通知不存在', icon: 'none' })
+    uni.showToast({ title: uni.$t('通知不存在'), icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
   }
 })

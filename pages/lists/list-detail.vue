@@ -23,7 +23,7 @@
 
     <view v-if="allItems.length > 0" class="add-row" @click="openAdd">
       <text class="add-plus">＋</text>
-      <text class="add-text">添加事项</text>
+      <text class="add-text">{{ $t('添加事项') }}</text>
     </view>
 
     <view v-if="undoneItems.length" class="items">
@@ -59,15 +59,15 @@
       <view class="empty-illus">
         <image class="empty-img" src="/static/list/bg_none_item.png" mode="aspectFit" />
       </view>
-      <text class="empty-text bl-muted">没有清单事项，快去添加事项！</text>
+      <text class="empty-text bl-muted">{{ $t('没有清单事项，快去添加事项！') }}</text>
       <view class="empty-action" @click="openAdd">
-        <text class="empty-action-text">添加事项</text>
+        <text class="empty-action-text">{{ $t('添加事项') }}</text>
         <image class="empty-action-icon" src="/static/task/icon_plus_circle.png" mode="aspectFit" />
       </view>
     </view>
 
     <view v-if="doneItems.length" class="done">
-      <text class="done-title">已完成</text>
+      <text class="done-title">{{ $t('已完成') }}</text>
       <view v-if="showCompleted" class="done-items">
         <view
           v-for="it in doneItems"
@@ -100,7 +100,7 @@
           <input
             v-model="itemText"
             class="sheet-field"
-            placeholder="输入事项"
+            :placeholder="$t('输入事项')"
             placeholder-class="ph"
           />
           <view v-if="itemText" class="sheet-clear" @click="itemText = ''"
@@ -109,14 +109,14 @@
         </view>
         <view class="sheet-actions">
           <view class="sheet-btn cancel" @click="closeItemSheet"
-            ><text class="sheet-btn-text">取消</text></view
+            ><text class="sheet-btn-text">{{ $t('取消') }}</text></view
           >
           <view
             class="sheet-btn ok"
             :class="{ disabled: !canConfirmItem }"
             @click="confirmItem"
           >
-            <text class="sheet-btn-text ok-text">确认</text>
+            <text class="sheet-btn-text ok-text">{{ $t('确认') }}</text>
           </view>
         </view>
       </view>
@@ -128,14 +128,14 @@
       @click.self="confirmDeleteOpen = false"
     >
       <view class="dialog">
-        <text class="dialog-title">删除列表</text>
-        <text class="dialog-sub">你确定要删除清单吗？</text>
+        <text class="dialog-title">{{ $t('删除列表') }}</text>
+        <text class="dialog-sub">{{ $t('你确定要删除清单吗？') }}</text>
         <view class="dialog-actions">
           <view class="dialog-btn cancel" @click="confirmDeleteOpen = false"
-            ><text class="dialog-btn-text">取消</text></view
+            ><text class="dialog-btn-text">{{ $t('取消') }}</text></view
           >
           <view class="dialog-btn danger" @click="deleteThisList"
-            ><text class="dialog-btn-text danger-text">删除</text></view
+            ><text class="dialog-btn-text danger-text">{{ $t('删除') }}</text></view
           >
         </view>
       </view>
@@ -228,12 +228,12 @@ const undoneItems = computed(() => allItems.value.filter((x) => !x.done))
 const doneItems = computed(() => allItems.value.filter((x) => x.done))
 
 const bottomLabel = computed(() => {
-  if (doneItems.value.length === 0) return '显示已勾选事项'
-  return showCompleted.value ? '隐藏已勾选事项' : '显示已勾选事项'
+  if (doneItems.value.length === 0) return uni.$t('显示已勾选事项')
+  return showCompleted.value ? uni.$t('隐藏已勾选事项') : uni.$t('显示已勾选事项')
 })
 
 const sheetTitle = computed(() =>
-  editingItemId.value ? '修改事项' : '添加事项',
+  editingItemId.value ? uni.$t('修改事项') : uni.$t('添加事项'),
 )
 const canConfirmItem = computed(() => !!String(itemText.value || '').trim())
 

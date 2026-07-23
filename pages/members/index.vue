@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page">
-    <BlHeader title="成员管理" back>
+    <BlHeader :title="$t('成员管理')" back>
       <template #right>
         <view class="add-btn" @click="goAdd">
           <image class="add-img" src="/static/calendar/icon_plus_circle.png" mode="aspectFit" />
@@ -9,8 +9,8 @@
     </BlHeader>
 
     <view class="section">
-      <text class="section-title">成员</text>
-      <text class="section-sub bl-muted">为家庭中的每位成员分配各自的颜色</text>
+      <text class="section-title">{{ $t('成员') }}</text>
+      <text class="section-sub bl-muted">{{ $t('为家庭中的每位成员分配各自的颜色') }}</text>
     </view>
 
     <view class="list">
@@ -44,8 +44,8 @@
     </view>
 
     <view class="section">
-      <text class="section-title">日历颜色</text>
-      <text class="section-sub bl-muted">如果需要为节日、第三方日历等非人物事项添加颜色，可以在此处整理。</text>
+      <text class="section-title">{{ $t('日历颜色') }}</text>
+      <text class="section-sub bl-muted">{{ $t('如果需要为节日、第三方日历等非人物事项添加颜色，可以在此处整理。') }}</text>
     </view>
 
     <view class="list">
@@ -78,7 +78,7 @@
       </view>
     </view>
 
-    <text class="tip bl-muted">提示:可以通过长按并拖动来进行排序</text>
+    <text class="tip bl-muted">{{ $t('提示：可以通过长按并拖动来进行排序') }}</text>
   </view>
 </template>
 
@@ -102,7 +102,7 @@ function glyphFromName(name) {
 async function syncRemoteMembers() {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (!logged) return false
-  uni.showLoading({ title: '加载中' })
+  uni.showLoading({ title: uni.$t('加载中') })
   try {
     const list = await membersApi.getMemberList()
     const mapped = (list || []).map((m) => {
@@ -120,7 +120,7 @@ async function syncRemoteMembers() {
     setMembers(state.value, mapped.filter((x) => x && x.id))
     return true
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '获取成员失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('获取成员失败')), icon: 'none' })
     return false
   } finally {
     try {

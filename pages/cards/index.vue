@@ -1,6 +1,6 @@
 <template>
   <view class="bl-page card-page">
-    <BlHeader title="写消息" back>
+    <BlHeader :title="$t('写消息')" back>
       <template #right>
         <view class="top-right">
           <view v-if="hasDraftContent" class="top-btn" @click="openDraftActions">
@@ -19,7 +19,7 @@
             </view>
             <view v-else class="placeholder">
               <image class="ph-icon-img" src="/static/card/icon-card-photo-placeholder.png" mode="aspectFit" />
-              <text class="ph-text">添加图片</text>
+              <text class="ph-text">{{ $t('添加图片') }}</text>
             </view>
           </view>
         </view>
@@ -30,7 +30,7 @@
             </view>
             <view v-else class="placeholders">
               <image class="ph-icon-img text" src="/static/card/icon-card-text-placeholder.png" mode="aspectFit" />
-              <text class="ph-text">添加内容</text>
+              <text class="ph-text">{{ $t('添加内容') }}</text>
             </view>
           </view>
         </view>
@@ -40,11 +40,11 @@
     <view class="actions">
       <view class="a-btn" @click="openPhotoActions">
         <image class="a-ico" src="/static/card/icon-card-photo-action.png" mode="aspectFit" />
-        <text class="a-text">添加照片</text>
+        <text class="a-text">{{ $t('添加照片') }}</text>
       </view>
       <view class="a-btn" @click="goDoodleText">
         <image class="a-ico text" src="/static/card/icon-card-text-action.png" mode="aspectFit" />
-        <text class="a-text">添加文本</text>
+        <text class="a-text">{{ $t('添加文本') }}</text>
       </view>
     </view>
 
@@ -52,16 +52,16 @@
       <view class="tabs">
         <view
           v-for="t in tabList"
-          :key="t"
+          :key="t.key"
           class="tab"
-          :class="{ active: activeTab === t }"
+          :class="{ active: activeTab === t.key }"
           @click="
-            activeTab = t;
+            activeTab = t.key;
             ensureResources();
           "
         >
-          <text class="tab-text">{{ t }}</text>
-          <view v-if="activeTab === t" class="tab-dot" />
+          <text class="tab-text">{{ $t(t.labelKey) }}</text>
+          <view v-if="activeTab === t.key" class="tab-dot" />
         </view>
       </view>
 
@@ -97,7 +97,7 @@
     </view>
 
     <view class="next" :class="{ disabled: !canNext }" @click="next">
-      <text class="next-text">下一步</text>
+      <text class="next-text">{{ $t('下一步') }}</text>
     </view>
   </view>
 </template>
@@ -111,30 +111,34 @@ import { clearCardDraft, draftHasContent, ensureCardDraft, saveCardDraft } from 
 import { cardsApi } from '../../utils/api'
 
 const draft = ref(ensureCardDraft())
-const activeTab = ref('生日')
+const activeTab = ref('birthday')
 const loadingRes = ref(false)
 const resMap = ref({})
 
-const tabList = ['生日', '假日', '纪念日', '宝贝', '婚礼', '爱', '恭喜']
-const TAB_RESOURCE_TYPE = {
-  生日: 1,
-  假日: 2,
-  纪念日: 3,
-  宝贝: 4,
-  婚礼: 5,
-  爱: 6,
-  恭喜: 7,
+const tabList = [
+  { key: 'birthday', labelKey: '生日', resourceType: 1 },
+  { key: 'holiday', labelKey: '假日', resourceType: 2 },
+  { key: 'anniversary', labelKey: '纪念日', resourceType: 3 },
+  { key: 'baby', labelKey: '宝贝', resourceType: 4 },
+  { key: 'wedding', labelKey: '婚礼', resourceType: 5 },
+  { key: 'love', labelKey: '爱', resourceType: 6 },
+  { key: 'congrats', labelKey: '恭喜', resourceType: 7 },
+]
+
+function currentResourceType() {
+  const t = tabList.find((x) => x.key === activeTab.value)
+  return t ? t.resourceType : 1
 }
 
 const templates = [
-  { key: 'birthday_1', tab: '生日', label: 'HBD', bg: 'linear-gradient(135deg, #ffb020 0%, #ff5a5f 100%)' },
-  { key: 'birthday_2', tab: '生日', label: 'Cake', bg: 'linear-gradient(135deg, #3d6afb 0%, #5aa7ff 100%)' },
-  { key: 'holiday_1', tab: '假日', label: 'Holiday', bg: 'linear-gradient(135deg, #00b060 0%, #4cc38a 100%)' },
-  { key: 'anniversary_1', tab: '纪念日', label: 'Day', bg: 'linear-gradient(135deg, #9b59ff 0%, #6b2cff 100%)' },
-  { key: 'kids_1', tab: '宝贝', label: 'Kid', bg: 'linear-gradient(135deg, #ffd24d 0%, #ffb020 100%)' },
-  { key: 'wedding_1', tab: '婚礼', label: 'Love', bg: 'linear-gradient(135deg, #ff4bd8 0%, #9b59ff 100%)' },
-  { key: 'love_1', tab: '爱', label: '❤', bg: 'linear-gradient(135deg, #ff5a5f 0%, #ff4b3f 100%)' },
-  { key: 'congrats_1', tab: '恭喜', label: 'Congrats', bg: 'linear-gradient(135deg, #7cc7ff 0%, #3d6afb 100%)' },
+  { key: 'birthday_1', tabKey: 'birthday', label: 'HBD', bg: 'linear-gradient(135deg, #ffb020 0%, #ff5a5f 100%)' },
+  { key: 'birthday_2', tabKey: 'birthday', label: 'Cake', bg: 'linear-gradient(135deg, #3d6afb 0%, #5aa7ff 100%)' },
+  { key: 'holiday_1', tabKey: 'holiday', label: 'Holiday', bg: 'linear-gradient(135deg, #00b060 0%, #4cc38a 100%)' },
+  { key: 'anniversary_1', tabKey: 'anniversary', label: 'Day', bg: 'linear-gradient(135deg, #9b59ff 0%, #6b2cff 100%)' },
+  { key: 'kids_1', tabKey: 'baby', label: 'Kid', bg: 'linear-gradient(135deg, #ffd24d 0%, #ffb020 100%)' },
+  { key: 'wedding_1', tabKey: 'wedding', label: 'Love', bg: 'linear-gradient(135deg, #ff4bd8 0%, #9b59ff 100%)' },
+  { key: 'love_1', tabKey: 'love', label: '❤', bg: 'linear-gradient(135deg, #ff5a5f 0%, #ff4b3f 100%)' },
+  { key: 'congrats_1', tabKey: 'congrats', label: 'Congrats', bg: 'linear-gradient(135deg, #7cc7ff 0%, #3d6afb 100%)' },
 ]
 
 onShow(() => {
@@ -142,9 +146,9 @@ onShow(() => {
   ensureResources()
 })
 
-const currentTemplates = computed(() => templates.filter((x) => x.tab === activeTab.value))
+const currentTemplates = computed(() => templates.filter((x) => x.tabKey === activeTab.value))
 const currentResourceUrls = computed(() => {
-  const type = TAB_RESOURCE_TYPE[activeTab.value] || 1
+  const type = currentResourceType()
   const list = resMap.value && resMap.value[type] ? resMap.value[type] : []
   return Array.isArray(list) ? list : []
 })
@@ -175,7 +179,7 @@ function selectTemplate(key) {
 async function ensureResources() {
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (!logged) return false
-  const type = TAB_RESOURCE_TYPE[activeTab.value] || 1
+  const type = currentResourceType()
   const existed = resMap.value && Array.isArray(resMap.value[type]) && resMap.value[type].length
   if (existed || loadingRes.value) return true
   loadingRes.value = true
@@ -187,7 +191,7 @@ async function ensureResources() {
     }
     return true
   } catch (e) {
-    uni.showToast({ title: String((e && e.message) || '加载贺卡资源失败'), icon: 'none' })
+    uni.showToast({ title: String((e && e.message) || uni.$t('加载贺卡资源失败')), icon: 'none' })
     return false
   } finally {
     loadingRes.value = false
@@ -195,13 +199,13 @@ async function ensureResources() {
 }
 
 function selectResource(url) {
-  const type = TAB_RESOURCE_TYPE[activeTab.value] || 1
+  const type = currentResourceType()
   persist({ imageUrl: String(url || '').trim(), resourceType: type, templateKey: `${activeTab.value}_${type}` })
 }
 
 function openPhotoActions() {
   uni.showActionSheet({
-    itemList: ['相机', '从手机相册中选择'],
+    itemList: [uni.$t('相机'), uni.$t('从手机相册中选择')],
     success: (res) => {
       const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       const sourceType = idx === 0 ? ['camera'] : ['album']
@@ -227,15 +231,15 @@ function goDoodleText() {
 
 function openDraftActions() {
   uni.showActionSheet({
-    itemList: ['删除草稿'],
+    itemList: [uni.$t('删除草稿')],
     success: (res) => {
       const idx = res && typeof res.tapIndex === 'number' ? res.tapIndex : -1
       if (idx !== 0) return
       uni.showModal({
         title: '',
-        content: '确定删除草稿？',
-        cancelText: '取消',
-        confirmText: '删除',
+        content: uni.$t('确定删除草稿？'),
+        cancelText: uni.$t('取消'),
+        confirmText: uni.$t('删除'),
         success: (r) => {
           if (!r.confirm) return
           draft.value = clearCardDraft()
