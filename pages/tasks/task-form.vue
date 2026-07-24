@@ -26,7 +26,10 @@
         <image class="field-icon" src="/static/task/icon_smiley.png" mode="aspectFit" />
         <text class="label">{{ $t('表情符号(可选)') }}</text>
       </view>
-      <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
+      <view class="row-right emoji-trigger-right">
+        <text v-if="emoji" class="emoji-preview">{{ emoji }}</text>
+        <image class="chev-img" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
+      </view>
     </view>
 
     <view class="block">
@@ -813,6 +816,17 @@ async function save() {
   width: 28rpx;
   height: 28rpx;
   display: block;
+}
+
+.emoji-trigger-right {
+  gap: 16rpx;
+}
+
+.emoji-preview {
+  min-width: 36rpx;
+  text-align: center;
+  font-size: 36rpx;
+  line-height: 1;
 }
 
 .tip {

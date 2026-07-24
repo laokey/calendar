@@ -80,38 +80,41 @@ const EMOJI = {
     { emoji: '😄' },
     { emoji: '😁' },
     { emoji: '😆' },
+    { emoji: '🥹' },
     { emoji: '😅' },
-    { emoji: '🤣' },
     { emoji: '😂' },
-    { emoji: '🙂' },
-    { emoji: '😉' },
+    { emoji: '🤣' },
+    { emoji: '🥲' },
+    { emoji: '☺️' },
     { emoji: '😊' },
     { emoji: '😇' },
+    { emoji: '🙂' },
+    { emoji: '🙃' },
+    { emoji: '😉' },
+    { emoji: '😌' },
     { emoji: '😍' },
+    { emoji: '🥰' },
     { emoji: '😘' },
+    { emoji: '😗' },
+    { emoji: '😚' },
+    { emoji: '😚' },
     { emoji: '😋' },
+    { emoji: '😛' },
+    { emoji: '😝' },
     { emoji: '😜' },
     { emoji: '🤪' },
+    { emoji: '🤨' },
+    { emoji: '🧐' },
+    { emoji: '🤓' },
     { emoji: '😎' },
-    { emoji: '🥳' },
-    { emoji: '😤' },
-    { emoji: '😢' },
-    { emoji: '😭' },
-    { emoji: '😱' },
-    { emoji: '😴' },
-    { emoji: '🤒' },
-    { emoji: '🤕' },
-    { emoji: '🤧' },
-    { emoji: '😷' },
+    { emoji: '🥸' },
     { emoji: '🤩' },
-    { emoji: '🤗' },
-    { emoji: '🤔' },
-    { emoji: '🫡' },
-    { emoji: '🫶' },
-    { emoji: '👍' },
-    { emoji: '👎' },
-    { emoji: '👏' },
-    { emoji: '🙏' },
+    { emoji: '🥳' },
+    { emoji: '🙂‍↕️' },
+    { emoji: '😏' },
+    { emoji: '😒' },
+    { emoji: '🙂‍↔️' },
+    { emoji: '😞' },
   ],
   people: [
     { emoji: '👶' },
@@ -290,7 +293,7 @@ function onTab(key) {
 
 <style scoped lang="scss">
 .picker {
-  height: 760rpx;
+  height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -359,7 +362,7 @@ function onTab(key) {
 .grid {
   display: flex;
   flex-wrap: wrap;
-  padding: 6rpx 0 10rpx;
+  padding: 6rpx 0 30rpx;
 }
 
 .cell {

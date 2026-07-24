@@ -42,11 +42,14 @@
         />
         <text class="label">{{ $t('表情符号(可选)') }}</text>
       </view>
-      <image
-        class="field-icon"
+      <view class="row-right emoji-trigger-right">
+        <text v-if="emoji" class="emoji-preview">{{ emoji }}</text>
+        <image
+          class="field-icon"
           src="/static/task/icon_chevron_down.png"
           mode="aspectFit"
         />
+      </view>
     </view>
 
     <view class="block row-between">
@@ -506,6 +509,11 @@ async function save() {
   gap: 12rpx;
 }
 
+.row-right {
+  display: flex;
+  align-items: center;
+}
+
 .label {
   font-size: 30rpx;
   font-weight: 900;
@@ -523,6 +531,17 @@ async function save() {
   height: 28rpx;
   flex-shrink: 0;
   display: block;
+}
+
+.emoji-trigger-right {
+  gap: 16rpx;
+}
+
+.emoji-preview {
+  min-width: 36rpx;
+  text-align: center;
+  font-size: 36rpx;
+  line-height: 1;
 }
 
 .tip {

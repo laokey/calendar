@@ -220,7 +220,7 @@ function normalizeTask(it) {
   return {
     id: idRaw === undefined || idRaw === null ? '' : String(idRaw),
     title: titleRaw === undefined || titleRaw === null ? '' : String(titleRaw),
-    emoji: x.emoji === undefined || x.emoji === null ? '' : String(x.emoji),
+    emoji: decodeRemoteEmoji(x.emoji === undefined || x.emoji === null ? '' : String(x.emoji)),
     dateEnabled: !!dateTime.date,
     date: dateTime.date,
     timeEnabled: !isAllDay && !!dateTime.time,
@@ -386,6 +386,26 @@ function normalizeText(input) {
   return input === undefined || input === null ? '' : String(input).trim()
 }
 
+function encodeRemoteEmoji(input) {
+  const raw = normalizeText(input)
+  if (!raw) return ''
+  return `__emoji__:${Array.from(raw).map((ch) => ch.codePointAt(0).toString(16)).join('-')}`
+}
+
+function decodeRemoteEmoji(input) {
+  const raw = normalizeText(input)
+  const match = raw.match(/^__emoji__:([0-9a-f-]+)$/i)
+  if (!match) return raw
+  try {
+    return match[1]
+      .split('-')
+      .map((part) => String.fromCodePoint(parseInt(part, 16)))
+      .join('')
+  } catch (e) {
+    return raw
+  }
+}
+
 function normalizeHexColor6(input) {
   const raw = normalizeText(input)
   if (!raw) return ''
@@ -523,7 +543,9 @@ export async function addTaskInfo(payload = {}) {
     (payload && (payload.taskDate !== undefined ? payload.taskDate : payload.date)) || finishTimeFromPayload(payload),
   )
   const starNumber = Number(payload && (payload.starNumber !== undefined ? payload.starNumber : payload.hearts)) || 0
-  return postForm('/calendar/app/addTaskInfo', {
+  const rawEmoji = payload && payload.emoji ? String(payload.emoji) : ''
+  const encodedEmoji = encodeRemoteEmoji(rawEmoji)
+  const form = {
     token,
     deviceEmail: email,
     deviceemail: email,
@@ -531,7 +553,7 @@ export async function addTaskInfo(payload = {}) {
     tasktitle: payload.taskTitle,
     taskDate,
     taskdate: taskDate,
-    emoji: payload.emoji || '',
+    emoji: encodedEmoji,
     isTime: payload.timeEnabled ? 0 : 1,
     istime: payload.timeEnabled ? 0 : 1,
     finishTime: finishTimeFromPayload(payload),
@@ -542,7 +564,8 @@ export async function addTaskInfo(payload = {}) {
     starNumber,
     starnumber: starNumber,
     members,
-  })
+  }
+  return await postForm('/calendar/app/addTaskInfo', form)
 }
 
 export async function updateTaskInfo(payload = {}) {
@@ -555,13 +578,15 @@ export async function updateTaskInfo(payload = {}) {
   )
   const finishTime = finishTimeFromPayload(p)
   const starNumber = Number(p && (p.starNumber !== undefined ? p.starNumber : p.hearts)) || 0
-  return postForm('/calendar/app/updateTaskInfo', {
+  const rawEmoji = p.emoji || ''
+  const encodedEmoji = encodeRemoteEmoji(rawEmoji)
+  const form = {
     token,
     taskId,
     taskid: taskId,
     taskTitle: p.taskTitle !== undefined ? p.taskTitle : p.title,
     tasktitle: p.taskTitle !== undefined ? p.taskTitle : p.title,
-    emoji: p.emoji || '',
+    emoji: encodedEmoji,
     taskDate,
     taskdate: taskDate,
     isTime: p.timeEnabled ? 0 : 1,
@@ -574,7 +599,8 @@ export async function updateTaskInfo(payload = {}) {
     starNumber,
     starnumber: starNumber,
     members,
-  })
+  }
+  return await postForm('/calendar/app/updateTaskInfo', form)
 }
 
 export async function completeTask({ taskId, memberId, updateReason, starNumber } = {}) {

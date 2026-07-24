@@ -25,6 +25,26 @@ function normalizeText(value) {
   return value === undefined || value === null ? '' : String(value).trim()
 }
 
+function encodeRemoteEmoji(value) {
+  const raw = normalizeText(value)
+  if (!raw) return ''
+  return `__emoji__:${Array.from(raw).map((ch) => ch.codePointAt(0).toString(16)).join('-')}`
+}
+
+function decodeRemoteEmoji(value) {
+  const raw = normalizeText(value)
+  const match = raw.match(/^__emoji__:([0-9a-f-]+)$/i)
+  if (!match) return raw
+  try {
+    return match[1]
+      .split('-')
+      .map((part) => String.fromCodePoint(parseInt(part, 16)))
+      .join('')
+  } catch (e) {
+    return raw
+  }
+}
+
 function normalizeInt(value, fallback = 0) {
   const n = Number(value)
   return Number.isFinite(n) ? Math.round(n) : fallback
@@ -143,7 +163,7 @@ function normalizeRewardItem(item) {
   return {
     rewardId: normalizeText(rewardId),
     rewardTitle: normalizeText(rewardTitle),
-    emoji: normalizeText(emoji),
+    emoji: decodeRemoteEmoji(emoji),
     isReset: normalizeResetFlag(isReset),
     starNumber: normalizeInt(starNumber, 0),
     rewardType: normalizeRewardType(rewardType),
@@ -338,7 +358,7 @@ export async function addRewardInfo({ deviceEmail, rewardTitle, emoji, isReset, 
     token,
     deviceEmail: email,
     rewardTitle: normalizeText(rewardTitle),
-    emoji: normalizeText(emoji),
+    emoji: encodeRemoteEmoji(emoji),
     isReset: normalizeResetFlag(isReset),
     starNumber: normalizeInt(starNumber, 0),
     rewardType: normalizeRewardType(rewardType),
@@ -360,7 +380,7 @@ export async function updateRewardInfo({ deviceEmail, rewardId, rewardTitle, emo
     rewardid: id,
     rewardTitle: normalizeText(rewardTitle),
     rewardtitle: normalizeText(rewardTitle),
-    emoji: normalizeText(emoji),
+    emoji: encodeRemoteEmoji(emoji),
     isReset: normalizeResetFlag(isReset),
     isreset: normalizeResetFlag(isReset),
     starNumber: normalizeInt(starNumber, 0),
