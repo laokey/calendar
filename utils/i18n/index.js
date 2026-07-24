@@ -92,6 +92,16 @@ export const i18n = createI18n({
   missing: (_locale, key) => (key === undefined || key === null ? '' : String(key)),
 })
 
+function bindTranslateToUni() {
+  try {
+    if (typeof uni !== 'undefined') {
+      uni.$t = translate
+    }
+  } catch (e) {}
+}
+
+bindTranslateToUni()
+
 export function translate(key, ...args) {
   const raw = key === undefined || key === null ? '' : String(key)
   if (!raw) return ''
@@ -118,9 +128,7 @@ export function applyAppLanguage(preference) {
   } catch (e) {}
 
   try {
-    if (typeof uni !== 'undefined') {
-      uni.$t = translate
-    }
+    bindTranslateToUni()
   } catch (e) {}
 
   return {
