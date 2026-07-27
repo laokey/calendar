@@ -225,25 +225,6 @@
       </view>
     </view>
 
-    <view class="block">
-      <view class="row-left">
-        <image
-          class="field-icon"
-          src="/static/calendar/icon_form_location.png"
-          mode="aspectFit"
-        />
-        <text class="label">{{ $t('定位&天气') }}</text>
-      </view>
-      <view class="input-wrap">
-        <input
-          v-model="location"
-          class="input"
-          :placeholder="isEdit ? '' : $t('请输入描述')"
-          placeholder-class="ph"
-        />
-      </view>
-    </view>
-
     <view class="bottom-save" @click="save">
       <image
         class="bottom-save-bg"
@@ -321,7 +302,6 @@ const startTime = ref("22:00");
 const endDate = ref("");
 const endTime = ref("23:00");
 const desc = ref("");
-const location = ref("");
 const tagColor = ref("#4c8dff");
 
 const repeatOn = ref(false);
@@ -456,7 +436,6 @@ onLoad((options) => {
       endDate.value = ev.endDate || startDate.value;
       endTime.value = ev.endTime || "23:00";
       desc.value = ev.desc || "";
-      location.value = ev.location || "";
       tagColor.value = ev.tagColor || "#4c8dff";
       selectedMemberIds.value = Array.isArray(ev.memberIds)
         ? ev.memberIds.slice()
@@ -580,7 +559,6 @@ function buildPayload() {
     endTime: isAllDay ? "" : endTime.value,
     memberIds: selectedMemberIds.value.slice(),
     desc: desc.value,
-    location: location.value,
     color: payloadColor(),
     tagColor: tagColor.value,
     repeat: repeatOn.value
@@ -666,7 +644,6 @@ function buildRemoteMatterPayload(payload, matterId = "") {
     isDeadline: 0,
     deadlineDate: "",
     description: payload.desc || "",
-    weather: "",
     weeks,
     days: "",
     members,
