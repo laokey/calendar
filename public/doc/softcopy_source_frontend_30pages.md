@@ -1,0 +1,1804 @@
+# 芝麻日历 软件著作权申请源码（前端前30页）
+
+软件版本：V1.0.0
+排版说明：每页 50 行前端代码；页眉格式为“芝麻日历 [V1.0.0]”；页脚为页码 1-30；后端从第 31 页继续补充。
+
+## 第 1 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 1 - 50 行
+
+```text
+   1 | <template>
+   2 |   <view class="cal-page" :style="{ paddingTop: safeTop + 'px' }">
+   3 |     <view class="topbar">
+   4 |       <view class="icon-btn" @click="back">
+   5 |         <image class="icon-img is-back" src="/static/calendar/icon_nav_back_small.png" mode="aspectFit" />
+   6 |       </view>
+   7 |       <text class="range">{{ rangeText }}</text>
+   8 |       <view class="icon-btn" @click="openMembers">
+   9 |         <image class="icon-img is-user" src="/static/calendar/icon_nav_members.png" mode="aspectFit" />
+  10 |       </view>
+  11 |     </view>
+  12 | 
+  13 |     <view class="switcher">
+  14 |       <view class="icon-btn" @click="prev">
+  15 |         <image class="icon-img is-nav" src="/static/calendar/icon_nav_prev_circle.png" mode="aspectFit" />
+  16 |       </view>
+  17 |       <view class="seg-wrap">
+  18 |         <BlSegmented v-model="viewMode" :options="modeOptions" />
+  19 |       </view>
+  20 |       <view class="icon-btn" @click="next">
+  21 |         <image class="icon-img is-nav" src="/static/calendar/icon_nav_next_circle.png" mode="aspectFit" />
+  22 |       </view>
+  23 |     </view>
+  24 | 
+  25 |     <view v-if="viewMode === 'month'" class="month">
+  26 |       <view class="weekdays">
+  27 |         <text v-for="w in weekdays" :key="w" class="wd">{{ w }}</text>
+  28 |       </view>
+  29 |       <view class="grid">
+  30 |         <view v-for="(row, rIdx) in monthRows" :key="rIdx" class="row">
+  31 |           <view
+  32 |             v-for="d in row"
+  33 |             :key="d.key"
+  34 |             class="cell"
+  35 |             :class="{ muted: !d.inMonth, selected: d.key === cursorDateKey, today: d.isToday }"
+  36 |             @click="onMonthCellClick(d)"
+  37 |           >
+  38 |             <view class="day">
+  39 |               <text class="day-num">{{ d.day }}</text>
+  40 |             </view>
+  41 |             <view class="chips">
+  42 |               <view
+  43 |                 v-for="ev in d.events"
+  44 |                 :key="ev.id"
+  45 |                 class="chip"
+  46 |                 :style="{ background: monthEventChipBg(ev) }"
+  47 |                 @click.stop="openEvent(ev.id)"
+  48 |               >
+  49 |                 <text class="chip-text" :style="{ color: monthEventChipTextColor(ev) }">{{ ev.title }}</text>
+  50 |               </view>
+```
+
+页脚：1
+
+## 第 2 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 51 - 100 行
+
+```text
+  51 |             </view>
+  52 |           </view>
+  53 |         </view>
+  54 |       </view>
+  55 |     </view>
+  56 | 
+  57 |     <view v-else class="week">
+  58 |       <view v-for="day in weekList" :key="day.key" class="day-row" @click="onWeekDayRowClick(day)">
+  59 |         <view class="left">
+  60 |           <text class="left-wd">{{ $t(day.weekday) }}</text>
+  61 |           <view class="date-pill" :class="{ 'is-active': day.isToday }">
+  62 |             <text class="date-pill-text">{{ day.date }}</text>
+  63 |           </view>
+  64 |         </view>
+  65 |         <view class="right">
+  66 |           <template v-if="day.events && day.events.length">
+  67 |             <view v-for="ev in day.events" :key="ev.id" class="event" :style="{ background: eventCardBg(ev) }" @click="openEvent(ev.id)">
+  68 |               <view class="event-left">
+  69 |                 <text class="event-title">{{ ev.title }}</text>
+  70 |                 <view class="event-time">
+  71 |                   <image class="clock" src="/static/calendar/icon_form_clock.png" mode="aspectFit" />
+  72 |                   <text class="event-time-text">{{ ev.allDay ? $t('全天') : `${ev.startTime || ''}–${ev.endTime || ''}` }}</text>
+  73 |                 </view>
+  74 |               </view>
+  75 |               <view class="event-right">
+  76 |                 <view v-if="ev.memberIds && ev.memberIds.length > 1" class="avatars">
+  77 |                   <BlAvatar
+  78 |                     v-for="mid in ev.memberIds.slice(0, 4)"
+  79 |                     :key="mid"
+  80 |                     class="member-avatar"
+  81 |                     :glyph="memberGlyph(mid)"
+  82 |                     :color="memberColor(mid)"
+  83 |                     :src="memberAvatar(mid)"
+  84 |                     :size="54"
+  85 |                   />
+  86 |                 </view>
+  87 |               <BlAvatar
+  88 |                 v-else
+  89 |                 class="member-avatar"
+  90 |                 :glyph="memberGlyph(ev.memberIds && ev.memberIds[0])"
+  91 |                 :color="memberColor(ev.memberIds && ev.memberIds[0])"
+  92 |                 :src="memberAvatar(ev.memberIds && ev.memberIds[0])"
+  93 |                 :size="58"
+  94 |               />
+  95 |               </view>
+  96 |             </view>
+  97 |           </template>
+  98 |           <view v-else class="event event-empty" @click.stop="addEventFor(day.key)">
+  99 |             <text class="event-empty-text">{{ $t('无活动') }}</text>
+ 100 |           </view>
+```
+
+页脚：2
+
+## 第 3 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 101 - 150 行
+
+```text
+ 101 |         </view>
+ 102 |       </view>
+ 103 |     </view>
+ 104 | 
+ 105 |     <view class="fab" @click="addEvent">
+ 106 |       <image class="fab-img" src="/static/common/btn_fab_add.png" mode="aspectFit" />
+ 107 |     </view>
+ 108 |   </view>
+ 109 | </template>
+ 110 | 
+ 111 | <script setup>
+ 112 | import { computed, onMounted, ref, watch } from 'vue'
+ 113 | import { onShow } from '@dcloudio/uni-app'
+ 114 | import BlSegmented from '../../components/BlSegmented.vue'
+ 115 | import BlAvatar from '../../components/BlAvatar.vue'
+ 116 | import {
+ 117 |   ensureCalendarState,
+ 118 |   eventsForDate,
+ 119 |   listMembers,
+ 120 |   monthMatrix,
+ 121 |   saveCalendarState,
+ 122 |   setMembers,
+ 123 |   setCalendarCursorDate,
+ 124 |   setCalendarViewMode,
+ 125 |   weekDays,
+ 126 |   weekRangeText,
+ 127 |   dayLabel,
+ 128 | } from '../../utils/calendarStore'
+ 129 | import { membersApi } from '../../utils/api'
+ 130 | import { calendarApi } from '../../utils/api'
+ 131 | 
+ 132 | const state = ref(ensureCalendarState())
+ 133 | const members = ref(listMembers(state.value))
+ 134 | 
+ 135 | const safeTop = computed(() => {
+ 136 |   const sys = uni.getSystemInfoSync()
+ 137 |   const insets = sys && sys.safeAreaInsets ? sys.safeAreaInsets : null
+ 138 |   return insets && typeof insets.top === 'number' ? insets.top : 0
+ 139 | })
+ 140 | 
+ 141 | const modeOptions = [
+ 142 |   { label: uni.$t('月'), value: 'month' },
+ 143 |   { label: uni.$t('周'), value: 'week' },
+ 144 | ]
+ 145 | 
+ 146 | const viewMode = ref(state.value.viewMode || 'month')
+ 147 | const cursorDateKey = ref(state.value.cursorDate)
+ 148 | 
+ 149 | const weekdays = [uni.$t('周日'), uni.$t('周一'), uni.$t('周二'), uni.$t('周三'), uni.$t('周四'), uni.$t('周五'), uni.$t('周六')]
+ 150 | 
+```
+
+页脚：3
+
+## 第 4 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 151 - 200 行
+
+```text
+ 151 | const rangeText = computed(() => {
+ 152 |   if (viewMode.value === 'month') {
+ 153 |     const d = parseKey(cursorDateKey.value)
+ 154 |     return `${d.getFullYear()}年-${String(d.getMonth() + 1).padStart(2, '0')}月`
+ 155 |   }
+ 156 |   return weekRangeText(cursorDateKey.value)
+ 157 | })
+ 158 | 
+ 159 | function parseKey(key) {
+ 160 |   const parts = String(key || '').split('-')
+ 161 |   if (parts.length !== 3) return new Date()
+ 162 |   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+ 163 | }
+ 164 | 
+ 165 | function formatKey(d) {
+ 166 |   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+ 167 | }
+ 168 | 
+ 169 | function todayKey() {
+ 170 |   return formatKey(new Date())
+ 171 | }
+ 172 | 
+ 173 | watch(viewMode, (v) => {
+ 174 |   state.value = setCalendarViewMode(state.value, v)
+ 175 |   ;(async () => {
+ 176 |     await syncRemoteMatters()
+ 177 |     state.value = ensureCalendarState()
+ 178 |     refreshMembers()
+ 179 |   })()
+ 180 | })
+ 181 | 
+ 182 | watch(cursorDateKey, (v) => {
+ 183 |   state.value = setCalendarCursorDate(state.value, v)
+ 184 |   ;(async () => {
+ 185 |     await syncRemoteMatters()
+ 186 |     state.value = ensureCalendarState()
+ 187 |     refreshMembers()
+ 188 |   })()
+ 189 | })
+ 190 | 
+ 191 | function refreshMembers() {
+ 192 |   members.value = listMembers(state.value)
+ 193 | }
+ 194 | 
+ 195 | async function syncRemoteMembers() {
+ 196 |   const logged = !!uni.getStorageSync('auth_logged_in')
+ 197 |   if (!logged) return false
+ 198 |   try {
+ 199 |     const list = await membersApi.getMemberList()
+ 200 |     setMembers(state.value, membersApi.mapRemoteMembersToLocalMembers(list))
+```
+
+页脚：4
+
+## 第 5 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 201 - 250 行
+
+```text
+ 201 |     state.value = ensureCalendarState()
+ 202 |     refreshMembers()
+ 203 |     return true
+ 204 |   } catch (e) {
+ 205 |     return false
+ 206 |   }
+ 207 | }
+ 208 | 
+ 209 | function rangeForRemoteFetch() {
+ 210 |   if (viewMode.value === 'week') {
+ 211 |     const days = weekDays(cursorDateKey.value)
+ 212 |     const start = days && days[0] ? formatKey(days[0]) : cursorDateKey.value
+ 213 |     const end = days && days[6] ? formatKey(days[6]) : cursorDateKey.value
+ 214 |     return { start, end }
+ 215 |   }
+ 216 |   const rows = monthMatrix(cursorDateKey.value)
+ 217 |   const flat = []
+ 218 |   for (const r of rows || []) {
+ 219 |     for (const d of r || []) flat.push(d)
+ 220 |   }
+ 221 |   const start = flat[0] ? formatKey(flat[0]) : cursorDateKey.value
+ 222 |   const end = flat.length ? formatKey(flat[flat.length - 1]) : cursorDateKey.value
+ 223 |   return { start, end }
+ 224 | }
+ 225 | 
+ 226 | async function syncRemoteMatters() {
+ 227 |   const logged = !!uni.getStorageSync('auth_logged_in')
+ 228 |   if (!logged) return false
+ 229 |   try {
+ 230 |     const keyOf = (e) => {
+ 231 |       const it = e && typeof e === 'object' ? e : {}
+ 232 |       const date = String(it.startDate || '').trim()
+ 233 |       const allDay = !!it.allDay
+ 234 |       const start = allDay ? '' : String(it.startTime || '').trim()
+ 235 |       const end = allDay ? '' : String(it.endTime || '').trim()
+ 236 |       const title = String(it.title || '').trim()
+ 237 |       const mids = Array.isArray(it.memberIds) ? it.memberIds.map((x) => String(x || '').trim()).filter(Boolean).sort().join(',') : ''
+ 238 |       return `${date}|${allDay ? 1 : 0}|${start}|${end}|${title}|${mids}`
+ 239 |     }
+ 240 |     const { start, end } = rangeForRemoteFetch()
+ 241 |     const list = await calendarApi.getMatterInfoList({ startDate: start, endDate: end })
+ 242 |     const remoteEvents = calendarApi.mapRemoteMattersToLocalEvents(list)
+ 243 |     const localEvents = (state.value.events || []).filter((e) => !/^\d+$/.test(String(e && e.id ? e.id : '')))
+ 244 |     const remoteKeys = new Set(remoteEvents.map((e) => keyOf(e)))
+ 245 |     const keptLocal = localEvents.filter((e) => !remoteKeys.has(keyOf(e)))
+ 246 |     const merged = [...keptLocal, ...remoteEvents]
+ 247 |     const unique = []
+ 248 |     const seen = new Map()
+ 249 |     for (const e of merged) {
+ 250 |       const k = keyOf(e)
+```
+
+页脚：5
+
+## 第 6 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 251 - 300 行
+
+```text
+ 251 |       const prev = seen.get(k)
+ 252 |       if (!prev) {
+ 253 |         seen.set(k, e)
+ 254 |         continue
+ 255 |       }
+ 256 |       const prevRemote = /^\d+$/.test(String(prev && prev.id ? prev.id : ''))
+ 257 |       const curRemote = /^\d+$/.test(String(e && e.id ? e.id : ''))
+ 258 |       if (!prevRemote && curRemote) seen.set(k, e)
+ 259 |     }
+ 260 |     for (const v of seen.values()) unique.push(v)
+ 261 |     state.value.events = unique
+ 262 |     saveCalendarState(state.value)
+ 263 |     return true
+ 264 |   } catch (e) {
+ 265 |     return false
+ 266 |   }
+ 267 | }
+ 268 | 
+ 269 | onMounted(() => {
+ 270 |   cursorDateKey.value = todayKey()
+ 271 |   refreshMembers()
+ 272 | })
+ 273 | 
+ 274 | onShow(() => {
+ 275 |   ;(async () => {
+ 276 |     await syncRemoteMembers()
+ 277 |     await syncRemoteMatters()
+ 278 |     state.value = ensureCalendarState()
+ 279 |     refreshMembers()
+ 280 |   })()
+ 281 | })
+ 282 | 
+ 283 | const monthRows = computed(() => {
+ 284 |   const rows = monthMatrix(cursorDateKey.value)
+ 285 |   const cursor = parseKey(cursorDateKey.value)
+ 286 |   const m = cursor.getMonth()
+ 287 |   const tKey = todayKey()
+ 288 |   return rows.map((r) =>
+ 289 |     r.map((d) => {
+ 290 |       const key = formatKey(d)
+ 291 |       return {
+ 292 |         key,
+ 293 |         day: d.getDate(),
+ 294 |         inMonth: d.getMonth() === m,
+ 295 |         events: eventsForDate(state.value, key).slice(0, 3),
+ 296 |         isToday: key === tKey,
+ 297 |       }
+ 298 |     }),
+ 299 |   )
+ 300 | })
+```
+
+页脚：6
+
+## 第 7 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 301 - 350 行
+
+```text
+ 301 | 
+ 302 | const weekList = computed(() => {
+ 303 |   const days = weekDays(cursorDateKey.value)
+ 304 |   const tKey = todayKey()
+ 305 |   return days.map((d) => {
+ 306 |     const key = formatKey(d)
+ 307 |     const label = dayLabel(d)
+ 308 |     return {
+ 309 |       key,
+ 310 |       weekday: label.weekday,
+ 311 |       date: label.date,
+ 312 |       events: eventsForDate(state.value, key),
+ 313 |       isToday: key === tKey,
+ 314 |     }
+ 315 |   })
+ 316 | })
+ 317 | 
+ 318 | function setCursor(key) {
+ 319 |   cursorDateKey.value = key
+ 320 | }
+ 321 | 
+ 322 | function onMonthCellClick(d) {
+ 323 |   if (!d || !d.key) return
+ 324 |   if (!d.events || !d.events.length) {
+ 325 |     addEventFor(d.key)
+ 326 |     return
+ 327 |   }
+ 328 |   setCursor(d.key)
+ 329 | }
+ 330 | 
+ 331 | function onWeekDayRowClick(day) {
+ 332 |   if (!day || !day.key) return
+ 333 |   if (!day.events || !day.events.length) addEventFor(day.key)
+ 334 | }
+ 335 | 
+ 336 | function shiftWeek(deltaWeeks) {
+ 337 |   const d = parseKey(cursorDateKey.value)
+ 338 |   d.setDate(d.getDate() + 7 * deltaWeeks)
+ 339 |   setCursor(formatKey(d))
+ 340 | }
+ 341 | 
+ 342 | function shiftMonth(deltaMonths) {
+ 343 |   const d = parseKey(cursorDateKey.value)
+ 344 |   const day = d.getDate()
+ 345 |   const target = new Date(d.getFullYear(), d.getMonth() + deltaMonths, 1)
+ 346 |   const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+ 347 |   target.setDate(Math.min(day, last))
+ 348 |   setCursor(formatKey(target))
+ 349 | }
+ 350 | 
+```
+
+页脚：7
+
+## 第 8 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 351 - 400 行
+
+```text
+ 351 | function prev() {
+ 352 |   if (viewMode.value === 'month') {
+ 353 |     shiftMonth(-1)
+ 354 |     return
+ 355 |   }
+ 356 |   shiftWeek(-1)
+ 357 | }
+ 358 | 
+ 359 | function next() {
+ 360 |   if (viewMode.value === 'month') {
+ 361 |     shiftMonth(1)
+ 362 |     return
+ 363 |   }
+ 364 |   shiftWeek(1)
+ 365 | }
+ 366 | 
+ 367 | function back() {
+ 368 |   uni.navigateBack()
+ 369 | }
+ 370 | 
+ 371 | function addEvent() {
+ 372 |   addEventFor(cursorDateKey.value)
+ 373 | }
+ 374 | 
+ 375 | function addEventFor(dateKey) {
+ 376 |   uni.navigateTo({ url: `/pages/calendar/event-form?date=${dateKey}` })
+ 377 | }
+ 378 | 
+ 379 | function openEvent(id) {
+ 380 |   uni.navigateTo({ url: `/pages/calendar/event-detail?id=${id}` })
+ 381 | }
+ 382 | 
+ 383 | function openMembers() {
+ 384 |   uni.navigateTo({ url: '/pages/members/index' })
+ 385 | }
+ 386 | 
+ 387 | function memberGlyph(id) {
+ 388 |   const m = (members.value || []).find((x) => x.id === id)
+ 389 |   return m ? m.glyph : ''
+ 390 | }
+ 391 | 
+ 392 | function memberColor(id) {
+ 393 |   const m = (members.value || []).find((x) => x.id === id)
+ 394 |   return m && m.color ? m.color : '#3d6afb'
+ 395 | }
+ 396 | 
+ 397 | function memberAvatar(id) {
+ 398 |   const m = (members.value || []).find((x) => x.id === id)
+ 399 |   return m && m.avatarUrl ? m.avatarUrl : ''
+ 400 | }
+```
+
+页脚：8
+
+## 第 9 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 401 - 450 行
+
+```text
+ 401 | 
+ 402 | function rgbaFromColor(color, alpha) {
+ 403 |   const c = String(color || '').trim()
+ 404 |   if (!c) return `rgba(61, 106, 251, ${alpha})`
+ 405 |   if (c.startsWith('rgba(')) {
+ 406 |     const inner = c.slice(5, -1)
+ 407 |     const parts = inner.split(',').map((x) => x.trim())
+ 408 |     if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+ 409 |     return c
+ 410 |   }
+ 411 |   if (c.startsWith('rgb(')) {
+ 412 |     const inner = c.slice(4, -1)
+ 413 |     const parts = inner.split(',').map((x) => x.trim())
+ 414 |     if (parts.length >= 3) return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`
+ 415 |     return c
+ 416 |   }
+ 417 |   if (c[0] === '#') {
+ 418 |     let hex = c.slice(1)
+ 419 |     if (hex.length === 3) {
+ 420 |       hex = hex
+ 421 |         .split('')
+ 422 |         .map((x) => x + x)
+ 423 |         .join('')
+ 424 |     }
+ 425 |     if (hex.length === 6) {
+ 426 |       const r = parseInt(hex.slice(0, 2), 16)
+ 427 |       const g = parseInt(hex.slice(2, 4), 16)
+ 428 |       const b = parseInt(hex.slice(4, 6), 16)
+ 429 |       if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) return `rgba(${r}, ${g}, ${b}, ${alpha})`
+ 430 |     }
+ 431 |   }
+ 432 |   return c
+ 433 | }
+ 434 | 
+ 435 | function eventCardBg(ev) {
+ 436 |   const ids = ev && Array.isArray(ev.memberIds) ? ev.memberIds.filter(Boolean) : []
+ 437 |   if (ids.length === 1) return rgbaFromColor(memberColor(ids[0]), 0.1)
+ 438 |   const idx = ev && ev.memberColor !== undefined && ev.memberColor !== null ? Number(ev.memberColor) : NaN
+ 439 |   if (Number.isFinite(idx)) return rgbaFromColor(membersApi.memberHexFromColorIndex(idx), 0.1)
+ 440 |   return 'rgba(17, 17, 17, 0.04)'
+ 441 | }
+ 442 | 
+ 443 | function monthEventChipBg(ev) {
+ 444 |   const ids = ev && Array.isArray(ev.memberIds) ? ev.memberIds.filter(Boolean) : []
+ 445 |   if (ids.length === 1) return rgbaFromColor(memberColor(ids[0]), 0.5)
+ 446 |   const idx = ev && ev.memberColor !== undefined && ev.memberColor !== null ? Number(ev.memberColor) : NaN
+ 447 |   if (Number.isFinite(idx)) return rgbaFromColor(membersApi.memberHexFromColorIndex(idx), 0.5)
+ 448 |   return 'rgba(17, 17, 17, 0.5)'
+ 449 | }
+ 450 | 
+```
+
+页脚：9
+
+## 第 10 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/calendar/index.vue 第 451 - 500 行
+
+```text
+ 451 | function monthEventChipTextColor() {
+ 452 |   return '#ffffff'
+ 453 | }
+ 454 | 
+ 455 | uni.$on && uni.$on('calendar:refresh', () => {
+ 456 |   state.value = ensureCalendarState()
+ 457 |   viewMode.value = state.value.viewMode || 'month'
+ 458 |   cursorDateKey.value = state.value.cursorDate
+ 459 |   refreshMembers()
+ 460 |   ;(async () => {
+ 461 |     await syncRemoteMembers()
+ 462 |     await syncRemoteMatters()
+ 463 |     state.value = ensureCalendarState()
+ 464 |     refreshMembers()
+ 465 |   })()
+ 466 | })
+ 467 | </script>
+ 468 | 
+ 469 | <style scoped lang="scss">
+ 470 | .cal-page {
+ 471 |   padding: 18rpx 28rpx 220rpx;
+ 472 |   background: #ffffff;
+ 473 |   min-height: 100vh;
+ 474 |   box-sizing: border-box;
+ 475 | }
+ 476 | 
+ 477 | .topbar {
+ 478 |   display: flex;
+ 479 |   align-items: center;
+ 480 |   justify-content: space-between;
+ 481 |   padding: 10rpx 0 12rpx;
+ 482 | }
+ 483 | 
+ 484 | .range {
+ 485 |   font-size: 40rpx;
+ 486 |   font-weight: 900;
+ 487 | }
+ 488 | 
+ 489 | .icon-btn {
+ 490 |   width: 72rpx;
+ 491 |   height: 72rpx;
+ 492 |   border-radius: 999rpx;
+ 493 |   display: flex;
+ 494 |   align-items: center;
+ 495 |   justify-content: center;
+ 496 | }
+ 497 | 
+ 498 | .icon {
+ 499 |   font-size: 56rpx;
+ 500 |   font-weight: 700;
+```
+
+页脚：10
+
+## 第 11 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 1 - 50 行
+
+```text
+   1 | <template>
+   2 |   <view class="task-page">
+   3 |     <BlHeader back back-icon-src="/static/task/icon_nav_back_small.png">
+   4 |       <template #center>
+   5 |         <view class="center">
+   6 |           <text class="center-date">{{ mdText }}</text>
+   7 |           <view class="today-pill" @click="goToday">
+   8 |             <text class="today-refresh">↻</text>
+   9 |             <text class="today-text">{{ $t('今天') }}</text>
+  10 |           </view>
+  11 |         </view>
+  12 |       </template>
+  13 |       <template #right>
+  14 |         <view class="right-actions">
+  15 |           <view class="icon-btn" @click="openMembers">
+  16 |             <image class="top-icon" src="/static/task/icon_task_members_alt.png" mode="aspectFit" />
+  17 |           </view>
+  18 |           <view class="icon-btn" @click="openSettings">
+  19 |             <image class="top-icon" src="/static/task/icon_task_list.png" mode="aspectFit" />
+  20 |           </view>
+  21 |         </view>
+  22 |       </template>
+  23 |     </BlHeader>
+  24 | 
+  25 |     <view
+  26 |       class="top-calendar"
+  27 |       @touchstart="onCalTouchStart"
+  28 |       @touchmove.stop="onCalTouchMove"
+  29 |       @touchend="onCalTouchEnd"
+  30 |     >
+  31 |       <view v-if="calendarOpen" class="week-labels">
+  32 |         <view v-for="w in weekdayLabels" :key="w" class="wlabel">
+  33 |           <text class="wlabel-text">{{ w }}</text>
+  34 |         </view>
+  35 |       </view>
+  36 | 
+  37 |       <view v-if="!calendarOpen" class="week-row">
+  38 |         <view
+  39 |           v-for="d in weekDaysList"
+  40 |           :key="d.key"
+  41 |           class="day-cell"
+  42 |           :class="{ selected: d.key === cursorKey }"
+  43 |           @click="selectDate(d.key)"
+  44 |         >
+  45 |           <text class="day-wd">{{ d.wd }}</text>
+  46 |           <view class="day-body">
+  47 |             <text class="day-num">{{ d.num }}</text>
+  48 |             <view v-if="d.dot" class="dot" />
+  49 |           </view>
+  50 |         </view>
+```
+
+页脚：11
+
+## 第 12 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 51 - 100 行
+
+```text
+  51 |       </view>
+  52 | 
+  53 |       <view v-else class="month-grid">
+  54 |         <view v-for="(row, rIdx) in monthRows" :key="rIdx" class="mrow">
+  55 |           <view
+  56 |             v-for="d in row"
+  57 |             :key="d.key"
+  58 |             class="mcell"
+  59 |             :class="{ selected: d.key === cursorKey, muted: !d.inMonth }"
+  60 |             @click="selectDate(d.key)"
+  61 |           >
+  62 |             <text class="mnum">{{ d.num }}</text>
+  63 |             <view v-if="d.dot" class="mdot" />
+  64 |           </view>
+  65 |         </view>
+  66 |       </view>
+  67 | 
+  68 |       <view class="toggle" @click="toggleCalendar">
+  69 |         <image class="toggle-img" :class="{ open: calendarOpen }" src="/static/task/icon_chevron_down.png" mode="aspectFit" />
+  70 |       </view>
+  71 |     </view>
+  72 | 
+  73 |     <view class="panel">
+  74 |       <view class="filters">
+  75 |         <scroll-view scroll-x class="filter-scroll" show-scrollbar="false">
+  76 |           <view class="filter-row">
+  77 |             <view
+  78 |               v-for="f in visibleFilterItems"
+  79 |               :key="f.id"
+  80 |               class="fitem"
+  81 |               :class="{ active: f.id === activeFilter }"
+  82 |               @click="activeFilter = f.id"
+  83 |             >
+  84 |               <view v-if="f.id === 'all'" class="circle all" :style="circleRingStyle(f)">
+  85 |                 <text class="all-text">{{ $t('全部') }}</text>
+  86 |               </view>
+  87 |               <view v-else class="circle" :style="circleStyle(f)">
+  88 |                 <text class="circle-text">{{ f.glyph }}</text>
+  89 |               </view>
+  90 |               <view v-if="statsFor(f.id).total > 0" class="stats">
+  91 |                 <text class="stats-text">{{ statsFor(f.id).done }}/{{ statsFor(f.id).total }}</text>
+  92 |               </view>
+  93 |               <view v-if="f.id !== 'all' && statsFor(f.id).total > 0" class="hearts">
+  94 |                 <image class="heart-img" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
+  95 |                 <text class="hearts-text">{{ statsFor(f.id).hearts }}</text>
+  96 |               </view>
+  97 |             </view>
+  98 |           </view>
+  99 |         </scroll-view>
+ 100 |       </view>
+```
+
+页脚：12
+
+## 第 13 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 101 - 150 行
+
+```text
+ 101 | 
+ 102 |       <view class="list-wrap">
+ 103 |         <text class="date-title">{{ mdText }}</text>
+ 104 | 
+ 105 |         <view v-if="pendingTasks.length" class="list">
+ 106 |           <view v-for="t in pendingTasks" :key="t.id" class="swipe-item" :class="{ 'is-open': isSwipeRevealed(t.id) }">
+ 107 |             <view class="swipe-actions">
+ 108 |               <view class="swipe-btn swipe-edit" @click.stop="swipeEdit(t)">
+ 109 |                 <image class="swipe-icon" src="/static/common/icon_edit_pencil.png" mode="aspectFit" />
+ 110 |               </view>
+ 111 |               <view class="swipe-btn swipe-delete" @click.stop="swipeDelete(t)">
+ 112 |                 <image class="swipe-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
+ 113 |               </view>
+ 114 |             </view>
+ 115 |             <view
+ 116 |               class="swipe-track"
+ 117 |               :class="{ dragging: swipeActiveId === t.id && swipeLocked === 'x' }"
+ 118 |               :style="{ transform: `translateX(${swipeTranslateX(t.id)}px)` }"
+ 119 |               @touchstart="onSwipeStart(t.id, $event)"
+ 120 |               @touchmove.stop="onSwipeMove(t.id, $event)"
+ 121 |               @touchend="onSwipeEnd(t.id, $event)"
+ 122 |               @click="onCardTap(t.id)"
+ 123 |             >
+ 124 |               <view v-if="t.hearts" class="heart-pill">
+ 125 |                 <image class="heart-img is-pill" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
+ 126 |                 <text class="pill-text">{{ t.hearts }}</text>
+ 127 |               </view>
+ 128 |               <view class="card" :class="{ 'has-heart': !!t.hearts }" :style="{ background: taskCardBg(t) }">
+ 129 |                 <view class="left-icon">
+ 130 |                   <image v-if="!t.emoji" class="left-icon-img" src="/static/task/icon_title_t.png" mode="aspectFit" />
+ 131 |                   <text v-else class="left-icon-text">{{ t.emoji }}</text>
+ 132 |                 </view>
+ 133 |                 <view class="mid">
+ 134 |                   <text class="title">{{ t.title }}</text>
+ 135 |                   <view v-if="metaText(t)" class="meta">
+ 136 |                     <image v-if="metaIconSrc(t)" class="meta-icon" :src="metaIconSrc(t)" mode="aspectFit" />
+ 137 |                     <text class="meta-text" :class="{ overdue: !!overdueText(t) }">{{ metaText(t) }}</text>
+ 138 |                   </view>
+ 139 |                 </view>
+ 140 |                 <view class="assign">
+ 141 |                   <BlAvatar :glyph="memberGlyph(t.memberId)" :src="memberAvatar(t.memberId)" :color="memberColor(t.memberId)" :size="58" />
+ 142 |                   <view class="check" @click.stop="toggleDone(t)">
+ 143 |                     <image class="check-img" src="/static/common/icon_radio_off.png" mode="aspectFit" />
+ 144 |                   </view>
+ 145 |                 </view>
+ 146 |               </view>
+ 147 |             </view>
+ 148 |           </view>
+ 149 |         </view>
+ 150 | 
+```
+
+页脚：13
+
+## 第 14 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 151 - 200 行
+
+```text
+ 151 |         <view v-else class="empty">
+ 152 |           <view class="empty-illus">
+ 153 |             <image class="empty-bg" src="/static/task/bg_none_task.png" mode="aspectFit" />
+ 154 |           </view>
+ 155 |           <text class="empty-text bl-muted">{{ $t('今天没有待完成的任务') }}</text>
+ 156 |         </view>
+ 157 | 
+ 158 |         <view v-if="settings.showDone" class="done-section">
+ 159 |           <text class="done-title">{{ $t('已完成') }}</text>
+ 160 |           <view v-if="doneTasks.length" class="list">
+ 161 |             <view v-for="t in doneTasks" :key="t.id" class="swipe-item" :class="{ 'is-open': isSwipeRevealed(t.id) }">
+ 162 |               <view class="swipe-actions">
+ 163 |                 <view class="swipe-btn swipe-edit" @click.stop="swipeEdit(t)">
+ 164 |                   <image class="swipe-icon" src="/static/common/icon_edit_pencil.png" mode="aspectFit" />
+ 165 |                 </view>
+ 166 |                 <view class="swipe-btn swipe-delete" @click.stop="swipeDelete(t)">
+ 167 |                   <image class="swipe-icon" src="/static/task/icon_trash.png" mode="aspectFit" />
+ 168 |                 </view>
+ 169 |               </view>
+ 170 |               <view
+ 171 |                 class="swipe-track"
+ 172 |                 :class="{ dragging: swipeActiveId === t.id && swipeLocked === 'x' }"
+ 173 |                 :style="{ transform: `translateX(${swipeTranslateX(t.id)}px)` }"
+ 174 |                 @touchstart="onSwipeStart(t.id, $event)"
+ 175 |                 @touchmove.stop="onSwipeMove(t.id, $event)"
+ 176 |                 @touchend="onSwipeEnd(t.id, $event)"
+ 177 |                 @click="onCardTap(t.id)"
+ 178 |               >
+ 179 |                 <view v-if="t.hearts" class="heart-pill green">
+ 180 |                   <image class="heart-img is-pill" src="/static/task/icon_heart_orange.png" mode="aspectFit" />
+ 181 |                   <text class="pill-text">{{ t.hearts }}</text>
+ 182 |                 </view>
+ 183 |                 <view class="card done" :class="{ 'has-heart': !!t.hearts }" :style="{ background: taskCardBg(t) }">
+ 184 |                   <view class="left-icon done-icon">
+ 185 |                     <image v-if="!t.emoji" class="left-icon-img" src="/static/task/icon_title_t.png" mode="aspectFit" />
+ 186 |                     <text v-else class="left-icon-text">{{ t.emoji }}</text>
+ 187 |                   </view>
+ 188 |                   <view class="mid">
+ 189 |                     <text class="title">{{ t.title }}</text>
+ 190 |                     <view v-if="metaText(t)" class="meta">
+ 191 |                       <image v-if="metaIconSrc(t)" class="meta-icon" :src="metaIconSrc(t)" mode="aspectFit" />
+ 192 |                       <text class="meta-text">{{ metaText(t) }}</text>
+ 193 |                     </view>
+ 194 |                   </view>
+ 195 |                   <view class="assign">
+ 196 |                     <BlAvatar :glyph="memberGlyph(t.memberId)" :src="memberAvatar(t.memberId)" :color="memberColor(t.memberId)" :size="56" />
+ 197 |                     <view class="check" @click.stop="toggleDone(t)">
+ 198 |                       <image class="check-img checked" src="/static/task/icon_check_circle_green.png" mode="aspectFit" />
+ 199 |                     </view>
+ 200 |                   </view>
+```
+
+页脚：14
+
+## 第 15 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 201 - 250 行
+
+```text
+ 201 |                 </view>
+ 202 |               </view>
+ 203 |             </view>
+ 204 |           </view>
+ 205 |         </view>
+ 206 |       </view>
+ 207 |     </view>
+ 208 | 
+ 209 |     <view class="fab" @click="addTask">
+ 210 |       <image class="fab-img" src="/static/common/btn_fab_add.png" mode="aspectFit" />
+ 211 |     </view>
+ 212 | 
+ 213 |     <BlSheet v-model="actionSheetOpen" title="" :confirm-text="''">
+ 214 |       <view class="action-list">
+ 215 |         <view class="action-item" @click="editTask"><text class="action-text">{{ $t('编辑') }}</text></view>
+ 216 |         <view class="action-item danger" @click="askDelete"><text class="action-text danger-text">{{ $t('删除') }}</text></view>
+ 217 |         <view class="action-cancel" @click="actionSheetOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
+ 218 |       </view>
+ 219 |     </BlSheet>
+ 220 | 
+ 221 |     <BlSheet v-model="deleteSheetOpen" title="" :confirm-text="''">
+ 222 |       <view class="action-list">
+ 223 |         <view class="action-item" @click="doDelete('one')"><text class="action-text">{{ $t('删除此任务') }}</text></view>
+ 224 |         <view class="action-item" @click="doDelete('future')"><text class="action-text">{{ $t('删除此任务和所有后续任务') }}</text></view>
+ 225 |         <view class="action-item" @click="doDelete('all')"><text class="action-text">{{ $t('删除所有任务') }}</text></view>
+ 226 |         <view class="action-cancel" @click="deleteSheetOpen = false"><text class="action-cancel-text">{{ $t('取消') }}</text></view>
+ 227 |       </view>
+ 228 |     </BlSheet>
+ 229 | 
+ 230 |     <BlSheet v-model="donePopupOpen" title="" :confirm-text="''">
+ 231 |       <view class="done-pop">
+ 232 |         <view class="pop-illus">
+ 233 |           <image class="pop-burst" src="/static/task/illus_task_done_burst.png" mode="aspectFit" />
+ 234 |           <image class="pop-confetti" src="/static/task/illus_task_done_confetti.png" mode="aspectFit" />
+ 235 |         </view>
+ 236 |         <text class="pop-title">{{ $t('太棒了！') }}</text>
+ 237 |         <text class="pop-sub">{{ $t('你今天完成了所有任务。明天继续。') }}</text>
+ 238 |         <view class="pop-btn" @click="donePopupOpen = false"><text class="pop-btn-text">{{ $t('确认') }}</text></view>
+ 239 |       </view>
+ 240 |     </BlSheet>
+ 241 |   </view>
+ 242 | </template>
+ 243 | 
+ 244 | <script setup>
+ 245 | import { computed, onMounted, ref, watch } from 'vue'
+ 246 | import { onLoad, onShow } from '@dcloudio/uni-app'
+ 247 | import BlAvatar from '../../components/BlAvatar.vue'
+ 248 | import BlHeader from '../../components/BlHeader.vue'
+ 249 | import BlSheet from '../../components/BlSheet.vue'
+ 250 | import { ensureCalendarState, listMembers, monthMatrix, setMembers, weekDays } from '../../utils/calendarStore'
+```
+
+页脚：15
+
+## 第 16 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 251 - 300 行
+
+```text
+ 251 | import {
+ 252 |   deleteTask,
+ 253 |   ensureTaskState,
+ 254 |   isTaskOverdue,
+ 255 |   isTaskDone,
+ 256 |   markTaskDone,
+ 257 |   markTaskUndone,
+ 258 |   replaceTaskList,
+ 259 |   setTaskCalendarOpen,
+ 260 |   setTaskCursorDate,
+ 261 |   taskOverdueText,
+ 262 |   taskStatsForDate,
+ 263 |   tasksForDate,
+ 264 | } from '../../utils/taskStore'
+ 265 | import { membersApi, tasksApi } from '../../utils/api'
+ 266 | 
+ 267 | const taskState = ref(ensureTaskState())
+ 268 | const calendarState = ref(ensureCalendarState())
+ 269 | 
+ 270 | const activeFilter = ref('all')
+ 271 | const actionSheetOpen = ref(false)
+ 272 | const deleteSheetOpen = ref(false)
+ 273 | const donePopupOpen = ref(false)
+ 274 | const activeTaskId = ref('')
+ 275 | const openSwipeId = ref('')
+ 276 | const swipeActiveId = ref('')
+ 277 | const swipeStartX = ref(0)
+ 278 | const swipeStartY = ref(0)
+ 279 | const swipeStartOffset = ref(0)
+ 280 | const swipeOffsetX = ref(0)
+ 281 | const swipeMoving = ref(false)
+ 282 | const swipeLocked = ref('')
+ 283 | const swipeActionWidthPxRef = ref(0)
+ 284 | let swipeRaf = 0
+ 285 | let swipeNextX = 0
+ 286 | 
+ 287 | const calTouchStartX = ref(0)
+ 288 | const calTouchStartY = ref(0)
+ 289 | const calLocked = ref('')
+ 290 | const calMoved = ref(false)
+ 291 | const calSuppressSelectUntil = ref(0)
+ 292 | 
+ 293 | const weekdayLabels = [uni.$t('周日'), uni.$t('周一'), uni.$t('周二'), uni.$t('周三'), uni.$t('周四'), uni.$t('周五'), uni.$t('周六')]
+ 294 | 
+ 295 | const cursorKey = computed(() => taskState.value.cursorDate)
+ 296 | const calendarOpen = computed(() => !!taskState.value.calendarOpen)
+ 297 | const settings = computed(() => taskState.value.settings || { sort: 'time', showDone: true, showOverdue: true })
+ 298 | 
+ 299 | function formatMdText(key) {
+ 300 |   const parts = String(key || '').split('-')
+```
+
+页脚：16
+
+## 第 17 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 301 - 350 行
+
+```text
+ 301 |   if (parts.length !== 3) return ''
+ 302 |   return `${String(parts[1]).padStart(2, '0')}${uni.$t('月')}${String(parts[2]).padStart(2, '0')}${uni.$t('日')}`
+ 303 | }
+ 304 | 
+ 305 | function parseKey(key) {
+ 306 |   const parts = String(key || '').split('-')
+ 307 |   if (parts.length !== 3) return new Date()
+ 308 |   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+ 309 | }
+ 310 | 
+ 311 | function formatKey(d) {
+ 312 |   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+ 313 | }
+ 314 | 
+ 315 | function shiftCursorMonth(deltaMonths) {
+ 316 |   const d = parseKey(cursorKey.value)
+ 317 |   const day = d.getDate()
+ 318 |   const target = new Date(d.getFullYear(), d.getMonth() + deltaMonths, 1)
+ 319 |   const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+ 320 |   target.setDate(Math.min(day, last))
+ 321 |   taskState.value = setTaskCursorDate(taskState.value, formatKey(target))
+ 322 | }
+ 323 | 
+ 324 | function shiftCursorWeek(deltaWeeks) {
+ 325 |   const d = parseKey(cursorKey.value)
+ 326 |   d.setDate(d.getDate() + 7 * deltaWeeks)
+ 327 |   taskState.value = setTaskCursorDate(taskState.value, formatKey(d))
+ 328 | }
+ 329 | 
+ 330 | function touchPoint(e) {
+ 331 |   const t = e && e.touches && e.touches[0] ? e.touches[0] : null
+ 332 |   if (t && typeof t.clientX === 'number') return { x: t.clientX, y: t.clientY }
+ 333 |   const c = e && e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : null
+ 334 |   if (c && typeof c.clientX === 'number') return { x: c.clientX, y: c.clientY }
+ 335 |   return { x: 0, y: 0 }
+ 336 | }
+ 337 | 
+ 338 | function onCalTouchStart(e) {
+ 339 |   const p = touchPoint(e)
+ 340 |   calTouchStartX.value = p.x
+ 341 |   calTouchStartY.value = p.y
+ 342 |   calLocked.value = ''
+ 343 |   calMoved.value = false
+ 344 | }
+ 345 | 
+ 346 | function onCalTouchMove(e) {
+ 347 |   const p = touchPoint(e)
+ 348 |   const dx = p.x - calTouchStartX.value
+ 349 |   const dy = p.y - calTouchStartY.value
+ 350 |   const ax = Math.abs(dx)
+```
+
+页脚：17
+
+## 第 18 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 351 - 400 行
+
+```text
+ 351 |   const ay = Math.abs(dy)
+ 352 |   if (!calLocked.value) {
+ 353 |     if (ax >= 10 || ay >= 10) {
+ 354 |       calLocked.value = ax >= ay ? 'x' : 'y'
+ 355 |     }
+ 356 |   }
+ 357 |   if (calLocked.value === 'x' && ax >= 10) calMoved.value = true
+ 358 | }
+ 359 | 
+ 360 | function onCalTouchEnd(e) {
+ 361 |   if (calLocked.value !== 'x' || !calMoved.value) return
+ 362 |   const p = touchPoint(e)
+ 363 |   const dx = p.x - calTouchStartX.value
+ 364 |   const adx = Math.abs(dx)
+ 365 |   const threshold = 56
+ 366 |   if (adx < threshold) return
+ 367 |   calSuppressSelectUntil.value = Date.now() + 350
+ 368 |   if (calendarOpen.value) {
+ 369 |     if (dx < 0) shiftCursorMonth(1)
+ 370 |     else shiftCursorMonth(-1)
+ 371 |     return
+ 372 |   }
+ 373 |   if (dx < 0) shiftCursorWeek(1)
+ 374 |   else shiftCursorWeek(-1)
+ 375 | }
+ 376 | 
+ 377 | const mdText = computed(() => formatMdText(cursorKey.value))
+ 378 | 
+ 379 | function memberList() {
+ 380 |   const base = [
+ 381 |     { id: 'me', name: uni.$t('我'), glyph: uni.$t('我'), color: '#4cc38a' },
+ 382 |     ...listMembers(calendarState.value).filter((m) => m.enabled !== false),
+ 383 |   ]
+ 384 |   return base
+ 385 | }
+ 386 | 
+ 387 | const filterItems = computed(() => {
+ 388 |   const ms = memberList()
+ 389 |   const other = ms.filter((m) => m.id !== 'me')
+ 390 |   const list = [
+ 391 |     { id: 'all', glyph: '', color: '' },
+ 392 |     other[0] ? { id: other[0].id, glyph: other[0].glyph, color: other[0].color } : null,
+ 393 |     { id: 'me', glyph: uni.$t('我'), color: '#4cc38a' },
+ 394 |     ...other.slice(1).map((m) => ({ id: m.id, glyph: m.glyph, color: m.color })),
+ 395 |   ].filter((x) => !!x)
+ 396 |   return list
+ 397 | })
+ 398 | 
+ 399 | function memberGlyph(id) {
+ 400 |   const m = memberList().find((x) => x.id === id)
+```
+
+页脚：18
+
+## 第 19 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 401 - 450 行
+
+```text
+ 401 |   return m ? m.glyph : ''
+ 402 | }
+ 403 | 
+ 404 | function memberColor(id) {
+ 405 |   const m = memberList().find((x) => x.id === id)
+ 406 |   return m ? m.color : '#3d6afb'
+ 407 | }
+ 408 | 
+ 409 | function memberAvatar(id) {
+ 410 |   const m = memberList().find((x) => x.id === id)
+ 411 |   return m && m.avatarUrl ? m.avatarUrl : ''
+ 412 | }
+ 413 | 
+ 414 | function todayKey() {
+ 415 |   const d = new Date()
+ 416 |   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+ 417 | }
+ 418 | 
+ 419 | function isRemoteTaskMode() {
+ 420 |   return !!uni.getStorageSync('auth_logged_in')
+ 421 | }
+ 422 | 
+ 423 | function refresh() {
+ 424 |   taskState.value = ensureTaskState()
+ 425 |   calendarState.value = ensureCalendarState()
+ 426 |   if (!taskState.value.cursorDate) {
+ 427 |     taskState.value.cursorDate = todayKey()
+ 428 |   }
+ 429 | }
+ 430 | 
+ 431 | async function syncRemoteMembers() {
+ 432 |   if (!isRemoteTaskMode()) return false
+ 433 |   try {
+ 434 |     const list = await membersApi.getMemberList()
+ 435 |     setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+ 436 |     return true
+ 437 |   } catch (e) {
+ 438 |     return false
+ 439 |   }
+ 440 | }
+ 441 | 
+ 442 | async function syncRemoteTasks(targetKey = cursorKey.value) {
+ 443 |   if (!isRemoteTaskMode()) return false
+ 444 |   try {
+ 445 |     const baseKey = String(targetKey || taskState.value.cursorDate || todayKey())
+ 446 |     const startDate = baseKey
+ 447 |     const endDate = baseKey
+ 448 |     const list = await tasksApi.getTaskInfoList({ startDate, endDate })
+ 449 |     taskState.value = replaceTaskList(taskState.value, list)
+ 450 |     return true
+```
+
+页脚：19
+
+## 第 20 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/tasks/index.vue 第 451 - 500 行
+
+```text
+ 451 |   } catch (e) {
+ 452 |     return false
+ 453 |   }
+ 454 | }
+ 455 | 
+ 456 | onLoad(() => {
+ 457 |   refresh()
+ 458 |   taskState.value = setTaskCursorDate(taskState.value, todayKey())
+ 459 |   taskState.value = setTaskCalendarOpen(taskState.value, false)
+ 460 |   syncRemoteTasks(todayKey())
+ 461 | })
+ 462 | onShow(() => {
+ 463 |   ;(async () => {
+ 464 |     await syncRemoteMembers()
+ 465 |     await syncRemoteTasks(cursorKey.value)
+ 466 |     refresh()
+ 467 |   })()
+ 468 | })
+ 469 | 
+ 470 | function updateSwipeActionWidth() {
+ 471 |   const sys = uni.getSystemInfoSync()
+ 472 |   const ww = sys && typeof sys.windowWidth === 'number' ? sys.windowWidth : 375
+ 473 |   swipeActionWidthPxRef.value = (ww / 750) * swipeActionWidthRpx
+ 474 | }
+ 475 | 
+ 476 | onMounted(() => updateSwipeActionWidth())
+ 477 | onShow(() => updateSwipeActionWidth())
+ 478 | 
+ 479 | const weekDaysList = computed(() => {
+ 480 |   const days = weekDays(cursorKey.value)
+ 481 |   return days.map((d) => {
+ 482 |     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+ 483 |     const list = tasksForDate(taskState.value, key, { memberId: activeFilter.value })
+ 484 |     return { key, wd: weekdayLabels[d.getDay()], num: d.getDate(), dot: list.length > 0 }
+ 485 |   })
+ 486 | })
+ 487 | 
+ 488 | const monthRows = computed(() => {
+ 489 |   const rows = monthMatrix(cursorKey.value)
+ 490 |   const cur = String(cursorKey.value || '').split('-')
+ 491 |   const month = cur.length === 3 ? Number(cur[1]) - 1 : new Date().getMonth()
+ 492 |   return rows.map((r) =>
+ 493 |     r.map((d) => {
+ 494 |       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+ 495 |       const list = tasksForDate(taskState.value, key, { memberId: activeFilter.value })
+ 496 |       return { key, num: d.getDate(), inMonth: d.getMonth() === month, dot: list.length > 0 }
+ 497 |     }),
+ 498 |   )
+ 499 | })
+ 500 | 
+```
+
+页脚：20
+
+## 第 21 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 1 - 50 行
+
+```text
+   1 | <template>
+   2 |   <view class="bl-page reward-page">
+   3 |     <BlHeader :title="$t('奖励')" back back-icon-src="/static/reward/icon_nav_back_small.png">
+   4 |       <template #right>
+   5 |         <view class="right">
+   6 |           <view class="icon-btn" @click="goGive">
+   7 |             <image class="top-icon" src="/static/reward/icon_give_hearts.png" mode="aspectFit" />
+   8 |           </view>
+   9 |           <view class="icon-btn" @click="goSettings">
+  10 |             <image class="top-icon" src="/static/reward/icon_settings_list.png" mode="aspectFit" />
+  11 |           </view>
+  12 |         </view>
+  13 |       </template>
+  14 |     </BlHeader>
+  15 | 
+  16 |     <scroll-view scroll-x class="member-scroll" show-scrollbar="false">
+  17 |       <view class="member-row">
+  18 |         <view
+  19 |           v-for="m in memberItems"
+  20 |           :key="m.id"
+  21 |           class="member"
+  22 |           :class="{ active: m.id === activeMemberId }"
+  23 |           @click="selectMember(m.id)"
+  24 |         >
+  25 |           <view class="ring" :style="{ borderColor: m.id === 'me' ? '#4cc38a' : m.color }">
+  26 |             <BlAvatar :glyph="m.glyph" :src="m.avatarUrl" :color="m.id === 'me' ? '#4cc38a' : m.color" :size="92" />
+  27 |           </view>
+  28 |           <view class="member-hearts">
+  29 |             <image class="heart-img" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+  30 |             <text class="member-hearts-text">{{ balance(m.id) }}</text>
+  31 |           </view>
+  32 |         </view>
+  33 |       </view>
+  34 |     </scroll-view>
+  35 | 
+  36 |     <view class="panel" :style="{ background: panelBackground }">
+  37 |       <view class="panel-head">
+  38 |         <view class="head-left">
+  39 |           <BlAvatar :glyph="activeMember.glyph" :src="activeMember.avatarUrl" :color="activeMemberColor" :size="72" />
+  40 |           <view class="head-meta">
+  41 |             <text class="head-name">{{ activeMemberLabel }}</text>
+  42 |           </view>
+  43 |         </view>
+  44 |         <view class="pill">
+  45 |           <image class="heart-img" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+  46 |           <text class="pill-text">{{ balance(activeMemberId) }}</text>
+  47 |         </view>
+  48 |       </view>
+  49 | 
+  50 |       <scroll-view v-if="filteredItems.length" scroll-y class="panel-body" show-scrollbar="false">
+```
+
+页脚：21
+
+## 第 22 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 51 - 100 行
+
+```text
+  51 |         <view class="items">
+  52 |           <view v-for="it in filteredItems" :key="it.id" class="item" @longpress="openActions(it)" @click="tryRedeem(it)">
+  53 |             <view class="item-left">
+  54 |               <view class="emoji">
+  55 |                 <image
+  56 |                   v-if="!it.emoji"
+  57 |                   class="emoji-heart"
+  58 |                   :src="it.type === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+  59 |                   mode="aspectFit"
+  60 |                 />
+  61 |                 <text v-else class="emoji-text">{{ it.emoji }}</text>
+  62 |               </view>
+  63 |               <view class="item-main">
+  64 |                 <text class="item-title">{{ it.title }}</text>
+  65 |                 <text v-if="it.type === 'punish'" class="item-sub bl-muted">{{ it.desc || $t('惩罚') }}</text>
+  66 |               </view>
+  67 |             </view>
+  68 |             <view class="item-right">
+  69 |               <view v-if="buttonMode(it) === 'today'" class="btn disabled">
+  70 |                 <text class="btn-text">{{ it.type === 'punish' ? $t('今天惩罚') : $t('今天奖励') }}</text>
+  71 |               </view>
+  72 |               <view v-else-if="buttonMode(it) === 'progress'" class="progress" :class="{ ready: canAfford(it) }">
+  73 |                 <view class="progress-fill" :style="{ width: progressWidth(it) }" />
+  74 |                 <view class="progress-text">
+  75 |                   <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+  76 |                   <text class="progress-label">{{ balance(activeMemberId) }}/{{ it.hearts }}</text>
+  77 |                 </view>
+  78 |               </view>
+  79 |               <view v-else class="btn" :class="{ punish: it.type === 'punish', disabled: it.type !== 'punish' && !canAfford(it) }">
+  80 |                 <template v-if="it.type !== 'punish'">
+  81 |                   <text class="btn-text">{{ $t('兑换') }}</text>
+  82 |                   <image class="heart-img is-small" src="/static/reward/icon_heart_orange_small.png" mode="aspectFit" />
+  83 |                   <text class="btn-text">+{{ it.hearts }}</text>
+  84 |                 </template>
+  85 |                 <template v-else>
+  86 |                   <image class="heart-img is-small" src="/static/reward/icon_heart_black.png" mode="aspectFit" />
+  87 |                   <text class="btn-text">-{{ it.hearts }}</text>
+  88 |                 </template>
+  89 |               </view>
+  90 |             </view>
+  91 |           </view>
+  92 |         </view>
+  93 |       </scroll-view>
+  94 | 
+  95 |       <view v-else class="panel-empty">
+  96 |         <view class="empty-illus">
+  97 |           <image class="empty-img" src="/static/reward/illus_empty_rewards.png" mode="aspectFit" />
+  98 |         </view>
+  99 |         <text class="empty-text bl-muted">{{ $t('今天没有待完成的任务') }}</text>
+ 100 |       </view>
+```
+
+页脚：22
+
+## 第 23 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 101 - 150 行
+
+```text
+ 101 |     </view>
+ 102 | 
+ 103 |     <view class="fab" @click="addItem">
+ 104 |       <image class="fab-img" src="/static/reward/btn_add_pill.png" mode="aspectFit" />
+ 105 |     </view>
+ 106 | 
+ 107 |     <view v-if="celebrateOpen" class="celebrate">
+ 108 |       <image
+ 109 |         class="float-heart h1"
+ 110 |         :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+ 111 |         mode="aspectFit"
+ 112 |       />
+ 113 |       <image
+ 114 |         class="float-heart h2"
+ 115 |         :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+ 116 |         mode="aspectFit"
+ 117 |       />
+ 118 |       <image
+ 119 |         class="float-heart h3"
+ 120 |         :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+ 121 |         mode="aspectFit"
+ 122 |       />
+ 123 |       <image
+ 124 |         class="float-heart h4"
+ 125 |         :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+ 126 |         mode="aspectFit"
+ 127 |       />
+ 128 |       <image
+ 129 |         class="float-heart h5"
+ 130 |         :src="celebrateType === 'punish' ? '/static/reward/icon_heart_black.png' : '/static/reward/icon_heart_orange.png'"
+ 131 |         mode="aspectFit"
+ 132 |       />
+ 133 |     </view>
+ 134 | 
+ 135 |     <BlSheet v-model="resultSheetOpen" title="" :confirm-text="''">
+ 136 |       <view class="result">
+ 137 |         <text class="result-title">{{ celebrateType === 'punish' ? $t('受到惩罚！') : $t('奖励已发放！') }}</text>
+ 138 |         <text class="result-sub">
+ 139 |           {{ celebrateType === 'punish' ? $t('今天没有完成 ') : $t('今天已奖励 ') }}
+ 140 |           <text class="result-link">{{ celebrateTitle }}</text>
+ 141 |         </text>
+ 142 |         <view class="result-btn" :class="{ punish: celebrateType === 'punish' }" @click="closeResult">
+ 143 |           <text class="result-btn-text">{{ $t('确定') }}</text>
+ 144 |         </view>
+ 145 |         <view class="result-cancel" @click="cancelAction">
+ 146 |           <text class="result-cancel-text">{{ celebrateType === 'punish' ? $t('取消惩罚') : $t('取消奖励') }}</text>
+ 147 |         </view>
+ 148 |       </view>
+ 149 |     </BlSheet>
+ 150 | 
+```
+
+页脚：23
+
+## 第 24 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 151 - 200 行
+
+```text
+ 151 |     <BlSheet v-model="actionSheetOpen" title="" :confirm-text="''">
+ 152 |       <view class="action-list">
+ 153 |         <view class="action-item" @click="editItem"><text class="action-text">编辑</text></view>
+ 154 |         <view class="action-item danger" @click="deleteItem"><text class="action-text danger-text">删除</text></view>
+ 155 |         <view class="action-cancel" @click="actionSheetOpen = false"><text class="action-cancel-text">取消</text></view>
+ 156 |       </view>
+ 157 |     </BlSheet>
+ 158 |   </view>
+ 159 | </template>
+ 160 | 
+ 161 | <script setup>
+ 162 | import { computed, ref, watch } from 'vue'
+ 163 | import { onShow } from '@dcloudio/uni-app'
+ 164 | import BlAvatar from '../../components/BlAvatar.vue'
+ 165 | import BlHeader from '../../components/BlHeader.vue'
+ 166 | import BlSheet from '../../components/BlSheet.vue'
+ 167 | import { ensureCalendarState, listMembers, setMembers } from '../../utils/calendarStore'
+ 168 | import { ensureRewardState, setRewardActiveMember } from '../../utils/rewardStore'
+ 169 | import { membersApi, rewardsApi } from '../../utils/api'
+ 170 | 
+ 171 | const calendarState = ref(ensureCalendarState())
+ 172 | const rewardState = ref(ensureRewardState())
+ 173 | const remoteRewards = ref([])
+ 174 | const memberBalanceMap = ref({})
+ 175 | const starRecords = ref([])
+ 176 | const loading = ref(false)
+ 177 | 
+ 178 | const activeMemberId = computed(() => String(rewardState.value.activeMemberId || ''))
+ 179 | const todayKey = computed(() => formatDateKey(new Date()))
+ 180 | 
+ 181 | const actionSheetOpen = ref(false)
+ 182 | const activeItemId = ref('')
+ 183 | 
+ 184 | const celebrateOpen = ref(false)
+ 185 | const resultSheetOpen = ref(false)
+ 186 | const celebrateType = ref('reward')
+ 187 | const celebrateTitle = ref('')
+ 188 | const celebrateItemId = ref('')
+ 189 | const pendingAction = ref(false)
+ 190 | 
+ 191 | function refreshLocalState() {
+ 192 |   calendarState.value = ensureCalendarState()
+ 193 |   rewardState.value = ensureRewardState()
+ 194 | }
+ 195 | 
+ 196 | async function syncRemoteMembers() {
+ 197 |   const logged = !!uni.getStorageSync('auth_logged_in')
+ 198 |   if (!logged) return false
+ 199 |   try {
+ 200 |     const list = await membersApi.getMemberList()
+```
+
+页脚：24
+
+## 第 25 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 201 - 250 行
+
+```text
+ 201 |     setMembers(calendarState.value, membersApi.mapRemoteMembersToLocalMembers(list))
+ 202 |     return true
+ 203 |   } catch (e) {
+ 204 |     return false
+ 205 |   }
+ 206 | }
+ 207 | 
+ 208 | const memberItems = computed(() => listMembers(calendarState.value).filter((m) => m.enabled !== false))
+ 209 | 
+ 210 | const activeMember = computed(() => memberItems.value.find((m) => m.id === activeMemberId.value) || memberItems.value[0] || {
+ 211 |   id: '',
+ 212 |   name: '',
+ 213 |   glyph: '',
+ 214 |   color: '#4cc38a',
+ 215 |   avatarUrl: '',
+ 216 | })
+ 217 | 
+ 218 | const activeMemberLabel = computed(() => activeMember.value.name || uni.$t('成员'))
+ 219 | const activeMemberColor = computed(() => activeMember.value.color || '#4cc38a')
+ 220 | 
+ 221 | const allRemoteItems = computed(() => rewardsApi.mapRemoteRewardsToLocalItems(remoteRewards.value))
+ 222 | 
+ 223 | const todayDoneMap = computed(() => {
+ 224 |   const map = {}
+ 225 |   for (const record of starRecords.value) {
+ 226 |     const rewardId = String(record && record.rewardId ? record.rewardId : '')
+ 227 |     if (!rewardId) continue
+ 228 |     const key = formatDateKey(record && record.updateTime ? record.updateTime : '')
+ 229 |     if (key === todayKey.value) map[rewardId] = true
+ 230 |   }
+ 231 |   return map
+ 232 | })
+ 233 | 
+ 234 | watch(
+ 235 |   activeMemberId,
+ 236 |   () => {
+ 237 |     syncStarRecords()
+ 238 |   },
+ 239 |   { immediate: true },
+ 240 | )
+ 241 | 
+ 242 | onShow(() => {
+ 243 |   ;(async () => {
+ 244 |     refreshLocalState()
+ 245 |     await syncRemoteMembers()
+ 246 |     await refreshRemoteRewards()
+ 247 |   })()
+ 248 | })
+ 249 | 
+ 250 | function ensureValidActiveMember() {
+```
+
+页脚：25
+
+## 第 26 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 251 - 300 行
+
+```text
+ 251 |   const list = memberItems.value
+ 252 |   if (!list.length) return
+ 253 |   if (list.some((m) => m.id === activeMemberId.value)) return
+ 254 |   rewardState.value = setRewardActiveMember(rewardState.value, list[0].id)
+ 255 | }
+ 256 | 
+ 257 | function dedupeRemoteRewards(list) {
+ 258 |   const source = Array.isArray(list) ? list : []
+ 259 |   const seen = new Set()
+ 260 |   const out = []
+ 261 |   for (const item of source) {
+ 262 |     if (!item || !item.rewardId) continue
+ 263 |     const members = Array.isArray(item.members) ? item.members.map((member) => String(member && member.memberId ? member.memberId : '')).filter(Boolean).sort() : []
+ 264 |     const key = [String(item.rewardId), String(item.rewardType), members.join(','), String(item.rewardTitle || '')].join('|')
+ 265 |     if (seen.has(key)) continue
+ 266 |     seen.add(key)
+ 267 |     out.push(item)
+ 268 |   }
+ 269 |   return out
+ 270 | }
+ 271 | 
+ 272 | async function refreshRemoteRewards() {
+ 273 |   const logged = !!uni.getStorageSync('auth_logged_in')
+ 274 |   if (!logged) {
+ 275 |     remoteRewards.value = []
+ 276 |     memberBalanceMap.value = {}
+ 277 |     starRecords.value = []
+ 278 |     return
+ 279 |   }
+ 280 |   loading.value = true
+ 281 |   try {
+ 282 |     const [rewardList, punishList] = await Promise.all([
+ 283 |       rewardsApi.getMemberRewardList({ rewardType: 0 }),
+ 284 |       rewardsApi.getMemberRewardList({ rewardType: 1 }),
+ 285 |     ])
+ 286 |     remoteRewards.value = dedupeRemoteRewards([...rewardList, ...punishList])
+ 287 |     memberBalanceMap.value = rewardsApi.collectMemberBalancesFromRewards(remoteRewards.value)
+ 288 |     ensureValidActiveMember()
+ 289 |     await syncStarRecords()
+ 290 |   } catch (e) {
+ 291 |     remoteRewards.value = []
+ 292 |     memberBalanceMap.value = {}
+ 293 |     starRecords.value = []
+ 294 |     uni.showToast({ title: String((e && e.message) || uni.$t('获取奖励列表失败')), icon: 'none' })
+ 295 |   } finally {
+ 296 |     loading.value = false
+ 297 |   }
+ 298 | }
+ 299 | 
+ 300 | async function syncStarRecords() {
+```
+
+页脚：26
+
+## 第 27 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 301 - 350 行
+
+```text
+ 301 |   const memberId = activeMemberId.value
+ 302 |   const logged = !!uni.getStorageSync('auth_logged_in')
+ 303 |   if (!logged || !memberId) {
+ 304 |     starRecords.value = []
+ 305 |     return
+ 306 |   }
+ 307 |   try {
+ 308 |     starRecords.value = await rewardsApi.getStarNumberList({ memberId })
+ 309 |   } catch (e) {
+ 310 |     starRecords.value = []
+ 311 |   }
+ 312 | }
+ 313 | 
+ 314 | function formatDateKey(input) {
+ 315 |   const d = input instanceof Date ? input : new Date(input || Date.now())
+ 316 |   if (Number.isNaN(d.getTime())) return ''
+ 317 |   const y = d.getFullYear()
+ 318 |   const m = String(d.getMonth() + 1).padStart(2, '0')
+ 319 |   const day = String(d.getDate()).padStart(2, '0')
+ 320 |   return `${y}-${m}-${day}`
+ 321 | }
+ 322 | 
+ 323 | function hexToRgba(hex, alpha) {
+ 324 |   const a = Math.max(0, Math.min(1, Number(alpha)))
+ 325 |   const raw = String(hex || '').trim()
+ 326 |   if (!raw) return ''
+ 327 |   if (raw.startsWith('rgba(') || raw.startsWith('rgb(')) return raw
+ 328 |   if (!raw.startsWith('#')) return ''
+ 329 |   const h = raw.slice(1)
+ 330 |   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+ 331 |   if (full.length !== 6) return ''
+ 332 |   const r = parseInt(full.slice(0, 2), 16)
+ 333 |   const g = parseInt(full.slice(2, 4), 16)
+ 334 |   const b = parseInt(full.slice(4, 6), 16)
+ 335 |   if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return ''
+ 336 |   return `rgba(${r}, ${g}, ${b}, ${a})`
+ 337 | }
+ 338 | 
+ 339 | const panelBackground = computed(() => {
+ 340 |   const c = activeMemberColor.value || '#4cc38a'
+ 341 |   const rgba = hexToRgba(c, 0.12)
+ 342 |   if (rgba) return rgba
+ 343 |   return '#eaf7f1'
+ 344 | })
+ 345 | 
+ 346 | function balance(memberId) {
+ 347 |   return Number(memberBalanceMap.value[String(memberId || '')] || 0) || 0
+ 348 | }
+ 349 | 
+ 350 | function selectMember(id) {
+```
+
+页脚：27
+
+## 第 28 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 351 - 400 行
+
+```text
+ 351 |   rewardState.value = setRewardActiveMember(rewardState.value, id)
+ 352 | }
+ 353 | 
+ 354 | const filteredItems = computed(() => {
+ 355 |   const settings = rewardState.value.settings || { sort: 'asc', showDone: true }
+ 356 |   const items = allRemoteItems.value
+ 357 |     .filter((x) => x.memberId === activeMemberId.value)
+ 358 |     .filter((x) => (settings.showDone ? true : !isDoneToday(x)))
+ 359 | 
+ 360 |   const asc = settings.sort === 'asc'
+ 361 |   return items
+ 362 |     .slice()
+ 363 |     .sort((a, b) => {
+ 364 |       const ta = a.type === 'punish' ? 1 : 0
+ 365 |       const tb = b.type === 'punish' ? 1 : 0
+ 366 |       if (ta !== tb) return ta - tb
+ 367 |       const ha = Number(a.hearts || 0) || 0
+ 368 |       const hb = Number(b.hearts || 0) || 0
+ 369 |       if (ha !== hb) return asc ? ha - hb : hb - ha
+ 370 |       const aa = String(a.title || '')
+ 371 |       const bb = String(b.title || '')
+ 372 |       return aa.localeCompare(bb, 'zh-Hans-CN')
+ 373 |     })
+ 374 | })
+ 375 | 
+ 376 | function isDoneToday(it) {
+ 377 |   if (!it || !it.rewardId) return false
+ 378 |   return !!todayDoneMap.value[String(it.rewardId)]
+ 379 | }
+ 380 | 
+ 381 | function canAfford() {
+ 382 |   return true
+ 383 | }
+ 384 | 
+ 385 | function buttonMode(it) {
+ 386 |   if (isDoneToday(it)) return 'today'
+ 387 |   return 'button'
+ 388 | }
+ 389 | 
+ 390 | function progressWidth(it) {
+ 391 |   const cur = balance(activeMemberId.value)
+ 392 |   const need = Number(it && it.hearts ? it.hearts : 0) || 0
+ 393 |   if (!need) return '0%'
+ 394 |   const ratio = Math.max(0, Math.min(1, cur / need))
+ 395 |   return `${Math.floor(ratio * 100)}%`
+ 396 | }
+ 397 | 
+ 398 | async function tryRedeem(it) {
+ 399 |   if (!it || pendingAction.value) return
+ 400 |   if (buttonMode(it) === 'today') return
+```
+
+页脚：28
+
+## 第 29 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 401 - 450 行
+
+```text
+ 401 |   pendingAction.value = true
+ 402 |   const delta = Number(it.hearts || 0) || 0
+ 403 |   try {
+ 404 |     await rewardsApi.addStarNumberInfo({
+ 405 |       memberId: it.memberId,
+ 406 |       rewardId: it.rewardId || it.id,
+ 407 |       updateReason: it.type === 'punish' ? `惩罚:${it.title}` : `奖励:${it.title}`,
+ 408 |       starNumber: it.type === 'punish' ? -delta : delta,
+ 409 |     })
+ 410 |     celebrateType.value = it.type
+ 411 |     celebrateTitle.value = it.title
+ 412 |     celebrateItemId.value = it.rewardId || it.id
+ 413 |     celebrateOpen.value = true
+ 414 |     setTimeout(() => {
+ 415 |       celebrateOpen.value = false
+ 416 |       resultSheetOpen.value = true
+ 417 |     }, 220)
+ 418 |   } catch (e) {
+ 419 |     uni.showToast({ title: String((e && e.message) || uni.$t('调整星星失败')), icon: 'none' })
+ 420 |   } finally {
+ 421 |     pendingAction.value = false
+ 422 |   }
+ 423 | }
+ 424 | 
+ 425 | async function closeResult() {
+ 426 |   resultSheetOpen.value = false
+ 427 |   await refreshRemoteRewards()
+ 428 | }
+ 429 | 
+ 430 | async function cancelAction() {
+ 431 |   const id = celebrateItemId.value
+ 432 |   const it = allRemoteItems.value.find((x) => x.rewardId === id && x.memberId === activeMemberId.value)
+ 433 |   if (!it || pendingAction.value) return
+ 434 |   pendingAction.value = true
+ 435 |   const delta = Number(it.hearts || 0) || 0
+ 436 |   try {
+ 437 |     await rewardsApi.addStarNumberInfo({
+ 438 |       memberId: it.memberId,
+ 439 |       rewardId: it.rewardId,
+ 440 |       updateReason: celebrateType.value === 'punish' ? `取消惩罚:${it.title}` : `取消奖励:${it.title}`,
+ 441 |       starNumber: celebrateType.value === 'punish' ? delta : -delta,
+ 442 |     })
+ 443 |     resultSheetOpen.value = false
+ 444 |     await refreshRemoteRewards()
+ 445 |   } catch (e) {
+ 446 |     uni.showToast({ title: String((e && e.message) || uni.$t('取消操作失败')), icon: 'none' })
+ 447 |   } finally {
+ 448 |     pendingAction.value = false
+ 449 |   }
+ 450 | }
+```
+
+页脚：29
+
+## 第 30 页
+
+页眉：芝麻日历 [V1.0.0]
+代码范围：pages/rewards/index.vue 第 451 - 500 行
+
+```text
+ 451 | 
+ 452 | function addItem() {
+ 453 |   const memberId = activeMemberId.value ? `&memberId=${encodeURIComponent(activeMemberId.value)}` : ''
+ 454 |   uni.navigateTo({ url: `/pages/rewards/reward-form?type=reward${memberId}` })
+ 455 | }
+ 456 | 
+ 457 | function openActions(it) {
+ 458 |   activeItemId.value = it.rewardId || it.id
+ 459 |   actionSheetOpen.value = true
+ 460 | }
+ 461 | 
+ 462 | function editItem() {
+ 463 |   const id = activeItemId.value
+ 464 |   actionSheetOpen.value = false
+ 465 |   if (!id) return
+ 466 |   uni.navigateTo({ url: `/pages/rewards/reward-form?id=${encodeURIComponent(id)}` })
+ 467 | }
+ 468 | 
+ 469 | async function deleteItem() {
+ 470 |   const id = activeItemId.value
+ 471 |   actionSheetOpen.value = false
+ 472 |   if (!id) return
+ 473 |   const item = allRemoteItems.value.find((x) => (x.rewardId || x.id) === id)
+ 474 |   if (!item) return
+ 475 |   try {
+ 476 |     await rewardsApi.deleteRewardInfo({ rewardId: id })
+ 477 |     await refreshRemoteRewards()
+ 478 |   } catch (e) {
+ 479 |     uni.showToast({ title: String((e && e.message) || uni.$t('删除奖励失败')), icon: 'none' })
+ 480 |   }
+ 481 | }
+ 482 | 
+ 483 | function goGive() {
+ 484 |   uni.navigateTo({ url: '/pages/rewards/give-hearts' })
+ 485 | }
+ 486 | 
+ 487 | function goSettings() {
+ 488 |   uni.navigateTo({ url: '/pages/rewards/settings' })
+ 489 | }
+ 490 | </script>
+ 491 | 
+ 492 | <style scoped lang="scss">
+ 493 | .bl-page {
+ 494 |   height: 100vh;
+ 495 |   background: #ffffff;
+ 496 | }
+ 497 | .reward-page {
+ 498 |   height: 100vh;
+ 499 |   padding-bottom: 222rpx;
+ 500 |   box-sizing: border-box;
+```
+
+页脚：30
