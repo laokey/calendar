@@ -3,7 +3,7 @@
     "appid" : "__UNI__19BA6D3",
     "description" : "",
     "versionName" : "1.0.0",
-    "versionCode" : "100",
+    "versionCode" : 110,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
@@ -17,7 +17,8 @@
         },
         "modules" : {
             "Camera" : {},
-            "Geolocation" : {}
+            "Geolocation" : {},
+            "Push" : {}
         },
         "distribute" : {
             "android" : {
@@ -49,16 +50,50 @@
             },
             "ios" : {
                 "dSYMs" : false,
+                "idfa" : false,
+                "bundleId" : "com.zmkhai.calendar",
                 "icons" : {
                     "iphone" : "static/favicon.png",
                     "ipad" : "static/favicon.png",
                     "appstore" : "static/favicon.png"
+                },
+                "capabilities" : {
+                    "entitlements" : {
+                        "aps-environment" : "production"
+                    }
+                },
+                "UIBackgroundModes" : [
+                    "remote-notification",
+                    "fetch",
+                    "audio"
+                ],
+                "privacyDescription" : {
+                    "NSPhotoLibraryUsageDescription" : "为了允许您在芝麻日历中上传头像、为日程添加照片附件或更换背景图片，我们需要访问您的相册。",
+                    "NSCameraUsageDescription" : "为了支持您通过拍照来记录日程附件或扫描识别相关信息，我们需要使用您的相机。",
+                    "NSUserNotificationUsageDescription" : "为了在日程提醒、任务到期提醒、奖惩通知、家人协作消息等，我们需要向您发送推送通知。",
+                    "NSLocalNotificationUsageDescription" : "为了日程提醒、任务到期提醒、奖惩通知、家人协作消息等，我们需要向您发送本地通知。",
+                    "NSPhotoLibraryAddUsageDescription" : "为了允许您将贺卡、涂鸦、相册中的图片保存到系统相册，我们需要相册写入权限。"
                 }
             },
             "sdkConfigs" : {
                 "geolocation" : {
                     "system" : {
                         "__platform__" : [ "ios", "android" ]
+                    }
+                },
+                "push" : {
+                    "unipush" : {
+                        "version" : "2",
+                        "offline" : false,
+                        "icons" : {
+                            "small" : {
+                                "ldpi" : "static/favicon.png",
+                                "mdpi" : "static/favicon.png",
+                                "hdpi" : "static/favicon.png",
+                                "xhdpi" : "static/favicon.png",
+                                "xxhdpi" : "static/favicon.png"
+                            }
+                        }
                     }
                 }
             },

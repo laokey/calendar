@@ -1,5 +1,9 @@
 const commonEsES = {
   '设备': 'Dispositivo',
+  '首页': 'Inicio',
+  '相册': 'Álbum',
+  '活动': 'Actividad',
+  '我': 'Yo',
   '确定': 'Confirmar',
   '取消': 'Cancelar',
   '保存': 'Guardar',

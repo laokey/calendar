@@ -1,5 +1,9 @@
 const commonDeDE = {
   '设备': 'Gerät',
+  '首页': 'Startseite',
+  '相册': 'Fotos',
+  '活动': 'Aktivität',
+  '我': 'Ich',
   '确定': 'Bestätigen',
   '取消': 'Abbrechen',
   '保存': 'Speichern',

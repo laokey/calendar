@@ -5,9 +5,71 @@
 </template>
 
 <script setup>
-import { onLaunch } from '@dcloudio/uni-app'
+import { onLaunch, onShow } from '@dcloudio/uni-app'
+import {
+  initPush,
+  handleOnlinePush,
+  handlePushClick,
+  refreshPushBindingForCurrentUser,
+} from './utils/push'
+import { getUserId } from './utils/authToken'
+
+function startListeningPushEvents() {
+  try {
+    uni.onPushMessage((res) => {
+      try {
+        handleOnlinePush(res)
+      } catch (e) {}
+    })
+  } catch (e) {}
+  try {
+    uni.onPushClick &&
+      uni.onPushClick((res) => {
+        try {
+          handlePushClick(res)
+        } catch (e) {}
+      })
+  } catch (e) {}
+  try {
+    if (typeof plus !== 'undefined' && plus && plus.push) {
+      plus.push.addEventListener &&
+        plus.push.addEventListener(
+          'click',
+          (msg) => {
+            try {
+              handlePushClick({ type: 'click', data: msg && (msg.payload || msg.content) })
+            } catch (e) {}
+          },
+          false,
+        )
+      plus.push.addEventListener &&
+        plus.push.addEventListener(
+          'receive',
+          (msg) => {
+            try {
+              handleOnlinePush({ type: 'receive', data: msg && (msg.payload || msg.content) })
+            } catch (e) {}
+          },
+          false,
+        )
+    }
+  } catch (e) {}
+}
 
 onLaunch(() => {
+  try {
+    startListeningPushEvents()
+  } catch (e) {}
+  try {
+    initPush()
+  } catch (e) {}
+})
+
+onShow(() => {
+  try {
+    const userId = getUserId()
+    if (userId) refreshPushBindingForCurrentUser()
+  } catch (e) {}
 })
 </script>
 
@@ -38,7 +100,7 @@ button {
 }
 
 .bl-page {
-  padding: 28rpx 28rpx 220rpx;
+  padding: 28rpx 28rpx 300rpx;
 }
 
 .bl-header {
@@ -299,35 +361,49 @@ button {
 
 .bl-bottom-nav {
   position: fixed;
-  left: 28rpx;
-  right: 28rpx;
-  bottom: 36rpx;
-  height: 120rpx;
-  border-radius: 9999rpx;
-  background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(17, 17, 17, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28rpx;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 172rpx !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-shadow: 0 -10rpx 30rpx rgba(17, 17, 17, 0.04) !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 9999 !important;
 }
 
 .bl-bottom-item {
-  flex: 1;
-  width: auto;
-  height: 86rpx;
-  border-radius: 9999rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(17, 17, 17, 0.5);
-  background: transparent;
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(17, 17, 17, 0.45) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .bl-bottom-item.is-active {
-  width: 86rpx;
-  background: transparent;
-  color: rgba(17, 17, 17, 0.5);
+  width: auto !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #3d6afb !important;
+  border-radius: 0 !important;
 }
 
 .bl-bottom-dot {

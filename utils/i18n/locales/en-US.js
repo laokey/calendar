@@ -1,5 +1,9 @@
 const commonEnUS = {
   '设备': 'Device',
+  '首页': 'Home',
+  '相册': 'Photos',
+  '活动': 'Activity',
+  '我': 'Me',
   '确定': 'Confirm',
   '取消': 'Cancel',
   '保存': 'Save',

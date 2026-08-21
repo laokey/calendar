@@ -1,5 +1,9 @@
 const commonItIT = {
   '设备': 'Dispositivo',
+  '首页': 'Home',
+  '相册': 'Foto',
+  '活动': 'Attività',
+  '我': 'Io',
   '确定': 'Conferma',
   '取消': 'Annulla',
   '保存': 'Salva',

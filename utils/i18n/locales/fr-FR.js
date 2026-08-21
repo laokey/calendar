@@ -1,5 +1,9 @@
 const commonFrFR = {
   '设备': 'Dispositivo',
+  '首页': 'Accueil',
+  '相册': 'Photos',
+  '活动': 'Activité',
+  '我': 'Moi',
   '确定': 'Confirmer',
   '取消': 'Annuler',
   '保存': 'Enregistrer',
