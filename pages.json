@@ -319,6 +319,12 @@
       }
     },
     {
+      "path": "pages/sync/oauth-webview",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/calendar/settings",
       "style": {
         "navigationStyle": "custom"

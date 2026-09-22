@@ -134,7 +134,7 @@ const homeStats = ref({
 });
 const HOME_EVENT_PREVIEW_LIMIT = 4;
 
-const BASE_MENUS = [
+const BASE_MENUS = () => [
   { title: uni.$t('日历'), sub: uni.$t('今天没有活动'), icon: "/static/home/icon_menu_calendar.png", cls: "is-purple" },
   { title: uni.$t('任务'), sub: uni.$t('剩余{n}个', { n: 0 }), icon: "/static/home/icon_menu_tasks.png", cls: "is-blue" },
   { title: uni.$t('奖励'), sub: uni.$t('大胆和小目标'), icon: "/static/home/icon_menu_rewards.png", cls: "is-salmon" },
@@ -156,7 +156,7 @@ const todayTasks = computed(() => {
 });
 const menus = computed(() => {
   const stats = homeStats.value || {};
-  return BASE_MENUS.map((item) => {
+  return BASE_MENUS().map((item) => {
     if (item.title === uni.$t('日历')) {
       return {
         ...item,
