@@ -16,6 +16,17 @@ function buildQuery(params) {
   return parts.length ? `?${parts.join('&')}` : ''
 }
 
+function toFormBody(params) {
+  const obj = params && typeof params === 'object' ? params : {}
+  const parts = []
+  for (const k of Object.keys(obj)) {
+    const v = obj[k]
+    if (v === undefined || v === null) continue
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+  }
+  return parts.join('&')
+}
+
 function safeJsonParse(raw) {
   try {
     if (raw === undefined || raw === null || raw === '') return null
@@ -71,7 +82,14 @@ function setCachedTags(tags) {
 export async function reportPushInfoToBackend({ cid, alias, tags } = {}) {
   try {
     const token = getToken()
-    if (!token) return null
+    if (!token) {
+      console.warn('[push] reportPushInfoToBackend skipped: token empty, cid=' + (cid || '') + ', alias=' + (alias || ''))
+      return null
+    }
+    if (!cid && !alias) {
+      console.warn('[push] reportPushInfoToBackend skipped: both cid and alias empty')
+      return null
+    }
     const payload = {
       token,
       cid: cid || '',
@@ -95,12 +113,16 @@ export async function reportPushInfoToBackend({ cid, alias, tags } = {}) {
       payload.sdkVersion = String(sys.SDKVersion || sys.SDKVersionName || '')
       payload.deviceId = String(sys.deviceId || sys.deviceID || '')
     } catch (e) {}
-    return await post(`/calendar/app/bindPushInfo${buildQuery(payload)}`, undefined, {
+    console.log('[push] reportPushInfoToBackend payload', payload)
+    const result = await post('/calendar/app/bindPushInfo', toFormBody(payload), {
       withAuth: false,
       showErrorToast: false,
       header: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
+    console.log('[push] reportPushInfoToBackend result', result)
+    return result
   } catch (e) {
+    console.error('[push] reportPushInfoToBackend error', e)
     return null
   }
 }
@@ -108,17 +130,21 @@ export async function reportPushInfoToBackend({ cid, alias, tags } = {}) {
 export async function unbindPushInfoFromBackend({ cid } = {}) {
   try {
     const token = getToken()
-    if (!token) return null
-    return await post(
-      `/calendar/app/unbindPushInfo${buildQuery({ token, cid: cid || '' })}`,
-      undefined,
-      {
-        withAuth: false,
-        showErrorToast: false,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      },
-    )
+    if (!token) {
+      console.warn('[push] unbindPushInfoFromBackend skipped: token empty')
+      return null
+    }
+    const payload = { token, cid: cid || '' }
+    console.log('[push] unbindPushInfoFromBackend payload', payload)
+    const result = await post('/calendar/app/unbindPushInfo', toFormBody(payload), {
+      withAuth: false,
+      showErrorToast: false,
+      header: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    })
+    console.log('[push] unbindPushInfoFromBackend result', result)
+    return result
   } catch (e) {
+    console.error('[push] unbindPushInfoFromBackend error', e)
     return null
   }
 }
@@ -564,6 +590,7 @@ export async function initPush(options = {}) {
     }
   } catch (e) {}
   const cid = await getPushClientId()
+  console.log('cid', cid)
   const userId = getUserId()
   const alias = userId ? String(userId) : ''
   const profileEmail = (() => {
@@ -580,14 +607,19 @@ export async function initPush(options = {}) {
   if (tags.length) {
     setPushTags(tags).catch(() => {})
   }
-  if (cid && userId) {
-    reportPushInfoToBackend({ cid, alias, tags }).catch(() => {})
+  const token = getToken()
+  console.log('[push] initPush check: cid=' + !!cid + ', userId=' + !!userId + ', token=' + !!token)
+  if (cid && token) {
+    reportPushInfoToBackend({ cid, alias, tags }).catch((e) => console.error('[push] initPush reportPushInfoToBackend catch', e))
+  } else {
+    console.warn('[push] initPush skip reportPushInfoToBackend: missing cid/userId/token')
   }
 }
 
 export async function refreshPushBindingForCurrentUser(userProfile) {
   const userId = getUserId()
   if (!userId) {
+    console.log('[push] refreshPushBindingForCurrentUser: no userId, clearing alias/tags')
     await setPushAlias('')
     await setPushTags([])
     return false
@@ -597,7 +629,13 @@ export async function refreshPushBindingForCurrentUser(userProfile) {
   const tags = buildUserTags(userId, userProfile || {})
   const aliasOk = await setPushAlias(alias)
   const tagsOk = await setPushTags(tags)
-  if (cid && userId) reportPushInfoToBackend({ cid, alias, tags }).catch(() => {})
+  const token = getToken()
+  console.log('[push] refreshPushBindingForCurrentUser check: cid=' + !!cid + ', userId=' + !!userId + ', token=' + !!token)
+  if (cid && userId && token) {
+    reportPushInfoToBackend({ cid, alias, tags }).catch((e) => console.error('[push] refreshPushBindingForCurrentUser reportPushInfoToBackend catch', e))
+  } else {
+    console.warn('[push] refreshPushBindingForCurrentUser skip reportPushInfoToBackend: missing cid/userId/token')
+  }
   return aliasOk || tagsOk
 }
 
