@@ -105,10 +105,11 @@ export function addAccountSync(state, provider, payload) {
   const syncMode = payload && payload.syncMode === 'oneWay' ? 'oneWay' : 'twoWay'
   if (!email) return null
   const id = uid(`acc_${provider}`)
+  const normalizedProvider = provider === 'outlook' ? 'outlook' : provider === 'icloud' ? 'icloud' : 'google'
   const item = {
     id,
     type: 'account',
-    provider: provider === 'outlook' ? 'outlook' : 'google',
+    provider: normalizedProvider,
     email,
     name: String(payload && payload.name ? payload.name : email),
     syncMode,

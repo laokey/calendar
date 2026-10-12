@@ -332,6 +332,8 @@ const commonFrFR = {
   "自动续费协议": "Accord de renouvellement automatique",
   "将分享链接发送至:": "Envoyer le lien de partage à :",
   "在此处粘贴网址": "Collez l’URL ici",
+  "请先粘贴日历链接": "Veuillez d’abord coller le lien du calendrier",
+  "请输入正确的日历链接": "Veuillez saisir un lien de calendrier valide",
   "同步Cozi": "Synchroniser Cozi",
   "同步Teamsnap": "Synchroniser TeamSnap",
   "同步已订阅日历": "Synchroniser le calendrier abonné",

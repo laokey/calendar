@@ -344,6 +344,8 @@ const commonEsES = {
   "当前设备": "Dispositivo actual",
   "二": "Martes",
   "在此处粘贴网址": "Pega la URL aquí",
+  "请先粘贴日历链接": "Pega primero el enlace del calendario",
+  "请输入正确的日历链接": "Introduce un enlace de calendario válido",
   "同步Cozi": "Sincronizar Cozi",
   "同步Teamsnap": "Sincronizar TeamSnap",
   "同步已订阅日历": "Sincronizar calendario suscrito",

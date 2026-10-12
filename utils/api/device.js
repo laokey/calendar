@@ -162,6 +162,15 @@ export async function unbindCalendarDevice(deviceEmail) {
   return postWithFallback('/calendar/app/unbindCalendarDevice', '/calendar/app/unbindCalendarDeviceList', { token, deviceEmail: email })
 }
 
+export async function transferCalendarDevice({ userEmail, deviceEmail } = {}) {
+  const token = getToken()
+  return postForm('/calendar/app/transferCalendarDevice', {
+    token,
+    userEmail: normalizeText(userEmail),
+    deviceEmail: normalizeText(deviceEmail),
+  })
+}
+
 async function resolveLinkDeviceEmail(passed) {
   const direct = normalizeText(passed)
   if (direct) return direct

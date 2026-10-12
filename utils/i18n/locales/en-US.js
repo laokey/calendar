@@ -342,6 +342,8 @@ const commonEnUS = {
   "自动续费协议": "Auto-Renewal Agreement",
   "将分享链接发送至:": "Send the sharing link to:",
   "在此处粘贴网址": "Paste the URL here",
+  "请先粘贴日历链接": "Please paste the calendar link first",
+  "请输入正确的日历链接": "Please enter a valid calendar link",
   "同步Cozi": "Sync Cozi",
   "同步Teamsnap": "Sync TeamSnap",
   "同步已订阅日历": "Sync Subscribed Calendar",

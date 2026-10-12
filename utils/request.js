@@ -20,6 +20,7 @@ const config = {
   tokenHeader: 'Authorization',
   tokenPrefix: 'Bearer ',
   showErrorToast: true,
+  enableLog: false,
   onUnauthorized: () => {
     clearToken()
     try {
@@ -27,7 +28,6 @@ const config = {
     } catch (e) {}
   },
 }
-
 const requestInterceptors = []
 const responseInterceptors = []
 let redirectingToLogin = false
@@ -66,6 +66,58 @@ export function setRequestConfig(patch) {
 
 export function getRequestConfig() {
   return { ...config }
+}
+
+export function setHttpLogEnabled(enabled) {
+  config.enableLog = !!enabled
+  try {
+    uni.setStorageSync('debug_http_log', config.enableLog ? '1' : '0')
+  } catch (e) {}
+  return config.enableLog
+}
+
+export function isHttpLogEnabled() {
+  if (config.enableLog) return true
+  try {
+    const v = uni.getStorageSync('debug_http_log')
+    if (v === '1' || v === 1 || v === true) return true
+  } catch (e) {}
+  return false
+}
+
+function safeLog(args) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log.apply(console, args)
+  } catch (e) {}
+}
+
+function printHttpRequest(req, url, method, startAt) {
+  if (!isHttpLogEnabled()) return
+  const tag = `[http] ➡️ ${method} ${url}`
+  safeLog([
+    `%c${tag}`,
+    'color:#3d6afb;font-weight:600;',
+    {
+      header: req && req.header,
+      data: req && req.data,
+      startAt: new Date(startAt).toISOString(),
+    },
+  ])
+}
+
+function printHttpResponse(url, method, statusCode, body, startAt, isError, extra) {
+  if (!isHttpLogEnabled()) return
+  const cost = startAt ? ` cost=${Date.now() - startAt}ms` : ''
+  const color = isError ? '#ff5a5f' : statusCode >= 400 ? '#ffb020' : '#34c38f'
+  const tag = isError
+    ? `[http] ❌ ${method} ${url}${cost}`
+    : `[http] ⬅️ ${method} ${url} -> ${statusCode}${cost}`
+  safeLog([
+    `%c${tag}`,
+    `color:${color};font-weight:600;`,
+    { statusCode, body, ...(extra || {}) },
+  ])
 }
 
 export function addRequestInterceptor(fn) {
@@ -182,6 +234,9 @@ export async function request(options) {
     if (next && typeof next === 'object') req = next
   }
 
+  const startAt = Date.now()
+  printHttpRequest(req, url, method, startAt)
+
   try {
     const res = await toRequestPromise(req)
     let out = res
@@ -197,7 +252,10 @@ export async function request(options) {
       try {
         if (typeof config.onUnauthorized === 'function') config.onUnauthorized()
       } catch (e) {}
+      printHttpResponse(url, method, statusCode, body, startAt, false)
       goLoginPage()
+    } else {
+      printHttpResponse(url, method, statusCode, body, startAt, false)
     }
 
     if (statusCode < 200 || statusCode >= 300) {
@@ -225,9 +283,13 @@ export async function request(options) {
 
     return parsed.data
   } catch (e) {
-    if (e && e.name === 'HttpError') throw e
+    if (e && e.name === 'HttpError') {
+      printHttpResponse(url, method, e.statusCode, e.data, startAt, false)
+      throw e
+    }
     const message = pickMessage(e) || '网络异常，请稍后重试'
     const err = new HttpError(message, { statusCode: 0, data: e, url, method })
+    printHttpResponse(url, method, 0, e, startAt, true)
     if (showErrorToast) showToast(err.message)
     throw err
   }

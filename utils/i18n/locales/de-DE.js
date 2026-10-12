@@ -344,6 +344,8 @@ const commonDeDE = {
   "链接多个日历以在设备间共享相同信息。当您在一台设备上进行更改时，其他关联设备将自动更新。": "Verbinden Sie mehrere Kalender, um die gleiche Informationen zu teilen. Wenn Sie auf einem Gerät ändern, werden die anderen Geräte automatisch aktualisiert.",
   "将分享链接发送至:": "Freigabelink senden an:",
   "在此处粘贴网址": "URL hier einfügen",
+  "请先粘贴日历链接": "Bitte fügen Sie zuerst den Kalenderlink ein",
+  "请输入正确的日历链接": "Bitte geben Sie einen gültigen Kalenderlink ein",
   "同步Cozi": "Cozi synchronisieren",
   "同步Teamsnap": "TeamSnap synchronisieren",
   "同步已订阅日历": "Abonnierten Kalender synchronisieren",

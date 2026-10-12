@@ -15,6 +15,9 @@
             <image v-if="item.id === activeId" class="check-img" src="/static/sync/icon_radio_on_check_blue.png" mode="aspectFit" />
             <view v-else class="check-off" />
           </view>
+          <view v-if="item.type === 'account'" class="unbind-btn" @click.stop="confirmUnbind(item)">
+            <text class="unbind-text">{{ $t('解绑') }}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -63,6 +66,21 @@
         </view>
       </view>
     </view>
+
+    <view v-if="unbindDialogOpen" class="mask" @click="unbindDialogOpen = false">
+      <view class="dialog" @click.stop>
+        <text class="dialog-title">{{ $t('确认解绑') }}</text>
+        <text class="dialog-text">{{ unbindDialogDesc }}</text>
+        <view class="dialog-actions">
+          <view class="btn btn-cancel" @click="unbindDialogOpen = false">
+            <text class="btn-text">{{ $t('取消') }}</text>
+          </view>
+          <view class="btn btn-danger" @click="doUnbind">
+            <text class="btn-text ok-text">{{ $t('解绑') }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -71,17 +89,30 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
 import { ensureMeState, updateSettings } from '../../utils/meStore'
-import { ensureSyncState, listLocalCalendars, listSynced, markLocalSynced, setActiveSynced } from '../../utils/syncStore'
+import {
+  addAccountSync,
+  ensureSyncState,
+  listLocalCalendars,
+  listSynced,
+  markLocalSynced,
+  removeSynced,
+  saveSyncState,
+  setActiveSynced,
+} from '../../utils/syncStore'
+import { getCalendarAccountList, normalizeAccountList, unbindCalendarAccount } from '../../utils/api/sync'
 
 const meState = ref(ensureMeState())
 const syncState = ref(ensureSyncState())
 
 const permDialogOpen = ref(false)
 const pendingPermValue = ref(false)
+const unbindDialogOpen = ref(false)
+const pendingUnbindItem = ref(null)
+const unbinding = ref(false)
 
 onShow(() => {
   meState.value = ensureMeState()
-  syncState.value = ensureSyncState()
+  refreshSynced()
 })
 
 const calendarPerm = computed(() => {
@@ -93,10 +124,55 @@ const syncedList = computed(() => listSynced(syncState.value))
 const localList = computed(() => listLocalCalendars(syncState.value))
 const activeId = computed(() => String(syncState.value && syncState.value.activeId ? syncState.value.activeId : ''))
 
+const unbindDialogDesc = computed(() => {
+  const item = pendingUnbindItem.value
+  if (!item) return ''
+  const providerLabel = item.provider === 'outlook' ? uni.$t('Outlook') : item.provider === 'icloud' ? uni.$t('iCloud') : uni.$t('Google')
+  return `${uni.$t('解绑后将不再同步此')}${providerLabel}${uni.$t('账号（')}${item.email || ''}${uni.$t('）的日历数据，确定继续吗？')}`
+})
+
 function providerIcon(provider) {
   if (provider === 'outlook') return '/static/sync/logo_outlook.png'
+  if (provider === 'icloud') return '/static/sync/logo_icloud_calendar.png'
   if (provider === 'url') return '/static/sync/icon_calendar_url.png'
   return '/static/sync/logo_google_calendar.png'
+}
+
+async function refreshSynced() {
+  const state = ensureSyncState()
+  try {
+    const raw = await getCalendarAccountList()
+    const remoteList = normalizeAccountList(raw)
+    const localAccounts = (state.synced || []).filter((x) => x && x.type === 'account')
+    const remoteEmailSet = new Set(remoteList.map((x) => String(x.email || '').toLowerCase()).filter(Boolean))
+    for (const local of localAccounts) {
+      const email = String(local.email || '').toLowerCase()
+      if (email && !remoteEmailSet.has(email)) {
+        removeSynced(state, local.id)
+      }
+    }
+    for (const remote of remoteList) {
+      const email = String(remote.email || '')
+      if (!email) continue
+      const hit = (state.synced || []).find(
+        (x) => x && x.type === 'account' && x.provider === remote.provider && String(x.email || '').toLowerCase() === email.toLowerCase(),
+      )
+      if (!hit) {
+        addAccountSync(state, remote.provider, {
+          email,
+          name: remote.name || email,
+          syncMode: remote.syncMode || 'twoWay',
+          remoteId: remote.id,
+        })
+      } else {
+        hit.name = remote.name || hit.name
+        hit.syncMode = remote.syncMode || hit.syncMode
+        if (remote.id) hit.remoteId = String(remote.id)
+      }
+    }
+    saveSyncState(state)
+  } catch (e) {}
+  syncState.value = ensureSyncState()
 }
 
 function goNew() {
@@ -145,6 +221,36 @@ function syncLocal(c) {
   syncState.value = ensureSyncState()
   uni.navigateTo({ url: `/pages/sync/sync-status?mode=progress&from=local&count=101` })
 }
+
+function confirmUnbind(item) {
+  if (!item || unbinding.value) return
+  pendingUnbindItem.value = item
+  unbindDialogOpen.value = true
+}
+
+async function doUnbind() {
+  const item = pendingUnbindItem.value
+  unbindDialogOpen.value = false
+  if (!item) return
+  unbinding.value = true
+  try {
+    const remoteId = item.remoteId || item.id || ''
+    try {
+      if (remoteId && item.provider !== 'url') {
+        await unbindCalendarAccount({ accountId: remoteId, provider: item.provider })
+      }
+    } catch (e) {}
+    const state = ensureSyncState()
+    removeSynced(state, item.id)
+    syncState.value = ensureSyncState()
+    uni.showToast({ title: uni.$t('已解绑'), icon: 'success' })
+  } catch (e) {
+    uni.showToast({ title: (e && e.message) || uni.$t('解绑失败'), icon: 'none' })
+  } finally {
+    pendingUnbindItem.value = null
+    unbinding.value = false
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -177,6 +283,7 @@ function syncLocal(c) {
   padding: 18rpx 18rpx;
   display: flex;
   align-items: center;
+  gap: 12rpx;
   box-shadow: 0 10rpx 26rpx rgba(17, 17, 17, 0.06);
 }
 
@@ -191,7 +298,7 @@ function syncLocal(c) {
   display: flex;
   flex-direction: column;
   gap: 6rpx;
-  padding: 0 14rpx;
+  padding: 0 8rpx;
   min-width: 0;
 }
 
@@ -213,10 +320,11 @@ function syncLocal(c) {
 }
 
 .card-right {
-  width: 72rpx;
+  width: 64rpx;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .check-img {
@@ -230,6 +338,23 @@ function syncLocal(c) {
   height: 48rpx;
   border-radius: 999rpx;
   background: rgba(17, 17, 17, 0.08);
+}
+
+.unbind-btn {
+  padding: 0 20rpx;
+  height: 58rpx;
+  border-radius: 9999rpx;
+  background: rgba(255, 90, 95, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.unbind-text {
+  font-size: 24rpx;
+  font-weight: 900;
+  color: #ff5a5f;
 }
 
 .perm-card {
@@ -381,6 +506,14 @@ function syncLocal(c) {
   padding: 36rpx 28rpx 26rpx;
 }
 
+.dialog-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 18rpx;
+}
+
 .dialog-text {
   display: block;
   font-size: 28rpx;
@@ -411,6 +544,10 @@ function syncLocal(c) {
 
 .btn-ok {
   background: #3d6afb;
+}
+
+.btn-danger {
+  background: #ff5a5f;
 }
 
 .btn-text {

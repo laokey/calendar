@@ -321,7 +321,11 @@
     {
       "path": "pages/sync/oauth-webview",
       "style": {
-        "navigationStyle": "custom"
+        "navigationStyle": "default",
+        "navigationBarTitleText": "授权登录",
+        "navigationBarBackgroundColor": "#FFFFFF",
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleAlign": "center"
       }
     },
     {

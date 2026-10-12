@@ -8,5 +8,6 @@ import * as noticeApi from './notice'
 import * as rewardsApi from './rewards'
 import * as tasksApi from './tasks'
 import * as usersApi from './users'
+import * as syncApi from './sync'
 
-export { authApi, calendarApi, cardsApi, deviceApi, mealsApi, membersApi, noticeApi, rewardsApi, tasksApi, usersApi }
+export { authApi, calendarApi, cardsApi, deviceApi, mealsApi, membersApi, noticeApi, rewardsApi, tasksApi, usersApi, syncApi }

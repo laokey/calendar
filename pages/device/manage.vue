@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <BlHeader title="" back />
+    <BlHeader :title="$t('转移设备链接')" back />
 
     <view class="hero">
       <view class="device-pic">
@@ -12,28 +12,101 @@
 
     <view class="card">
       <text class="card-title">{{ $t('芝麻日历') }}</text>
-      <view class="opt" :class="{ active: selected === 0 }" @click="selected = 0">
-        <text class="opt-text">601347083</text>
+      <view v-if="loading" class="state-text">
+        <text>{{ $t('加载中...') }}</text>
       </view>
-      <view class="opt" :class="{ active: selected === 1 }" @click="selected = 1">
-        <text class="opt-text">a1234567890</text>
+      <view v-else-if="!devices.length" class="state-text">
+        <text>{{ $t('暂无设备') }}</text>
+      </view>
+      <view
+        v-for="(item, idx) in devices"
+        :key="item.linkId || item.deviceEmail || idx"
+        class="opt"
+        :class="{ active: selected === idx }"
+        @click="selected = idx"
+      >
+        <text class="opt-text">{{ item.deviceEmail || item.deviceName }}</text>
       </view>
     </view>
 
-    <view class="btn" @click="send">
-      <text class="btn-text">{{ $t('发送邀请') }}</text>
+    <view class="btn" :class="{ disabled: loading || submitting || !devices.length }" @click="send">
+      <text class="btn-text">{{ $t('转移设备链接') }}</text>
     </view>
   </view>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
+import { getCalendarDeviceList, transferCalendarDevice } from '../../utils/api/device'
 
 const selected = ref(0)
+const loading = ref(false)
+const submitting = ref(false)
+const devices = ref([])
 
-function send() {
-  uni.showToast({ title: uni.$t('已发送邀请'), icon: 'none' })
+onLoad(() => {
+  loadDevices()
+})
+
+onShow(() => {
+  loadDevices()
+})
+
+function currentUserEmail() {
+  return String(uni.getStorageSync('auth_email') || '').trim()
+}
+
+async function loadDevices() {
+  loading.value = true
+  try {
+    const list = await getCalendarDeviceList()
+    devices.value = Array.isArray(list) ? list : []
+    if (!devices.value.length) {
+      selected.value = 0
+      return
+    }
+    if (selected.value < 0 || selected.value >= devices.value.length) {
+      selected.value = 0
+    }
+  } catch (e) {
+    devices.value = []
+    uni.showToast({ title: uni.$t('加载设备失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function send() {
+  if (loading.value || submitting.value) return
+  if (!devices.value.length) {
+    uni.showToast({ title: uni.$t('暂无可邀请设备'), icon: 'none' })
+    return
+  }
+  const current = devices.value[selected.value]
+  const userEmail = currentUserEmail()
+  const deviceEmail = current && current.deviceEmail ? String(current.deviceEmail).trim() : ''
+  if (!userEmail) {
+    uni.showToast({ title: uni.$t('未获取到当前用户邮箱'), icon: 'none' })
+    return
+  }
+  if (!deviceEmail) {
+    uni.showToast({ title: uni.$t('请选择设备'), icon: 'none' })
+    return
+  }
+  submitting.value = true
+  try {
+    await transferCalendarDevice({ userEmail, deviceEmail })
+    uni.showToast({ title: uni.$t('转移成功'), icon: 'none' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 300)
+  } catch (e) {
+    uni.showToast({ title: uni.$t('转移失败'), icon: 'none' })
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -41,7 +114,7 @@ function send() {
 .page {
   min-height: 100vh;
   background: #ffffff;
-  padding: 0 28rpx 40rpx;
+  padding: 0 28rpx calc(164rpx + env(safe-area-inset-bottom));
 }
 
 .hero {
@@ -115,6 +188,19 @@ function send() {
   margin-bottom: 16rpx;
 }
 
+.state-text {
+  min-height: 96rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  border: 2rpx solid rgba(17, 17, 17, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.45);
+}
+
 .opt {
   height: 96rpx;
   border-radius: 22rpx;
@@ -141,13 +227,21 @@ function send() {
 }
 
 .btn {
-  margin-top: 22rpx;
+  position: fixed;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
   height: 104rpx;
   border-radius: 9999rpx;
   background: #3d6afb;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
+}
+
+.btn.disabled {
+  background: rgba(61, 106, 251, 0.45);
 }
 
 .btn-text {

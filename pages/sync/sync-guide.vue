@@ -5,12 +5,37 @@
     <view class="steps">
       <view v-for="(s, idx) in steps" :key="idx" class="step">
         <text class="step-text">{{ idx + 1 }}.{{ s.text }}</text>
-        <image v-if="s.image" class="shot-img" :src="s.image" mode="widthFix" />
-        <view v-else class="shot" />
+        <template v-if="s.blocks && s.blocks.length">
+          <template v-for="(block, blockIdx) in s.blocks" :key="`${idx}-${blockIdx}`">
+            <view v-if="block.type === 'note'" class="note-card">
+              <text class="note-text">{{ block.text }}</text>
+            </view>
+            <image v-else-if="block.type === 'image'" class="shot-img" :src="block.image" mode="widthFix" />
+            <view v-else-if="block.type === 'share'" class="share-card step-share-card">
+              <text class="share-title">{{ $t('将分享链接发送至:') }}</text>
+              <view class="share-row">
+                <text class="share-email">{{ myEmail }}</text>
+                <view class="copy" @click="copyEmail"><text class="copy-text">{{ $t('复制') }}</text></view>
+              </view>
+            </view>
+            <view v-else-if="block.type === 'paste'" class="paste step-paste">
+              <textarea
+                v-model="pasted"
+                class="paste-area"
+                :placeholder="$t('在此处粘贴网址')"
+                placeholder-class="ph"
+              />
+            </view>
+          </template>
+        </template>
+        <template v-else>
+          <image v-if="s.image" class="shot-img" :src="s.image" mode="widthFix" />
+          <view v-else class="shot" />
+        </template>
       </view>
     </view>
 
-    <view class="share-card">
+    <view v-if="!inlineGuideActions" class="share-card">
       <text class="share-title">{{ $t('将分享链接发送至:') }}</text>
       <view class="share-row">
         <text class="share-email">{{ myEmail }}</text>
@@ -18,12 +43,14 @@
       </view>
     </view>
 
-    <view class="paste">
+    <view v-if="!inlineGuideActions" class="paste">
       <textarea v-model="pasted" class="paste-area" :placeholder="$t('在此处粘贴网址')" placeholder-class="ph" />
     </view>
 
     <view class="bottom-action">
-      <view class="bl-btn-primary" @click="done"><text>{{ $t('完成') }}</text></view>
+      <view class="bl-btn-primary" :class="{ 'is-disabled': submitting || !canSubmit }" @click="done">
+        <text>{{ $t('完成') }}</text>
+      </view>
     </view>
   </view>
 </template>
@@ -32,10 +59,12 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
+import { bindICloudCalendarUrl } from '../../utils/api/sync'
 
 const type = ref('icloud')
 const pasted = ref('')
-const myEmail = ref('a1234567890@myecalendar.cn')
+const myEmail = ref('wsliweihua@myecalerder.cn')
+const submitting = ref(false)
 
 function asset(path) {
   return encodeURI(path)
@@ -52,17 +81,53 @@ const title = computed(() => {
   return uni.$t('同步iCloud日历')
 })
 
+const inlineGuideActions = computed(() => type.value === 'icloud')
+const canSubmit = computed(() => type.value !== 'icloud' || pasted.value.trim().length > 0)
+
 const steps = computed(() => {
   if (type.value === 'icloud') {
     return [
-      { text: uni.$t('打开日历应用程序'), image: asset('/static/sync/icloud/Slice 77.png') },
-      { text: uni.$t('点击底部日历'), image: asset('/static/sync/icloud/Slice 77(1).png') },
-      { text: uni.$t('点击已同步的 iCloud 日历右侧信息按钮'), image: asset('/static/sync/icloud/Slice 77(2).png') },
-      { text: uni.$t('选择公开日历'), image: asset('/static/sync/icloud/Slice 77(3).png') },
-      { text: uni.$t('点击共享链接'), image: asset('/static/sync/icloud/Slice 77(4).png') },
-      { text: uni.$t('复制或发送日历 URL'), image: asset('/static/sync/icloud/Slice 77(5).png') },
-      { text: uni.$t('将 URL 粘贴到下方输入框'), image: asset('/static/sync/icloud/Slice 77(6).png') },
-      { text: uni.$t('确认同步完成'), image: asset('/static/sync/icloud/Slice 78.png') },
+      {
+        text: uni.$t('打开日历应用'),
+        blocks: [{ type: 'image', image: asset('/static/sync/icloud/Slice 77.png') }],
+      },
+      {
+        text: uni.$t('选择日历或图标 📅 图标'),
+        blocks: [
+          { type: 'note', text: uni.$t('旧版本:对于 iOS 26 以下版本，您需要选择日历') },
+          { type: 'image', image: asset('/static/sync/icloud/Slice 77(1).png') },
+          { type: 'note', text: uni.$t('新版本:对于 iOS 26 及后续版本，您需要点击图标 📅 图标。') },
+          { type: 'image', image: asset('/static/sync/icloud/Slice 77(2).png') },
+        ],
+      },
+      {
+        text: uni.$t('选择 ⓘ 日历图标'),
+        blocks: [{ type: 'image', image: asset('/static/sync/icloud/Slice 77(3).png') }],
+      },
+      {
+        text: uni.$t('启用“公共日历”并选择“共享链接”'),
+        blocks: [
+          { type: 'image', image: asset('/static/sync/icloud/Slice 77(4).png') },
+          {
+            type: 'note',
+            text: uni.$t(
+              '没有公开日历切换选项？按照以下 6 个步骤操作: 选择“设置”、“你的名字”、“iCloud”、“显示全部”、“iCloud日历”，然后打开“在此 iPhone上使用”。',
+            ),
+          },
+        ],
+      },
+      {
+        text: uni.$t('选择发送邮件'),
+        blocks: [{ type: 'image', image: asset('/static/sync/icloud/Slice 77(5).png') }],
+      },
+      {
+        text: uni.$t('将分享链接发送至:'),
+        blocks: [
+          { type: 'share' },
+          { type: 'image', image: asset('/static/sync/icloud/Slice 77(6).png') },
+          { type: 'paste' },
+        ],
+      },
     ]
   }
   if (type.value === 'teamsnap') {
@@ -112,8 +177,54 @@ function copyEmail() {
   })
 }
 
-function done() {
-  uni.navigateBack()
+function normalizeIcsUrl(raw) {
+  const value = String(raw || '').trim()
+  if (!value) return ''
+  if (/^webcals?:\/\//i.test(value)) return value
+  if (/^https?:\/\//i.test(value)) return value
+  return ''
+}
+
+function backToSyncHome() {
+  try {
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+    if ((pages || []).length >= 3) {
+      uni.navigateBack({ delta: 2 })
+      return
+    }
+  } catch (e) {}
+  uni.redirectTo({ url: '/pages/sync/sync-home' })
+}
+
+async function done() {
+  if (submitting.value) return
+  if (type.value !== 'icloud') {
+    uni.navigateBack()
+    return
+  }
+  if (!canSubmit.value) {
+    uni.showToast({ title: uni.$t('请先粘贴日历链接'), icon: 'none' })
+    return
+  }
+
+  const icsUrl = normalizeIcsUrl(pasted.value)
+  if (!icsUrl) {
+    uni.showToast({ title: uni.$t('请输入正确的日历链接'), icon: 'none' })
+    return
+  }
+
+  submitting.value = true
+  uni.showLoading({ title: uni.$t('同步日历') })
+  try {
+    await bindICloudCalendarUrl({ icsUrl })
+    uni.showToast({ title: uni.$t('绑定成功'), icon: 'success' })
+    setTimeout(() => backToSyncHome(), 350)
+  } catch (e) {
+    uni.showToast({ title: (e && e.message) || uni.$t('绑定失败，请重试'), icon: 'none' })
+  } finally {
+    submitting.value = false
+    uni.hideLoading()
+  }
 }
 </script>
 
@@ -154,6 +265,20 @@ function done() {
   display: block;
   border-radius: 22rpx;
   overflow: hidden;
+}
+
+.note-card {
+  border-radius: 22rpx;
+  background: rgba(17, 17, 17, 0.04);
+  padding: 20rpx 24rpx;
+}
+
+.note-text {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.6;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.72);
 }
 
 .share-card {
@@ -225,6 +350,11 @@ function done() {
   font-weight: 700;
 }
 
+.step-share-card,
+.step-paste {
+  margin-top: 0;
+}
+
 .bottom-action {
   position: fixed;
   left: 0;
@@ -232,5 +362,9 @@ function done() {
   bottom: 0;
   padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
   background: #ffffff;
+}
+
+.bl-btn-primary.is-disabled {
+  opacity: 0.45;
 }
 </style>

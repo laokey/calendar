@@ -345,6 +345,8 @@ const commonItIT = {
   "二": "Martedi",
   "将分享链接发送至:": "Invia il link di condivisione a:",
   "在此处粘贴网址": "Incolla qui l’URL",
+  "请先粘贴日历链接": "Incolla prima il link del calendario",
+  "请输入正确的日历链接": "Inserisci un link del calendario valido",
   "同步Cozi": "Sincronizza Cozi",
   "同步Cozi": "Sincronizza Cozi",
   "同步Teamsnap": "Sincronizza TeamSnap",

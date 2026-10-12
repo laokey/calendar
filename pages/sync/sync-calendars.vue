@@ -30,10 +30,12 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import BlHeader from '../../components/BlHeader.vue'
-import { ensureSyncState, getProviderCalendars, setProviderCalendars } from '../../utils/syncStore'
+import { ensureSyncState, findSynced, getProviderCalendars, setProviderCalendars } from '../../utils/syncStore'
+import { getCalendarList, normalizeCalendarList, triggerSync } from '../../utils/api/sync'
 
 const provider = ref('google')
 const accountId = ref('')
+const loading = ref(false)
 
 const calendars = ref([])
 
@@ -41,12 +43,57 @@ onLoad((options) => {
   provider.value = String(options && options.provider ? options.provider : 'google') === 'outlook' ? 'outlook' : 'google'
   accountId.value = String(options && options.accountId ? options.accountId : '')
   const state = ensureSyncState()
-  calendars.value = getProviderCalendars(state, provider.value)
+  const local = getProviderCalendars(state, provider.value)
+  calendars.value = local && local.length ? local : []
+  loadRemote()
 })
 
 const selectedCount = computed(() => calendars.value.filter((x) => x.selected).length)
 const allSelected = computed(() => calendars.value.length > 0 && selectedCount.value === calendars.value.length)
-const canSync = computed(() => selectedCount.value > 0)
+const canSync = computed(() => selectedCount.value > 0 && !loading.value)
+
+async function loadRemote() {
+  loading.value = true
+  try {
+    const rid = resolveRemoteAccountId()
+    const raw = await getCalendarList({ accountId: rid, provider: provider.value })
+    const list = normalizeCalendarList(raw)
+    if (list && list.length) {
+      const prevSelectedMap = {}
+      for (const c of calendars.value) if (c.id) prevSelectedMap[c.id] = !!c.selected
+      calendars.value = list.map((x) => ({
+        ...x,
+        selected: x.selected !== undefined ? x.selected : !!prevSelectedMap[x.id],
+      }))
+      persist()
+    }
+  } catch (e) {
+    if (!(calendars.value && calendars.value.length)) {
+      uni.showToast({ title: (e && e.message) || uni.$t('加载失败'), icon: 'none' })
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+function resolveRemoteAccountId() {
+  try {
+    const state = ensureSyncState()
+    const local = findSynced(state, accountId.value)
+    if (local && local.remoteId) return String(local.remoteId)
+    if (local && local.id) return String(local.id)
+  } catch (e) {}
+  return accountId.value
+}
+
+function resolveSyncMode() {
+  try {
+    const state = ensureSyncState()
+    const local = findSynced(state, accountId.value)
+    if (local && local.syncMode) return local.syncMode
+  } catch (e) {}
+  return 'twoWay'
+}
 
 function toggleAll() {
   const next = !allSelected.value
@@ -65,17 +112,35 @@ function persist() {
 }
 
 function reload() {
-  uni.showToast({ title: uni.$t('加载中'), icon: 'none' })
-  setTimeout(() => {
-    const state = ensureSyncState()
-    calendars.value = getProviderCalendars(state, provider.value)
-    uni.showToast({ title: uni.$t('已刷新'), icon: 'none' })
-  }, 350)
+  loadRemote()
 }
 
-function sync() {
+async function sync() {
   if (!canSync.value) return
-  uni.navigateTo({ url: `/pages/sync/sync-status?mode=progress&from=account&provider=${provider.value}&accountId=${encodeURIComponent(accountId.value)}&count=101` })
+  loading.value = true
+  try {
+    const selectedIds = calendars.value.filter((x) => x.selected).map((x) => x.id)
+    const calendarId = selectedIds[0] ? String(selectedIds[0]) : ''
+    const rid = resolveRemoteAccountId()
+    const mode = resolveSyncMode()
+    let taskId = ''
+    try {
+      const res = await triggerSync({
+        accountId: rid,
+        provider: provider.value,
+        calendarIds: selectedIds,
+        syncMode: mode,
+      })
+      taskId = res && typeof res === 'object' ? String(res.taskId || res.task_id || res.id || '') : ''
+    } catch (e) {}
+    uni.navigateTo({
+      url: `/pages/sync/sync-status?mode=progress&from=account&provider=${provider.value}&accountId=${encodeURIComponent(accountId.value)}&count=101&calendarId=${encodeURIComponent(calendarId)}&taskId=${encodeURIComponent(taskId)}`,
+    })
+  } catch (e) {
+    uni.showToast({ title: (e && e.message) || uni.$t('同步启动失败'), icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

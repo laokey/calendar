@@ -141,7 +141,7 @@ const BASE_MENUS = () => [
   { title: uni.$t('清单'), sub: uni.$t('{n}清单', { n: 0 }), icon: "/static/home/icon_menu_list.png", cls: "is-green" },
   { title: uni.$t('餐食'), sub: uni.$t('我们吃什么'), icon: "/static/home/icon_menu_meals.png", cls: "is-orange" },
   { title: uni.$t('相册'), sub: uni.$t('{n}个文件', { n: 0 }), icon: "/static/home/icon_menu_gallery.png", cls: "is-red" },
-  { title: uni.$t('同步'), sub: uni.$t('同步在线日历'), icon: "/static/home/icon_menu_sync.png", cls: "is-mint" },
+  // { title: uni.$t('同步'), sub: uni.$t('同步在线日历'), icon: "/static/home/icon_menu_sync.png", cls: "is-mint" },   // 同步功能暂未开放
   { title: uni.$t('成员管理'), sub: uni.$t('{n}个成员', { n: 0 }), icon: "/static/home/icon_menu_users.png", cls: "is-indigo" },
   { title: uni.$t('设备管理'), sub: uni.$t('控制功能'), icon: "/static/home/icon_menu_devices.png", cls: "is-blue2" },
   { title: uni.$t('用户管理'), sub: uni.$t('邀请你爱的人'), icon: "/static/home/icon_menu_members.png", cls: "is-indigo2" },
