@@ -2,8 +2,8 @@
     "name" : "芝麻日历",
     "appid" : "__UNI__19BA6D3",
     "description" : "",
-    "versionName" : "1.0.0",
-    "versionCode" : 110,
+    "versionName" : "1.1.0",
+    "versionCode" : 123,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
@@ -59,14 +59,11 @@
                 },
                 "capabilities" : {
                     "entitlements" : {
-                        "aps-environment" : "production"
+                        "aps-environment" : "production",
+                        "com.apple.developer.associated-domains" : [ "applinks:www.zmkhai.com" ]
                     }
                 },
-                "UIBackgroundModes" : [
-                    "remote-notification",
-                    "fetch",
-                    "audio"
-                ],
+                "UIBackgroundModes" : [ "remote-notification", "fetch", "audio" ],
                 "privacyDescription" : {
                     "NSPhotoLibraryUsageDescription" : "为了允许您在芝麻日历中上传头像、为日程添加照片附件或更换背景图片，我们需要访问您的相册。",
                     "NSCameraUsageDescription" : "为了支持您通过拍照来记录日程附件或扫描识别相关信息，我们需要使用您的相机。",

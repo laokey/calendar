@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载 - 芝麻日历</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f7f8fa; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
+        .logo { width: 80px; height: 80px; border-radius: 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h0 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+        p { font-size: 14px; color: #666; margin-bottom: 30px; }
+        .btn { width: 100%; max-width: 320px; height: 48px; background-color: #007aff; color: #fff; font-size: 16px; font-weight: 500; border: none; border-radius: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+        .btn:active { background-color: #0062cc; }
+        .tip { margin-top: 15px; font-size: 12px; color: #999; }
+    </style>
+</head>
+<body>
+
+    <img src="./static/logo.png" alt="Logo" class="logo">
+    <h0>芝麻日历</h0>
+    <p>高效同步管理您的全网日程</p>
+
+    <button class="btn" id="downloadBtn" onclick="handleOpenOrDownload()">点击下载 / 打开 App</button>
+    <div class="tip" id="tipText">请根据提示下载或打开应用</div>
+
+    <script>
+        // 【配置你的链接地址】
+        const CONFIG = {
+            iosUniversalLink: "https://www.zmkhai.com", // 你的 Universal Link 唤醒链接（或落地页路径）
+            iosAppStore: "https://apps.apple.com/cn/app/id6800324318", // App Store 商店下载地址
+            androidApk: "https://www.zmkhai.com/download/calendar.apk" // 安卓 APK 下载直链
+        };
+
+        function getDeviceType() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (/iphone|ipad|ipod|ios/.test(ua)) {
+                return 'ios';
+            } else if (/android/.test(ua)) {
+                return 'android';
+            }
+            return 'other';
+        }
+
+        function handleOpenOrDownload() {
+            const device = getDeviceType();
+
+            if (device === 'android') {
+                // 安卓设备：直接触发下载 APK
+                document.getElementById('tipText').innerText = '正在下载安卓安装包...';
+                window.location.href = CONFIG.androidApk;
+            } 
+            else if (device === 'ios') {
+                // 苹果设备：尝试唤起 App，如果没安装则延时跳 App Store
+                document.getElementById('tipText').innerText = '正在检测并打开应用...';
+                
+                const startTime = Date.now();
+                
+                // 1. 尝试通过 Universal Link 唤起 App
+                window.location.href = CONFIG.iosUniversalLink;
+
+                // 2. 计时器兜底：如果在 1.5 秒内页面没有被 App 成功切走（说明没安装），则跳转到 App Store
+                setTimeout(function() {
+                    const elapsed = Date.now() - startTime;
+                    // 如果用户留在网页上的时间超过了 1.5 秒且没有发生页面暂停，判定为未安装
+                    if (elapsed < 2000 && document.visibilityState === 'visible') {
+                        document.getElementById('tipText').innerText = '未检测到应用，正在前往 App Store...';
+                        window.location.href = CONFIG.iosAppStore;
+                    }
+                }, 1500);
+            } 
+            else {
+                // 其他设备（如 PC 端）：默认提示或者给个二维码
+                alert('请使用手机浏览器扫码或打开此页面进行下载。');
+            }
+        }
+    </script>
+</body>
+</html>

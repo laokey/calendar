@@ -100,8 +100,18 @@ const agreed = ref(false)
 const showPassword = ref(false)
 const policyVisible = ref(false)
 
+function normalizeRouteEmail(value) {
+  const raw = value === undefined || value === null ? '' : String(value).trim()
+  if (!raw || raw === 'null' || raw === 'undefined') return ''
+  let decoded = raw
+  try {
+    decoded = decodeURIComponent(raw)
+  } catch (e) {}
+  return decoded.replace(/\s+/g, '').trim()
+}
+
 onLoad((options) => {
-  if (options && options.email) email.value = String(options.email)
+  if (options && options.email) email.value = normalizeRouteEmail(options.email)
   const logged = !!uni.getStorageSync('auth_logged_in')
   if (logged) {
     uni.reLaunch({ url: '/pages/device/index' })

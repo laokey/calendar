@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "W5BHNLRW9R.com.zmkhai.calendar",
+        "paths": ["/download/*"]
+      }
+    ]
+  }
+}
