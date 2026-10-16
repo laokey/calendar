@@ -214,6 +214,43 @@ function normalizeVersionInfo(item) {
   }
 }
 
+function normalizeInviteLinkPayload(payload) {
+  if (payload === undefined || payload === null) return { code: '', link: '' }
+  if (typeof payload === 'string' || typeof payload === 'number') {
+    const text = normalizeText(payload)
+    if (!text) return { code: '', link: '' }
+    if (/^https?:\/\//i.test(text)) {
+      const codeMatch = text.match(/[?&#](?:code|inviteCode)=([^&#]+)/i)
+      const code = codeMatch && codeMatch[1] ? normalizeText(decodeURIComponent(codeMatch[1])) : ''
+      return { code, link: text }
+    }
+    return { code: text, link: '' }
+  }
+  if (typeof payload !== 'object') return { code: '', link: '' }
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
+  const code = normalizeText(
+    data.codeValue !== undefined
+      ? data.codeValue
+      : data.inviteCode !== undefined
+        ? data.inviteCode
+        : data.invitecode !== undefined
+          ? data.invitecode
+          : data.code,
+  )
+  const link = normalizeText(
+    data.inviteLink !== undefined
+      ? data.inviteLink
+      : data.invitelink !== undefined
+        ? data.invitelink
+        : data.link !== undefined
+          ? data.link
+          : data.url !== undefined
+            ? data.url
+            : data.inviteUrl,
+  )
+  return { code, link }
+}
+
 export async function inviteNewFriend({ inviteeEmail } = {}) {
   const token = getToken()
   const email = normalizeText(inviteeEmail)
@@ -221,6 +258,21 @@ export async function inviteNewFriend({ inviteeEmail } = {}) {
     token,
     inviteeEmail: email,
     inviteeemail: email,
+  })
+}
+
+export async function getInviteNewFriendsLink() {
+  const token = getToken()
+  const res = await postForm('/calendar/app/inviteNewFriendsLink', { token })
+  return normalizeInviteLinkPayload(res)
+}
+
+export async function addNewFriendsByLink({ code } = {}) {
+  const token = getToken()
+  const inviteCode = normalizeText(code)
+  return postForm('/calendar/app/addNewFriendsByLink', {
+    token,
+    code: inviteCode,
   })
 }
 

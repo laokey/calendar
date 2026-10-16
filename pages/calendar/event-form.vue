@@ -174,7 +174,7 @@
       </view>
     </view>
 
-    <view class="block">
+    <view v-if="showSyncCalendarSection" class="block">
       <view class="row-between" style="padding: 20rpx 20rpx 20rpx 0;" @click="toggleSync">
         <view class="row-left">
           <image
@@ -314,6 +314,7 @@ const repeatWeekdays = ref([]);
 
 const selectedMemberIds = ref([]);
 const syncOpen = ref(false);
+const showSyncCalendarSection = false;  // 是否显示同步日历部分
 
 const repeatUnits = [
   { label: uni.$t('天'), value: "day" },

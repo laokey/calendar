@@ -107,14 +107,29 @@ const submitting = ref(false)
 const pendingUsers = ref([])
 const approvedUsers = ref([])
 const rejectedUsers = ref([])
+const inviteCodeFromRoute = ref('')
 
 onLoad((options) => {
   const t = options && options.tab ? String(options.tab) : ''
   if (t === 'approved' || t === 'pending' || t === 'rejected') active.value = t
+  inviteCodeFromRoute.value = normalizeRouteText(options && (options.code || options.inviteCode || options.invitecode))
+  if (inviteCodeFromRoute.value) {
+    handleInviteCode(inviteCodeFromRoute.value)
+  }
 })
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase()
+}
+
+function normalizeRouteText(value) {
+  const raw = value === undefined || value === null ? '' : String(value).trim()
+  if (!raw || raw === 'null' || raw === 'undefined') return ''
+  try {
+    return decodeURIComponent(raw)
+  } catch (e) {
+    return raw
+  }
 }
 
 function currentUserEmail() {
@@ -231,8 +246,48 @@ async function add() {
   }
 }
 
-function share() {
-  uni.showToast({ title: uni.$t('接口文档未提供分享链接'), icon: 'none' })
+async function share() {
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const payload = await usersApi.getInviteNewFriendsLink()
+    const code = String(payload && payload.code ? payload.code : '').trim()
+    const link = String(payload && payload.link ? payload.link : '').trim()
+    const shareText = link || code
+    if (!shareText) {
+      uni.showToast({ title: '未获取到邀请码', icon: 'none' })
+      return
+    }
+    uni.setClipboardData({ data: shareText })
+  } catch (e) {
+    showError(e, '获取邀请码失败', {
+      201: uni.$t('用户不存在'),
+      202: '获取邀请码失败',
+    })
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function handleInviteCode(code) {
+  const inviteCode = String(code || '').trim()
+  if (!inviteCode || submitting.value) return
+  submitting.value = true
+  try {
+    await usersApi.addNewFriendsByLink({ code: inviteCode })
+    active.value = 'pending'
+    uni.showToast({ title: '已通过邀请链接提交好友申请', icon: 'none' })
+    await refresh()
+    inviteCodeFromRoute.value = ''
+  } catch (e) {
+    showError(e, '通过邀请链接添加失败', {
+      201: uni.$t('用户不存在'),
+      202: '邀请码无效',
+      203: '好友申请提交失败',
+    })
+  } finally {
+    submitting.value = false
+  }
 }
 
 async function approve(item) {
