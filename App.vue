@@ -13,6 +13,152 @@ import {
   refreshPushBindingForCurrentUser,
 } from './utils/push'
 import { getUserId } from './utils/authToken'
+import { usersApi } from './utils/api'
+
+const invitePromptState = {
+  lastSignature: '',
+  lastCapturedAt: 0,
+  modalOpen: false,
+  requesting: false,
+}
+
+function normalizeText(value) {
+  return value === undefined || value === null ? '' : String(value).trim()
+}
+
+function safeDecode(value) {
+  const text = normalizeText(value)
+  if (!text) return ''
+  try {
+    return decodeURIComponent(text)
+  } catch (e) {
+    return text
+  }
+}
+
+function assignInviteParam(target, key, value) {
+  const name = normalizeText(key).toLowerCase()
+  const text = safeDecode(value)
+  if (!text) return
+  if (name === 'code' || name === 'invitecode') {
+    target.code = text
+  } else if (name === 'token') {
+    target.token = text
+  }
+}
+
+function readInviteParamsFromUrl(url, target) {
+  const raw = normalizeText(url)
+  if (!raw) return
+  const queryIndex = raw.indexOf('?')
+  const hashIndex = raw.indexOf('#')
+  const queryParts = []
+  if (queryIndex >= 0) {
+    const end = hashIndex >= 0 && hashIndex > queryIndex ? hashIndex : raw.length
+    queryParts.push(raw.slice(queryIndex + 1, end))
+  }
+  if (hashIndex >= 0) {
+    const hash = raw.slice(hashIndex + 1)
+    if (hash.includes('=')) queryParts.push(hash)
+  }
+  for (const query of queryParts) {
+    for (const pair of String(query || '').split('&')) {
+      if (!pair) continue
+      const idx = pair.indexOf('=')
+      const key = idx >= 0 ? pair.slice(0, idx) : pair
+      const value = idx >= 0 ? pair.slice(idx + 1) : ''
+      assignInviteParam(target, key, value)
+    }
+  }
+}
+
+function extractInviteParams(options) {
+  const out = { token: '', code: '' }
+  if (!options || typeof options !== 'object') return out
+  const query = options.query && typeof options.query === 'object' ? options.query : {}
+  for (const key of Object.keys(query)) assignInviteParam(out, key, query[key])
+  readInviteParamsFromUrl(options.path, out)
+  readInviteParamsFromUrl(options.url, out)
+  readInviteParamsFromUrl(options.href, out)
+  readInviteParamsFromUrl(options.scene, out)
+  try {
+    if (typeof plus !== 'undefined' && plus && plus.runtime) {
+      readInviteParamsFromUrl(plus.runtime.arguments, out)
+      readInviteParamsFromUrl(plus.runtime.launcher, out)
+    }
+  } catch (e) {}
+  return out
+}
+
+function navigateToUsersPending() {
+  const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+  const current = pages && pages.length ? pages[pages.length - 1] : null
+  const route = current && current.route ? `/${current.route}` : ''
+  if (route === '/pages/users/index') return
+  uni.navigateTo({ url: '/pages/users/index?tab=pending' })
+}
+
+function confirmAndAddFriendByInvite(params) {
+  const code = normalizeText(params && params.code)
+  const token = normalizeText(params && params.token)
+  if (!code) return
+  const signature = `${token}|${code}`
+  const now = Date.now()
+  if (
+    invitePromptState.modalOpen ||
+    invitePromptState.requesting ||
+    (invitePromptState.lastSignature === signature && now - invitePromptState.lastCapturedAt < 1500)
+  ) return
+  invitePromptState.lastSignature = signature
+  invitePromptState.lastCapturedAt = now
+  invitePromptState.modalOpen = true
+  uni.showModal({
+    title: '提示',
+    content: '收到好友邀请，是否确认添加？',
+    confirmText: '确定',
+    cancelText: '取消',
+    success: async (res) => {
+      invitePromptState.modalOpen = false
+      if (!(res && res.confirm)) return
+      invitePromptState.requesting = true
+      try {
+        await usersApi.addNewFriendsByLink({ code })
+        uni.showModal({
+          title: '提示',
+          content: '添加好友成功',
+          showCancel: false,
+          success: () => {
+            navigateToUsersPending()
+          },
+        })
+      } catch (e) {
+        const codeNum = Number(e && e.code)
+        const message =
+          codeNum === 201
+            ? '用户不存在'
+            : codeNum === 202
+              ? '邀请码无效'
+              : codeNum === 203
+                ? '添加好友失败'
+                : String((e && e.message) || '添加好友失败')
+        uni.showToast({ title: message, icon: 'none' })
+      } finally {
+        invitePromptState.requesting = false
+      }
+    },
+    fail: () => {
+      invitePromptState.modalOpen = false
+    },
+  })
+}
+
+function handleUniversalInvite(options) {
+  const params = extractInviteParams(options)
+  if (!params.code) return
+  setTimeout(() => {
+    confirmAndAddFriendByInvite(params)
+  }, 120)
+}
 
 function startListeningPushEvents() {
   try {
@@ -56,20 +202,22 @@ function startListeningPushEvents() {
   } catch (e) {}
 }
 
-onLaunch(() => {
+onLaunch((options) => {
   try {
     startListeningPushEvents()
   } catch (e) {}
   try {
     initPush()
   } catch (e) {}
+  handleUniversalInvite(options)
 })
 
-onShow(() => {
+onShow((options) => {
   try {
     const userId = getUserId()
     if (userId) refreshPushBindingForCurrentUser()
   } catch (e) {}
+  handleUniversalInvite(options)
 })
 </script>
 
