@@ -1,662 +1,162 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>芝麻日历 - 下载</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载 - 芝麻日历</title>
     <style>
-      :root {
-        --bg: #ffffff;
-        --text: rgba(17, 17, 17, 0.92);
-        --muted: rgba(17, 17, 17, 0.6);
-        --primary: #3d6afb;
-        --card: rgba(17, 17, 17, 0.04);
-        --shadow: 0 10px 26px rgba(17, 17, 17, 0.06);
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'PingFang SC',
-          'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      }
-
-      .page {
-        min-height: 100%;
-        padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
-        max-width: 520px;
-        margin: 0 auto;
-      }
-
-      .hero {
-        margin-top: 8px;
-        padding: 20px 18px 16px;
-        border-radius: 18px;
-        background: radial-gradient(circle at 30% 20%, rgba(61, 106, 251, 0.18) 0%, rgba(61, 106, 251, 0) 60%),
-          radial-gradient(circle at 70% 0%, rgba(255, 176, 32, 0.12) 0%, rgba(255, 176, 32, 0) 55%),
-          rgba(17, 17, 17, 0.02);
-      }
-
-      .app-name {
-        font-size: 22px;
-        font-weight: 900;
-        line-height: 1.2;
-        margin: 0;
-      }
-
-      .subtitle {
-        margin: 10px 0 0;
-        font-size: 14px;
-        line-height: 1.5;
-        font-weight: 650;
-        color: var(--muted);
-        word-break: break-word;
-      }
-
-      .card {
-        margin-top: 14px;
-        padding: 16px 16px;
-        background: var(--card);
-        border-radius: 16px;
-        box-shadow: var(--shadow);
-      }
-
-      .row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-
-      .label {
-        font-size: 14px;
-        font-weight: 800;
-        color: rgba(17, 17, 17, 0.78);
-      }
-
-      .value {
-        font-size: 13px;
-        font-weight: 700;
-        color: rgba(17, 17, 17, 0.6);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 65%;
-      }
-
-      .btn {
-        margin-top: 14px;
-        height: 50px;
-        border-radius: 999px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        font-size: 16px;
-        font-weight: 900;
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        background: var(--primary);
-        color: #fff;
-      }
-
-      .btn-ghost {
-        background: rgba(61, 106, 251, 0.12);
-        color: var(--primary);
-      }
-
-      .btn-disabled {
-        background: rgba(17, 17, 17, 0.12);
-        color: rgba(17, 17, 17, 0.4);
-        cursor: not-allowed;
-      }
-
-      .hint {
-        margin-top: 12px;
-        font-size: 13px;
-        font-weight: 650;
-        color: rgba(17, 17, 17, 0.55);
-        line-height: 1.5;
-        word-break: break-word;
-      }
-
-      .platform-tag {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 12px;
-        min-width: 72px;
-        height: 28px;
-        padding: 0 12px;
-        border-radius: 999px;
-        background: rgba(61, 106, 251, 0.12);
-        color: var(--primary);
-        font-size: 13px;
-        font-weight: 800;
-      }
-
-      .mask {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        display: none;
-        padding: 18px;
-        z-index: 9999;
-      }
-
-      .mask-card {
-        margin: 0 auto;
-        max-width: 520px;
-        background: #fff;
-        border-radius: 18px;
-        padding: 18px 16px;
-        box-shadow: 0 18px 40px rgba(17, 17, 17, 0.18);
-      }
-
-      .mask-title {
-        font-size: 18px;
-        font-weight: 900;
-        margin: 0;
-      }
-
-      .mask-desc {
-        margin: 10px 0 0;
-        font-size: 14px;
-        font-weight: 650;
-        color: rgba(17, 17, 17, 0.68);
-        line-height: 1.55;
-      }
-
-      .toast {
-        position: fixed;
-        left: 50%;
-        bottom: calc(24px + env(safe-area-inset-bottom));
-        transform: translateX(-50%);
-        padding: 10px 14px;
-        border-radius: 999px;
-        background: rgba(17, 17, 17, 0.88);
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        display: none;
-        z-index: 10000;
-        max-width: calc(100% - 36px);
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-      }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f7f8fa; color: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; text-align: center; }
+        .logo { width: 80px; height: 80px; border-radius: 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h0 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+        p { font-size: 14px; color: #666; margin-bottom: 30px; }
+        .btn { width: 100%; max-width: 320px; height: 48px; background-color: #007aff; color: #fff; font-size: 16px; font-weight: 500; border: none; border-radius: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+        .btn:active { background-color: #0062cc; }
+        .tip { margin-top: 15px; font-size: 12px; color: #999; }
     </style>
-  </head>
-  <body>
-    <div class="page">
-      <div class="hero">
-        <h1 class="app-name">芝麻日历</h1>
-        <p class="subtitle" id="subtitle">正在获取下载地址…</p>
-        <div class="platform-tag" id="platformTag">检测中</div>
-      </div>
+</head>
+<body>
 
-      <div class="card">
-        <div class="row">
-          <div class="label">下载链接</div>
-          <div class="value" id="downloadUrlText">—</div>
-        </div>
-      </div>
+    <img src="./static/logo.png" alt="Logo" class="logo">
+    <h0>芝麻日历</h0>
+    <p>高效同步管理您的全网日程</p>
 
-      <div class="btn btn-primary btn-disabled" id="downloadBtn">立即下载</div>
-      <div class="btn btn-ghost btn-disabled" id="copyBtn">复制下载链接</div>
-
-      <div class="hint" id="hint">
-        如无法直接下载，请复制下载链接后在系统浏览器打开。
-      </div>
-    </div>
-
-    <div class="mask" id="wechatMask">
-      <div class="mask-card">
-        <h2 class="mask-title">请在浏览器打开</h2>
-        <p class="mask-desc">
-          微信内可能无法直接下载应用。请点击右上角菜单，选择“在浏览器打开”，再进行下载。
-        </p>
-        <div class="btn btn-primary" id="maskCopyBtn">复制下载链接</div>
-        <div class="btn btn-ghost" id="maskCloseBtn">我知道了</div>
-      </div>
-    </div>
-
-    <div class="toast" id="toast"></div>
+    <button class="btn" id="downloadBtn" onclick="handleOpenOrDownload()">点击下载 / 打开 App</button>
+    <div class="tip" id="tipText">请根据提示下载或打开应用</div>
 
     <script>
-      const elSubtitle = document.getElementById('subtitle')
-      const elDownloadUrlText = document.getElementById('downloadUrlText')
-      const elDownloadBtn = document.getElementById('downloadBtn')
-      const elCopyBtn = document.getElementById('copyBtn')
-      const elHint = document.getElementById('hint')
-      const elToast = document.getElementById('toast')
-      const elPlatformTag = document.getElementById('platformTag')
-      const elWechatMask = document.getElementById('wechatMask')
-      const elMaskCopyBtn = document.getElementById('maskCopyBtn')
-      const elMaskCloseBtn = document.getElementById('maskCloseBtn')
+        // 【配置你的链接地址】
+        const CONFIG = {
+            iosUniversalLink: "https://www.zmkhai.com", // 你的 Universal Link 唤醒链接（或落地页路径）
+            iosAppStore: "https://apps.apple.com/cn/app/id6800324318", // App Store 商店下载地址
+            androidLaunchUrl: "zmkhai://calendar", // 安卓拉起地址，例如 zmkhai://calendar/app/addNewFriendsByLink
+            androidApk: "https://www.zmkhai.com/download/calendar.apk" // 安卓 APK 下载直链
+        };
 
-      const DEFAULT_APP_STORE_URL = 'https://apps.apple.com/cn/app/id6800324318'
-      const DEFAULT_IOS_LAUNCH_URL = 'https://www.zmkhai.com'
-      const DEFAULT_ANDROID_LAUNCH_URL = ''
-      const DEFAULT_ANDROID_PACKAGE_NAME = ''
-
-      function ua() {
-        return navigator.userAgent || ''
-      }
-
-      function isWechat() {
-        return /MicroMessenger/i.test(ua())
-      }
-
-      function isIOS() {
-        return /iPhone|iPad|iPod/i.test(ua())
-      }
-
-      function isAndroid() {
-        return /Android/i.test(ua())
-      }
-
-      function showToast(text) {
-        elToast.textContent = String(text || '')
-        elToast.style.display = 'block'
-        setTimeout(() => {
-          elToast.style.display = 'none'
-        }, 1400)
-      }
-
-      function setButtonEnabled(el, enabled) {
-        const cls = 'btn-disabled'
-        if (enabled) el.classList.remove(cls)
-        else el.classList.add(cls)
-      }
-
-      function safeText(v) {
-        const s = String(v || '').trim()
-        return s
-      }
-
-      function getQueryParam(name) {
-        try {
-          const url = new URL(location.href)
-          return safeText(url.searchParams.get(name))
-        } catch (e) {
-          return ''
-        }
-      }
-
-      function extractAppStoreId(url) {
-        const text = safeText(url)
-        const match = text.match(/\/id(\d+)/i)
-        return match ? safeText(match[1]) : ''
-      }
-
-      function applyAppleItunesMeta(url) {
-        const appStoreId = extractAppStoreId(url)
-        if (!appStoreId) return
-        let meta = document.querySelector('meta[name="apple-itunes-app"]')
-        if (!meta) {
-          meta = document.createElement('meta')
-          meta.setAttribute('name', 'apple-itunes-app')
-          document.head.appendChild(meta)
-        }
-        meta.setAttribute('content', `app-id=${appStoreId}`)
-      }
-
-      function extractDownloadUrl(payload) {
-        if (!payload) return ''
-        if (typeof payload === 'string') return safeText(payload)
-        if (typeof payload !== 'object') return ''
-        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
-        return safeText(
-          data.downloadUrl ||
-            data.downloadurl ||
-            data.androidDownloadUrl ||
-            data.androiddownloadurl ||
-            data.apkUrl ||
-            data.apkurl ||
-            data.url ||
-            ''
-        )
-      }
-
-      function extractAppStoreUrl(payload) {
-        if (!payload || typeof payload !== 'object') return ''
-        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
-        return safeText(
-          data.appStoreUrl ||
-            data.appstoreurl ||
-            data.iosDownloadUrl ||
-            data.iosdownloadurl ||
-            data.iosUrl ||
-            data.iosurl ||
-            ''
-        )
-      }
-
-      function extractLaunchUrl(payload) {
-        if (!payload || typeof payload !== 'object') return ''
-        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
-        return safeText(
-          data.launchUrl ||
-            data.launchurl ||
-            data.universalLink ||
-            data.universallink ||
-            data.schemeUrl ||
-            data.schemeurl ||
-            ''
-        )
-      }
-
-      function extractAndroidLaunchUrl(payload) {
-        if (!payload || typeof payload !== 'object') return ''
-        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
-        return safeText(
-          data.androidLaunchUrl ||
-            data.androidlaunchurl ||
-            data.androidSchemeUrl ||
-            data.androidschemeurl ||
-            data.schemeUrl ||
-            data.schemeurl ||
-            data.launchUrl ||
-            data.launchurl ||
-            ''
-        )
-      }
-
-      function extractAndroidPackageName(payload) {
-        if (!payload || typeof payload !== 'object') return ''
-        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
-        return safeText(
-          data.androidPackageName ||
-            data.androidpackagename ||
-            data.packageName ||
-            data.packagename ||
-            data.androidPackage ||
-            data.androidpackage ||
-            ''
-        )
-      }
-
-      async function fetchDownloadUrl() {
-        try {
-          const res = await fetch('/calendar/app/getAppVersion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-            body: '',
-          })
-          const ct = res.headers.get('content-type') || ''
-          if (ct.includes('application/json')) {
-            const json = await res.json()
-            return {
-              androidUrl: extractDownloadUrl(json),
-              androidLaunchUrl: extractAndroidLaunchUrl(json),
-              androidPackageName: extractAndroidPackageName(json),
-              appStoreUrl: extractAppStoreUrl(json),
-              launchUrl: extractLaunchUrl(json),
+        function getDeviceType() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (/iphone|ipad|ipod|ios/.test(ua)) {
+                return 'ios';
+            } else if (/android/.test(ua)) {
+                return 'android';
             }
-          }
-          const text = await res.text()
-          try {
-            const json = JSON.parse(text)
-            return {
-              androidUrl: extractDownloadUrl(json),
-              androidLaunchUrl: extractAndroidLaunchUrl(json),
-              androidPackageName: extractAndroidPackageName(json),
-              appStoreUrl: extractAppStoreUrl(json),
-              launchUrl: extractLaunchUrl(json),
+            return 'other';
+        }
+
+        function safeText(value) {
+            return String(value || '').trim();
+        }
+
+        function getInviteParamsFromLocation() {
+            const out = {};
+            try {
+                const url = new URL(window.location.href);
+                const code = safeText(url.searchParams.get('code') || url.searchParams.get('inviteCode'));
+                const token = safeText(url.searchParams.get('token'));
+                if (code) out.code = code;
+                if (token) out.token = token;
+            } catch (e) {}
+            return out;
+        }
+
+        function appendQueryParams(url, params) {
+            const target = safeText(url);
+            const entries = Object.entries(params || {}).filter(function(entry) {
+                return safeText(entry[1]);
+            });
+            if (!target || !entries.length) return target;
+            const hashIndex = target.indexOf('#');
+            const base = hashIndex >= 0 ? target.slice(0, hashIndex) : target;
+            const hash = hashIndex >= 0 ? target.slice(hashIndex) : '';
+            const hasQuery = base.indexOf('?') >= 0;
+            const query = entries.map(function(entry) {
+                return encodeURIComponent(entry[0]) + '=' + encodeURIComponent(String(entry[1]));
+            }).join('&');
+            return base + (hasQuery ? '&' : '?') + query + hash;
+        }
+
+        function buildIosUniversalLink() {
+            const inviteParams = getInviteParamsFromLocation();
+            const fallback = safeText(CONFIG.iosUniversalLink);
+            const currentPage = safeText(window.location.origin) + safeText(window.location.pathname);
+            const baseUrl = currentPage || fallback;
+            return appendQueryParams(baseUrl, inviteParams);
+        }
+
+        function openAndroidScheme(url) {
+            const target = safeText(url);
+            if (!target) return;
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = target;
+            document.body.appendChild(iframe);
+            setTimeout(function() {
+                if (iframe.parentNode) {
+                    iframe.parentNode.removeChild(iframe);
+                }
+            }, 1000);
+            window.location.href = target;
+        }
+
+        function handleOpenOrDownload() {
+            const device = getDeviceType();
+            const inviteParams = getInviteParamsFromLocation();
+
+            if (device === 'android') {
+                // 安卓设备：优先尝试拉起 App，失败后回退下载 APK
+                const launchTarget = appendQueryParams(CONFIG.androidLaunchUrl, inviteParams);
+
+                if (!launchTarget) {
+                    document.getElementById('tipText').innerText = '正在下载安卓安装包...';
+                    window.location.href = CONFIG.androidApk;
+                    return;
+                }
+
+                document.getElementById('tipText').innerText = '正在尝试打开应用...';
+                const startTime = Date.now();
+                let handled = false;
+
+                const onVisibilityChange = function() {
+                    if (document.visibilityState === 'hidden') {
+                        handled = true;
+                    }
+                };
+
+                document.addEventListener('visibilitychange', onVisibilityChange, { once: true });
+                openAndroidScheme(launchTarget);
+
+                setTimeout(function() {
+                    if (handled || document.visibilityState === 'hidden') return;
+                    if (Date.now() - startTime < 1000) return;
+                    document.getElementById('tipText').innerText = '未检测到应用，正在下载安卓安装包...';
+                    window.location.href = CONFIG.androidApk;
+                }, 1200);
+            } 
+            else if (device === 'ios') {
+                // 苹果设备：尝试唤起 App，如果没安装则延时跳 App Store
+                document.getElementById('tipText').innerText = '正在检测并打开应用...';
+                
+                const startTime = Date.now();
+                const iosLaunchUrl = buildIosUniversalLink();
+                
+                // 1. 尝试通过 Universal Link 唤起 App
+                window.location.href = iosLaunchUrl;
+
+                // 2. 计时器兜底：如果在 1.5 秒内页面没有被 App 成功切走（说明没安装），则跳转到 App Store
+                setTimeout(function() {
+                    const elapsed = Date.now() - startTime;
+                    // 如果用户留在网页上的时间超过了 1.5 秒且没有发生页面暂停，判定为未安装
+                    if (elapsed < 2000 && document.visibilityState === 'visible') {
+                        document.getElementById('tipText').innerText = '未检测到应用，正在前往 App Store...';
+                        window.location.href = CONFIG.iosAppStore;
+                    }
+                }, 1500);
+            } 
+            else {
+                // 其他设备（如 PC 端）：默认提示或者给个二维码
+                alert('请使用手机浏览器扫码或打开此页面进行下载。');
             }
-          } catch (e) {
-            return {
-              androidUrl: extractDownloadUrl(text),
-              androidLaunchUrl: '',
-              androidPackageName: '',
-              appStoreUrl: '',
-              launchUrl: '',
-            }
-          }
-        } catch (e) {
-          return {
-            androidUrl: '',
-            androidLaunchUrl: '',
-            androidPackageName: '',
-            appStoreUrl: '',
-            launchUrl: '',
-          }
         }
-      }
-
-      async function copyText(text) {
-        const v = safeText(text)
-        if (!v) return false
-        try {
-          if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-            await navigator.clipboard.writeText(v)
-            return true
-          }
-        } catch (e) {}
-        try {
-          const input = document.createElement('input')
-          input.value = v
-          document.body.appendChild(input)
-          input.select()
-          input.setSelectionRange(0, input.value.length)
-          const ok = document.execCommand('copy')
-          document.body.removeChild(input)
-          return !!ok
-        } catch (e) {
-          return false
-        }
-      }
-
-      function openUrl(url) {
-        const target = safeText(url)
-        if (!target) return
-        location.href = target
-      }
-
-      function shortText(url) {
-        const v = safeText(url)
-        if (v.length <= 26) return v
-        return `${v.slice(0, 18)}…${v.slice(-6)}`
-      }
-
-      let androidDownloadUrl = ''
-      let androidLaunchUrl = ''
-      let androidPackageName = ''
-      let iosAppStoreUrl = ''
-      let iosLaunchUrl = ''
-
-      function currentPlatform() {
-        if (isIOS()) return 'ios'
-        if (isAndroid()) return 'android'
-        return 'other'
-      }
-
-      function resolveUniversalLink() {
-        try {
-          const url = new URL(location.href)
-          url.searchParams.set('openApp', '1')
-          return url.toString()
-        } catch (e) {
-          return location.href
-        }
-      }
-
-      function encodeIntentExtra(value) {
-        return encodeURIComponent(String(value || ''))
-          .replace(/'/g, '%27')
-          .replace(/\(/g, '%28')
-          .replace(/\)/g, '%29')
-      }
-
-      function buildAndroidIntentUrl(launchUrl, packageName, fallbackUrl) {
-        const launchTarget = safeText(launchUrl)
-        const fallbackTarget = safeText(fallbackUrl)
-        const pkg = safeText(packageName)
-        if (!launchTarget) return ''
-        if (/^intent:\/\//i.test(launchTarget)) {
-          if (!fallbackTarget || /S\.browser_fallback_url=/i.test(launchTarget)) return launchTarget
-          const suffix = launchTarget.endsWith(';end') ? '' : ';end'
-          return `${launchTarget.replace(/;end$/i, '')};S.browser_fallback_url=${encodeIntentExtra(fallbackTarget)}${suffix}`
-        }
-        const schemeMatch = launchTarget.match(/^([a-z][a-z0-9+\-.]*):\/\/(.*)$/i)
-        if (!schemeMatch) return launchTarget
-        const scheme = schemeMatch[1]
-        const path = schemeMatch[2]
-        const parts = [`intent://${path}#Intent`, `scheme=${scheme}`]
-        if (pkg) parts.push(`package=${pkg}`)
-        if (fallbackTarget) parts.push(`S.browser_fallback_url=${encodeIntentExtra(fallbackTarget)}`)
-        parts.push('end')
-        return parts.join(';')
-      }
-
-      function resolveAndroidLaunchTarget() {
-        const direct = safeText(androidLaunchUrl)
-        if (!direct) return ''
-        const fallback = safeText(androidDownloadUrl)
-        return buildAndroidIntentUrl(direct, androidPackageName, fallback)
-      }
-
-      function resolvePrimaryUrl() {
-        if (isIOS()) return iosAppStoreUrl || iosLaunchUrl
-        if (isAndroid()) return androidDownloadUrl || resolveAndroidLaunchTarget()
-        return androidDownloadUrl
-      }
-
-      function updateButtonText() {
-        if (isIOS()) {
-          elDownloadBtn.textContent = '打开或下载 App'
-          elCopyBtn.textContent = iosAppStoreUrl ? '复制 App Store 链接' : '复制打开链接'
-          return
-        }
-        if (isAndroid()) {
-          elDownloadBtn.textContent = '打开或下载 App'
-          elCopyBtn.textContent = '复制下载链接'
-          return
-        }
-        elDownloadBtn.textContent = '打开链接'
-        elCopyBtn.textContent = '复制链接'
-      }
-
-      function render() {
-        const platform = currentPlatform()
-        const primaryUrl = resolvePrimaryUrl()
-        elPlatformTag.textContent = platform === 'ios' ? 'iOS 设备' : platform === 'android' ? 'Android 设备' : '浏览器设备'
-        elDownloadUrlText.textContent = primaryUrl ? shortText(primaryUrl) : '—'
-        elSubtitle.textContent = primaryUrl
-          ? platform === 'ios'
-            ? 'iOS 设备将优先尝试拉起芝麻日历，未安装时自动跳转 App Store。'
-            : platform === 'android'
-              ? 'Android 设备将优先尝试拉起芝麻日历，未安装时自动跳转安装包下载地址。'
-              : '当前设备将使用浏览器打开对应链接。'
-          : platform === 'ios'
-            ? '暂未获取到 App Store 或拉起地址，请补充 iOS 下载配置。'
-            : '暂未获取到下载地址，请稍后重试或复制链接后在浏览器打开。'
-        elHint.textContent = platform === 'ios'
-          ? '如果未安装应用，将在短暂等待后自动跳转到 App Store。建议使用 Safari 打开。'
-          : platform === 'android'
-            ? 'Android 设备会先尝试拉起 App；如未安装，将自动回退到安装包下载地址。'
-            : '如无法直接打开，请复制链接后在系统浏览器中访问。'
-        updateButtonText()
-        setButtonEnabled(elDownloadBtn, !!primaryUrl && !isWechat())
-        setButtonEnabled(elCopyBtn, !!primaryUrl)
-      }
-
-      elDownloadBtn.addEventListener('click', () => {
-        const primaryUrl = resolvePrimaryUrl()
-        if (!primaryUrl) return
-        if (isWechat()) {
-          elWechatMask.style.display = 'block'
-          return
-        }
-        if (isIOS()) {
-          const fallbackUrl = iosAppStoreUrl
-          const launchTarget = iosLaunchUrl || resolveUniversalLink()
-          const startedAt = Date.now()
-          let handled = false
-          const onHide = () => {
-            handled = true
-          }
-          document.addEventListener('visibilitychange', onHide, { once: true })
-          openUrl(launchTarget)
-          setTimeout(() => {
-            if (handled) return
-            if (document.visibilityState === 'hidden') return
-            if (Date.now() - startedAt < 1200) return
-            if (fallbackUrl) {
-              openUrl(fallbackUrl)
-            } else {
-              showToast('未配置 App Store 地址')
-            }
-          }, 1400)
-          return
-        }
-        if (isAndroid()) {
-          const fallbackUrl = androidDownloadUrl
-          const launchTarget = resolveAndroidLaunchTarget()
-          if (!launchTarget) {
-            openUrl(fallbackUrl)
-            return
-          }
-          const startedAt = Date.now()
-          let handled = false
-          const onHide = () => {
-            handled = true
-          }
-          document.addEventListener('visibilitychange', onHide, { once: true })
-          openUrl(launchTarget)
-          setTimeout(() => {
-            if (handled) return
-            if (document.visibilityState === 'hidden') return
-            if (Date.now() - startedAt < 1000) return
-            if (fallbackUrl) {
-              openUrl(fallbackUrl)
-            } else {
-              showToast('未配置安卓下载地址')
-            }
-          }, 1200)
-          return
-        }
-        openUrl(primaryUrl)
-      })
-
-      async function doCopy() {
-        const primaryUrl = resolvePrimaryUrl()
-        if (!primaryUrl) return
-        const ok = await copyText(primaryUrl)
-        showToast(ok ? '链接已复制' : '复制失败')
-      }
-
-      elCopyBtn.addEventListener('click', doCopy)
-      elMaskCopyBtn.addEventListener('click', doCopy)
-      elMaskCloseBtn.addEventListener('click', () => {
-        elWechatMask.style.display = 'none'
-      })
-      elWechatMask.addEventListener('click', (e) => {
-        if (e && e.target === elWechatMask) elWechatMask.style.display = 'none'
-      })
-
-      ;(async () => {
-        if (isWechat()) elWechatMask.style.display = 'block'
-        const remote = await fetchDownloadUrl()
-        androidDownloadUrl = remote.androidUrl || getQueryParam('downloadUrl') || getQueryParam('androidUrl')
-        androidLaunchUrl = remote.androidLaunchUrl || getQueryParam('androidLaunchUrl') || getQueryParam('schemeUrl') || getQueryParam('launchUrl') || DEFAULT_ANDROID_LAUNCH_URL
-        androidPackageName = remote.androidPackageName || getQueryParam('androidPackageName') || getQueryParam('packageName') || DEFAULT_ANDROID_PACKAGE_NAME
-        iosAppStoreUrl = remote.appStoreUrl || getQueryParam('appStoreUrl') || getQueryParam('iosUrl') || DEFAULT_APP_STORE_URL
-        iosLaunchUrl = remote.launchUrl || getQueryParam('launchUrl') || getQueryParam('universalLink') || DEFAULT_IOS_LAUNCH_URL
-        applyAppleItunesMeta(iosAppStoreUrl)
-        render()
-      })()
     </script>
-  </body>
+</body>
 </html>
