@@ -47,6 +47,42 @@
             return String(value || '').trim();
         }
 
+        function getInviteParamsFromLocation() {
+            const out = {};
+            try {
+                const url = new URL(window.location.href);
+                const code = safeText(url.searchParams.get('code') || url.searchParams.get('inviteCode'));
+                const token = safeText(url.searchParams.get('token'));
+                if (code) out.code = code;
+                if (token) out.token = token;
+            } catch (e) {}
+            return out;
+        }
+
+        function appendQueryParams(url, params) {
+            const target = safeText(url);
+            const entries = Object.entries(params || {}).filter(function(entry) {
+                return safeText(entry[1]);
+            });
+            if (!target || !entries.length) return target;
+            const hashIndex = target.indexOf('#');
+            const base = hashIndex >= 0 ? target.slice(0, hashIndex) : target;
+            const hash = hashIndex >= 0 ? target.slice(hashIndex) : '';
+            const hasQuery = base.indexOf('?') >= 0;
+            const query = entries.map(function(entry) {
+                return encodeURIComponent(entry[0]) + '=' + encodeURIComponent(String(entry[1]));
+            }).join('&');
+            return base + (hasQuery ? '&' : '?') + query + hash;
+        }
+
+        function buildIosUniversalLink() {
+            const inviteParams = getInviteParamsFromLocation();
+            const fallback = safeText(CONFIG.iosUniversalLink);
+            const currentPage = safeText(window.location.origin) + safeText(window.location.pathname);
+            const baseUrl = currentPage || fallback;
+            return appendQueryParams(baseUrl, inviteParams);
+        }
+
         function openAndroidScheme(url) {
             const target = safeText(url);
             if (!target) return;
@@ -64,10 +100,11 @@
 
         function handleOpenOrDownload() {
             const device = getDeviceType();
+            const inviteParams = getInviteParamsFromLocation();
 
             if (device === 'android') {
                 // 安卓设备：优先尝试拉起 App，失败后回退下载 APK
-                const launchTarget = safeText(CONFIG.androidLaunchUrl);
+                const launchTarget = appendQueryParams(CONFIG.androidLaunchUrl, inviteParams);
 
                 if (!launchTarget) {
                     document.getElementById('tipText').innerText = '正在下载安卓安装包...';
@@ -100,9 +137,10 @@
                 document.getElementById('tipText').innerText = '正在检测并打开应用...';
                 
                 const startTime = Date.now();
+                const iosLaunchUrl = buildIosUniversalLink();
                 
                 // 1. 尝试通过 Universal Link 唤起 App
-                window.location.href = CONFIG.iosUniversalLink;
+                window.location.href = iosLaunchUrl;
 
                 // 2. 计时器兜底：如果在 1.5 秒内页面没有被 App 成功切走（说明没安装），则跳转到 App Store
                 setTimeout(function() {
