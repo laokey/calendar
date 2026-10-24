@@ -3,7 +3,7 @@
     "appid" : "__UNI__19BA6D3",
     "description" : "",
     "versionName" : "1.1.0",
-    "versionCode" : 123,
+    "versionCode" : 129,
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
@@ -22,6 +22,9 @@
         },
         "distribute" : {
             "android" : {
+                "minSdkVersion" : 24,
+                "targetSdkVersion" : 36,
+                "schemes" : [ "zmkhai" ],
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",

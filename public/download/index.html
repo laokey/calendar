@@ -247,6 +247,8 @@
 
       const DEFAULT_APP_STORE_URL = 'https://apps.apple.com/cn/app/id6800324318'
       const DEFAULT_IOS_LAUNCH_URL = 'https://www.zmkhai.com'
+      const DEFAULT_ANDROID_LAUNCH_URL = ''
+      const DEFAULT_ANDROID_PACKAGE_NAME = ''
 
       function ua() {
         return navigator.userAgent || ''
@@ -355,6 +357,36 @@
         )
       }
 
+      function extractAndroidLaunchUrl(payload) {
+        if (!payload || typeof payload !== 'object') return ''
+        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
+        return safeText(
+          data.androidLaunchUrl ||
+            data.androidlaunchurl ||
+            data.androidSchemeUrl ||
+            data.androidschemeurl ||
+            data.schemeUrl ||
+            data.schemeurl ||
+            data.launchUrl ||
+            data.launchurl ||
+            ''
+        )
+      }
+
+      function extractAndroidPackageName(payload) {
+        if (!payload || typeof payload !== 'object') return ''
+        const data = payload.data && typeof payload.data === 'object' ? payload.data : payload
+        return safeText(
+          data.androidPackageName ||
+            data.androidpackagename ||
+            data.packageName ||
+            data.packagename ||
+            data.androidPackage ||
+            data.androidpackage ||
+            ''
+        )
+      }
+
       async function fetchDownloadUrl() {
         try {
           const res = await fetch('/calendar/app/getAppVersion', {
@@ -367,6 +399,8 @@
             const json = await res.json()
             return {
               androidUrl: extractDownloadUrl(json),
+              androidLaunchUrl: extractAndroidLaunchUrl(json),
+              androidPackageName: extractAndroidPackageName(json),
               appStoreUrl: extractAppStoreUrl(json),
               launchUrl: extractLaunchUrl(json),
             }
@@ -376,12 +410,16 @@
             const json = JSON.parse(text)
             return {
               androidUrl: extractDownloadUrl(json),
+              androidLaunchUrl: extractAndroidLaunchUrl(json),
+              androidPackageName: extractAndroidPackageName(json),
               appStoreUrl: extractAppStoreUrl(json),
               launchUrl: extractLaunchUrl(json),
             }
           } catch (e) {
             return {
               androidUrl: extractDownloadUrl(text),
+              androidLaunchUrl: '',
+              androidPackageName: '',
               appStoreUrl: '',
               launchUrl: '',
             }
@@ -389,6 +427,8 @@
         } catch (e) {
           return {
             androidUrl: '',
+            androidLaunchUrl: '',
+            androidPackageName: '',
             appStoreUrl: '',
             launchUrl: '',
           }
@@ -431,6 +471,8 @@
       }
 
       let androidDownloadUrl = ''
+      let androidLaunchUrl = ''
+      let androidPackageName = ''
       let iosAppStoreUrl = ''
       let iosLaunchUrl = ''
 
@@ -450,8 +492,44 @@
         }
       }
 
+      function encodeIntentExtra(value) {
+        return encodeURIComponent(String(value || ''))
+          .replace(/'/g, '%27')
+          .replace(/\(/g, '%28')
+          .replace(/\)/g, '%29')
+      }
+
+      function buildAndroidIntentUrl(launchUrl, packageName, fallbackUrl) {
+        const launchTarget = safeText(launchUrl)
+        const fallbackTarget = safeText(fallbackUrl)
+        const pkg = safeText(packageName)
+        if (!launchTarget) return ''
+        if (/^intent:\/\//i.test(launchTarget)) {
+          if (!fallbackTarget || /S\.browser_fallback_url=/i.test(launchTarget)) return launchTarget
+          const suffix = launchTarget.endsWith(';end') ? '' : ';end'
+          return `${launchTarget.replace(/;end$/i, '')};S.browser_fallback_url=${encodeIntentExtra(fallbackTarget)}${suffix}`
+        }
+        const schemeMatch = launchTarget.match(/^([a-z][a-z0-9+\-.]*):\/\/(.*)$/i)
+        if (!schemeMatch) return launchTarget
+        const scheme = schemeMatch[1]
+        const path = schemeMatch[2]
+        const parts = [`intent://${path}#Intent`, `scheme=${scheme}`]
+        if (pkg) parts.push(`package=${pkg}`)
+        if (fallbackTarget) parts.push(`S.browser_fallback_url=${encodeIntentExtra(fallbackTarget)}`)
+        parts.push('end')
+        return parts.join(';')
+      }
+
+      function resolveAndroidLaunchTarget() {
+        const direct = safeText(androidLaunchUrl)
+        if (!direct) return ''
+        const fallback = safeText(androidDownloadUrl)
+        return buildAndroidIntentUrl(direct, androidPackageName, fallback)
+      }
+
       function resolvePrimaryUrl() {
         if (isIOS()) return iosAppStoreUrl || iosLaunchUrl
+        if (isAndroid()) return androidDownloadUrl || resolveAndroidLaunchTarget()
         return androidDownloadUrl
       }
 
@@ -462,7 +540,7 @@
           return
         }
         if (isAndroid()) {
-          elDownloadBtn.textContent = '立即下载'
+          elDownloadBtn.textContent = '打开或下载 App'
           elCopyBtn.textContent = '复制下载链接'
           return
         }
@@ -479,7 +557,7 @@
           ? platform === 'ios'
             ? 'iOS 设备将优先尝试拉起芝麻日历，未安装时自动跳转 App Store。'
             : platform === 'android'
-              ? 'Android 设备将直接使用下载包地址下载应用。'
+              ? 'Android 设备将优先尝试拉起芝麻日历，未安装时自动跳转安装包下载地址。'
               : '当前设备将使用浏览器打开对应链接。'
           : platform === 'ios'
             ? '暂未获取到 App Store 或拉起地址，请补充 iOS 下载配置。'
@@ -487,7 +565,7 @@
         elHint.textContent = platform === 'ios'
           ? '如果未安装应用，将在短暂等待后自动跳转到 App Store。建议使用 Safari 打开。'
           : platform === 'android'
-            ? 'Android 设备将直接跳转浏览器下载地址；如被拦截，请手动复制链接到系统浏览器打开。'
+            ? 'Android 设备会先尝试拉起 App；如未安装，将自动回退到安装包下载地址。'
             : '如无法直接打开，请复制链接后在系统浏览器中访问。'
         updateButtonText()
         setButtonEnabled(elDownloadBtn, !!primaryUrl && !isWechat())
@@ -523,6 +601,32 @@
           }, 1400)
           return
         }
+        if (isAndroid()) {
+          const fallbackUrl = androidDownloadUrl
+          const launchTarget = resolveAndroidLaunchTarget()
+          if (!launchTarget) {
+            openUrl(fallbackUrl)
+            return
+          }
+          const startedAt = Date.now()
+          let handled = false
+          const onHide = () => {
+            handled = true
+          }
+          document.addEventListener('visibilitychange', onHide, { once: true })
+          openUrl(launchTarget)
+          setTimeout(() => {
+            if (handled) return
+            if (document.visibilityState === 'hidden') return
+            if (Date.now() - startedAt < 1000) return
+            if (fallbackUrl) {
+              openUrl(fallbackUrl)
+            } else {
+              showToast('未配置安卓下载地址')
+            }
+          }, 1200)
+          return
+        }
         openUrl(primaryUrl)
       })
 
@@ -546,6 +650,8 @@
         if (isWechat()) elWechatMask.style.display = 'block'
         const remote = await fetchDownloadUrl()
         androidDownloadUrl = remote.androidUrl || getQueryParam('downloadUrl') || getQueryParam('androidUrl')
+        androidLaunchUrl = remote.androidLaunchUrl || getQueryParam('androidLaunchUrl') || getQueryParam('schemeUrl') || getQueryParam('launchUrl') || DEFAULT_ANDROID_LAUNCH_URL
+        androidPackageName = remote.androidPackageName || getQueryParam('androidPackageName') || getQueryParam('packageName') || DEFAULT_ANDROID_PACKAGE_NAME
         iosAppStoreUrl = remote.appStoreUrl || getQueryParam('appStoreUrl') || getQueryParam('iosUrl') || DEFAULT_APP_STORE_URL
         iosLaunchUrl = remote.launchUrl || getQueryParam('launchUrl') || getQueryParam('universalLink') || DEFAULT_IOS_LAUNCH_URL
         applyAppleItunesMeta(iosAppStoreUrl)
